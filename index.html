@@ -6,23 +6,23 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="RAMUSE">
-  <meta name="theme-color" content="#f5f5f7">
+  <meta name="theme-color" content="#efefec">
   <link rel="apple-touch-icon" id="apple-icon">
   <title>RAMUSE</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{height:100%;width:100%;max-width:100vw;overflow:hidden;overflow-x:hidden;
-      background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif}
-    @media(prefers-color-scheme:dark){html,body{background:#000000}}
+      background:#efefec;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif}
+    @media(prefers-color-scheme:dark){html,body{background:#131516}}
     iframe{width:100%;height:100%;border:none;display:block;max-width:100%}
 
     #loading{
       position:fixed;inset:0;z-index:999;
-      background:#F7F8FA;
+      background:#efefec;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       transition:opacity .6s ease, visibility .6s ease;
     }
-    @media(prefers-color-scheme:dark){#loading{background:#0F0F11}}
+    @media(prefers-color-scheme:dark){#loading{background:#131516}}
     #loading.exit{pointer-events:none;animation:overlay-out .45s ease forwards}
     @keyframes overlay-out{to{opacity:0;visibility:hidden}}
 
@@ -85,15 +85,20 @@
       var c = document.createElement('canvas');
       c.width = c.height = 512;
       var x = c.getContext('2d');
-      // Lime brand base
-      x.fillStyle = '#CAFF1A';
+      // Chrome silver base
+      var gs = x.createLinearGradient(0, 0, 0, 512);
+      gs.addColorStop(0, '#f9faf9');
+      gs.addColorStop(0.28, '#dfe4e4');
+      gs.addColorStop(0.7, '#b8c0c0');
+      gs.addColorStop(1, '#888f91');
+      x.fillStyle = gs;
       x.fillRect(0, 0, 512, 512);
-      // Subtle center highlight
-      var gh = x.createRadialGradient(256, 200, 0, 256, 256, 300);
-      gh.addColorStop(0, 'rgba(255,255,255,.25)');
+      // Top highlight
+      var gh = x.createRadialGradient(256, 100, 0, 256, 200, 320);
+      gh.addColorStop(0, 'rgba(255,255,255,.55)');
       gh.addColorStop(1, 'rgba(255,255,255,0)');
       x.fillStyle = gh; x.fillRect(0, 0, 512, 512);
-      // Black logo
+      // Dark logo
       var lw = 340;
       var lh = Math.round(logo.naturalHeight / logo.naturalWidth * lw);
       x.drawImage(logo, (512 - lw) / 2, (512 - lh) / 2, lw, lh);
