@@ -62,7 +62,7 @@
 
   <script>
     // モバイルはiframe内でGoogleのCookieがブロックされるため直接リダイレクト
-    var GAS_URL='https://script.google.com/macros/s/AKfycbzwSPsnmUIrIB-7ni0PytI_CYjgxzhkH5lP8LawHWTnTB0XnHRN6pKwgbAct1weGxuz/exec';
+    var GAS_URL='https://script.google.com/macros/s/AKfycbzwSPsnmUIrIB-7ni0PytI_CYjgxzhkH5lP8LawHWTnTB0XnHRN6pKwgbAct1weGxuz/exec?embedded=true';
     if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){window.location.replace(GAS_URL);}
     // 2.2秒後にローディングを消す
     setTimeout(function() {
