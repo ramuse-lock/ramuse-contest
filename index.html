@@ -56,11 +56,14 @@
   </div>
 
   <iframe id="app"
-    src="https://script.google.com/macros/s/AKfycbzXnCfxChnITia0XckIPsMogiC7FtH2qGrRNTqDv6KZZ7tnHr6MNQSWFPz7tNGPnpBQ/exec?embedded=true"
+    src="https://script.google.com/macros/s/AKfycbzB_GJL_2b-zyWQOsaTvQpzIOAJ4MocjSfmXcgTj6EDDGz9qrlBCbmMCdL4ZxI7mWF5/exec?embedded=true"
     allow="autoplay">
   </iframe>
 
   <script>
+    // モバイルはiframe内でGoogleのCookieがブロックされるため直接リダイレクト
+    var GAS_URL='https://script.google.com/macros/s/AKfycbzB_GJL_2b-zyWQOsaTvQpzIOAJ4MocjSfmXcgTj6EDDGz9qrlBCbmMCdL4ZxI7mWF5/exec';
+    if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){window.location.replace(GAS_URL);}
     // 2.2秒後にローディングを消す
     setTimeout(function() {
       var ld = document.getElementById('loading');
