@@ -61,10 +61,6 @@
   </iframe>
 
   <script>
-    // モバイルはiframe内でGoogleのCookieがブロックされるため直接リダイレクト
-    // ?embedded=true でGASバナーを非表示にする（ログイン不要設定が前提）
-    var GAS_URL='https://script.google.com/macros/s/AKfycbx_yaenWrQGR50fYHJIBJsreUpFp7-uTk-04nmnRHDHG_5X6r-Wn2HcTrCKfDb9BOKP/exec?embedded=true';
-    if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){window.location.replace(GAS_URL);}
     // 2.2秒後にローディングを消す
     setTimeout(function() {
       var ld = document.getElementById('loading');
