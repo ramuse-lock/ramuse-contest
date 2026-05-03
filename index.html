@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="RAMUSE">
   <meta name="theme-color" content="#efefec">
-  <link rel="apple-touch-icon" id="apple-icon">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <title>RAMUSE</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -69,28 +69,6 @@
       setTimeout(function() { ld.style.display = 'none'; }, 450);
     }, 2200);
 
-    // ホーム画面アイコン（chrome silver）
-    var gs = document.createElement('canvas');
-    gs.width = gs.height = 512;
-    var gx = gs.getContext('2d');
-    var grad = gx.createLinearGradient(0, 0, 0, 512);
-    grad.addColorStop(0, '#f9faf9');
-    grad.addColorStop(0.28, '#dfe4e4');
-    grad.addColorStop(0.7, '#b8c0c0');
-    grad.addColorStop(1, '#888f91');
-    gx.fillStyle = grad; gx.fillRect(0, 0, 512, 512);
-    var hl = gx.createRadialGradient(256, 100, 0, 256, 200, 320);
-    hl.addColorStop(0, 'rgba(255,255,255,.55)');
-    hl.addColorStop(1, 'rgba(255,255,255,0)');
-    gx.fillStyle = hl; gx.fillRect(0, 0, 512, 512);
-    var img = new Image();
-    img.onload = function() {
-      var lw = 340, lh = Math.round(img.naturalHeight / img.naturalWidth * lw);
-      gx.drawImage(img, (512-lw)/2, (512-lh)/2, lw, lh);
-      var lk = document.getElementById('apple-icon');
-      if (lk) lk.href = gs.toDataURL('image/png');
-    };
-    img.src = document.getElementById('ld-logo').src;
   </script>
 </body>
 </html>
