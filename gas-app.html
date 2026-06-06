@@ -3675,7 +3675,9 @@ function onICChange() {
     if(amtEl&&(!amtEl.value||amtEl.value==='0')) amtEl.value=parseInt(match['片道料金'])||0;
     hint.style.display='block';
     hint.innerHTML='<span style="color:var(--OK-t);background:var(--OK-bg);padding:2px 8px;border-radius:999px">✓ 保存済みルート ¥'+(parseInt(match['片道料金'])||0).toLocaleString()+'</span>';
-    saveBtn.style.display='none';
+    saveBtn.style.display='block';
+    saveBtn.textContent='✎ 更新';
+    saveBtn.disabled=false;
     updateGasCalc();
   } else {
     hint.style.display='none';
