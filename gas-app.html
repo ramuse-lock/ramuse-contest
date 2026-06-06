@@ -3563,15 +3563,13 @@ function renderTripSettlement() {
         var myItems=validOthers.filter(function(o){ return o.targets.indexOf(fam)>=0; });
         if(myItems.length===0) return;
         var myTotal=myItems.reduce(function(s,o){ return s+Math.floor((parseInt(o.amount)||0)/o.targets.length); },0);
-        html+='<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:3px">';
-        html+='<span style="font-weight:700;color:var(--TX);min-width:36px">'+esc(fam)+'</span>';
-        html+='<span style="flex:1">';
-        myItems.forEach(function(o,j){
+        html+='<div style="margin-bottom:4px">';
+        html+='<div style="font-weight:700;color:var(--TX);padding:1px 0">'+esc(fam)+'</div>';
+        myItems.forEach(function(o){
           var perAmt=Math.floor((parseInt(o.amount)||0)/o.targets.length);
-          html+=(j>0?'　':'')+'<span>'+esc(o.label||'その他')+' ¥'+perAmt.toLocaleString()+'</span>';
+          html+='<div style="display:flex;justify-content:space-between;padding:2px 0 2px 8px"><span>'+esc(o.label||'その他')+(o.targets.length>1?' （÷'+o.targets.length+'人）':'')+'</span><span>¥'+perAmt.toLocaleString()+'</span></div>';
         });
-        html+='</span>';
-        html+='<span style="font-weight:700;color:var(--TX);flex-shrink:0">¥'+myTotal.toLocaleString()+'</span>';
+        if(myItems.length>1) html+='<div style="display:flex;justify-content:space-between;padding:4px 0 2px 8px;border-top:1px dashed var(--BD);font-weight:600;color:var(--TX)"><span>小計</span><span>¥'+myTotal.toLocaleString()+'</span></div>';
         html+='</div>';
       });
       html+='</div>';
