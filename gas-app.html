@@ -3461,8 +3461,8 @@ function mkTripRecCard(r) {
   var costs=calcTripCost(r);
   var passengers=(r['乗車メンバー']||'').split(',').map(function(s){return s.trim();}).filter(function(s){return s;});
   var isProjectDone=S.activeProj&&String(S.activeProj['ステータス']||'').trim()==='完了';
-  var html='<div class="trip-rec-card">';
-  html+='<div class="trc-top" onclick="openEditRecord(\''+r['ID']+'\')" style="cursor:pointer">';
+  var html='<div class="trip-rec-card" onclick="openEditRecord(\''+r['ID']+'\')" style="cursor:pointer">';
+  html+='<div class="trc-top">';
   html+='<div>';
   html+='<div class="trc-date">'+(r['日付']||'日付なし')+'</div>';
   if(r['目的']||r['目的地']){
@@ -3536,13 +3536,13 @@ function renderTripSettlement() {
     var costs=calcTripCost(r);
     var total=costs.total;
     var psgr=(r['乗車メンバー']||'').split(',').map(function(s){return s.trim();}).filter(function(s){return s;});
-    html+='<div onclick="toggleSettleRow('+i+')" style="background:var(--SFC);border-radius:10px;border:1px solid var(--BD);margin-bottom:6px;overflow:hidden;cursor:pointer">';
-    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px">';
+    html+='<div style="background:var(--SFC);border-radius:10px;border:1px solid var(--BD);margin-bottom:6px;overflow:hidden">';
+    html+='<button type="button" onclick="toggleSettleRow('+i+')" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:none;border:none;cursor:pointer;text-align:left">';
     html+='<div style="font-size:13px;font-weight:600">'+(r['日付']?fmtD(r['日付'])+' ':'')+esc(r['目的']||r['目的地']||'記録'+(i+1))+'</div>';
     html+='<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">';
     html+='<span style="font-size:13px;font-weight:700">¥'+total.toLocaleString()+'</span>';
     html+='<svg id="settle-chev-'+i+'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;color:var(--MU)"><polyline points="6 9 12 15 18 9"/></svg>';
-    html+='</div></div>';
+    html+='</div></button>';
     html+='<div id="settle-row-'+i+'" style="display:none;padding:0 12px 10px;font-size:12px;color:var(--MU)">';
     html+='<div style="margin-bottom:6px">支払者: <b>'+esc(r['支払者']||'未設定')+'</b> / 乗車: <b>'+(psgr.join('・')||'未設定')+'</b></div>';
     // 交通・駐車費（乗車メンバー割り）
