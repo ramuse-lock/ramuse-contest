@@ -22,6 +22,7 @@
   /* Status badge colors */
   --s-entry-t:#7A6000;--s-entry-bg:rgba(200,162,0,0.13);
   --s-ready-t:#3A3A3C;--s-ready-bg:rgba(60,60,67,0.09);
+  --s-dayof-t:#1A5FA8;--s-dayof-bg:rgba(0,122,255,0.11);
   --s-waitpay-t:#5A3D00;--s-waitpay-bg:rgba(160,108,0,0.12);
   --s-done-t:#FFFFFF;--s-done-bg:#2C2C2E;
   --s-cancel-t:#8E8E93;--s-cancel-bg:rgba(142,142,147,0.10);
@@ -42,6 +43,7 @@
     --Y:#D4AC00;--YBG:rgba(212,172,0,0.15);
     --s-entry-t:#D4AC00;--s-entry-bg:rgba(200,162,0,0.16);
     --s-ready-t:#AEAEB2;--s-ready-bg:rgba(255,255,255,0.08);
+    --s-dayof-t:#6E99FF;--s-dayof-bg:rgba(0,122,255,0.15);
     --s-waitpay-t:#C8A050;--s-waitpay-bg:rgba(150,100,0,0.18);
     --s-done-t:#000000;--s-done-bg:#EBEBF5;
     --s-cancel-t:#636366;--s-cancel-bg:rgba(99,99,102,0.12);
@@ -306,6 +308,7 @@ button{cursor:pointer;border:none;background:none}
 .badge{font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0;letter-spacing:.01em}
 .b-entry{background:var(--s-entry-bg);color:var(--s-entry-t)}
 .b-ready{background:var(--s-ready-bg);color:var(--s-ready-t)}
+.b-dayof{background:var(--s-dayof-bg);color:var(--s-dayof-t)}
 .b-waitpay{background:var(--s-waitpay-bg);color:var(--s-waitpay-t)}
 .b-done{background:var(--s-done-bg);color:var(--s-done-t)}
 .b-cancel{background:var(--s-cancel-bg);color:var(--s-cancel-t)}
@@ -632,6 +635,7 @@ button{cursor:pointer;border:none;background:none}
           <option value="all">すべて</option>
           <option value="エントリー予定">エントリー予定</option>
           <option value="準備中">準備中</option>
+          <option value="当日待ち">当日待ち</option>
           <option value="会計待ち">会計待ち</option>
           <option value="完了">完了</option>
         </select>
@@ -1784,24 +1788,26 @@ function toggleTodayBanner(){
 // 自動ステータス計算
 function calcAutoStatus(c) {
   if(c['ステータス']==='キャンセル') return 'キャンセル';
-  // 1. エントリー未完了
+  // 1. エントリー未提出
   if(!c['エントリー_状況']||c['エントリー_状況']!=='提出済') return 'エントリー予定';
-  // 2. 提出物残り
+  // 2. 事前提出物が残っている（当日CDは除く）
   var submPending=false;
-  if(c['音源_要否']&&c['音源_要否']!=='不要'&&c['音源_状況']!=='提出済') submPending=true;
+  if(c['音源_要否']==='事前'&&c['音源_状況']!=='提出済') submPending=true;
   if(c['動画_要否']&&c['動画_要否']!=='不要'&&c['動画_状況']!=='提出済') submPending=true;
   if(c['写真_要否']&&c['写真_要否']!=='不要'&&c['写真_状況']!=='提出済') submPending=true;
   if(submPending) return '準備中';
-  // 3. 未払いあり
+  // 開催日判定
+  var cd=c['開催日']?new Date(c['開催日']):null;
+  var now=new Date(); now.setHours(0,0,0,0);
+  var afterContest=cd&&cd<now;
+  // 未集金チェック
   var efAmt=parseInt(c['エントリー費_金額'])||0;
-  var efMeth2=c['エントリー費_支払方法']||'';
-  var adultP=parseInt(c['観覧費_大人_単価'])||0, childP=parseInt(c['観覧費_子供_単価'])||0;
+  var adultP=parseInt(c['観覧費_大人_単価'])||0,childP=parseInt(c['観覧費_子供_単価'])||0;
   var tTotal=(parseInt(c['交通費_ガソリン代'])||0)+(parseInt(c['交通費_ETC'])||0);
-  var cd2=c['開催日']?new Date(c['開催日']):null; var now2=new Date(); now2.setHours(0,0,0,0);
   var unpaid=false;
   S.fams.forEach(function(fam){
     if(efAmt>0&&!parseBool(c[fam+'_エントリー費_支払済'])) unpaid=true;
-    var ad=parseInt(c[fam+'_観覧費_大人'])||0, ch=parseInt(c[fam+'_観覧費_子供'])||0;
+    var ad=parseInt(c[fam+'_観覧費_大人'])||0,ch=parseInt(c[fam+'_観覧費_子供'])||0;
     var kanFree=(c['観覧費_支払方法']==='不要');
     var freeOne=parseBool(c['観覧費_付き添い無料']);
     var effAdAmt=ad>0?adultP*(freeOne?Math.max(0,ad-1):ad):0;
@@ -1809,7 +1815,16 @@ function calcAutoStatus(c) {
     if(!kanFree&&(effAdAmt>0||effChAmt>0)&&!parseBool(c[fam+'_観覧費_支払済'])) unpaid=true;
     if(tTotal>0&&parseBool(c[fam+'_交通費_対象'])&&!parseBool(c[fam+'_交通費_支払済'])) unpaid=true;
   });
-  if(unpaid) return '会計待ち';
+  // 3. 大会後かつ未集金 → 会計待ち
+  if(afterContest&&unpaid) return '会計待ち';
+  // 4. 当日対応事項あり（大会前）→ 当日待ち
+  var dayOf=false;
+  if(c['音源_要否']==='当日CD') dayOf=true;
+  if(efAmt>0&&c['エントリー費_支払方法']==='当日') dayOf=true;
+  if(c['観覧費_支払方法']==='当日支払い') dayOf=true;
+  if(!afterContest&&dayOf) return '当日待ち';
+  // 5. 大会前かつ未集金（振込等）→ 準備中
+  if(!afterContest&&unpaid) return '準備中';
   return '完了';
 }
 
@@ -1864,7 +1879,7 @@ function renderContests() {
 
 function mkCard(c) {
   var autoStat=calcAutoStatus(c);
-  var bm={'エントリー予定':'b-entry','準備中':'b-ready','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
+  var bm={'エントリー予定':'b-entry','準備中':'b-ready','当日待ち':'b-dayof','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
   var bc=bm[autoStat]||'b-def';
   // 今後7日以内の大会はupcomingクラス
   var isUpcoming=false;
@@ -2096,11 +2111,22 @@ function updateSubs() {
     body.classList.toggle('on', v!==''&&v!=='不要');
     dl.style.display=(v!==''&&v!=='不要')?'block':'none';
   }
-  upd('音源','si-music','si-music-dl');
+  // 音源：期限フィールドは事前提出のみ表示、他に切り替えたらクリア
+  var mv=f.querySelector('[name="音源_要否"]').value;
+  var musicBody=document.getElementById('si-music');
+  var musicDl=document.getElementById('si-music-dl');
+  if(musicBody) musicBody.classList.toggle('on', mv!==''&&mv!=='不要');
+  if(musicDl){
+    var showDl=(mv==='事前');
+    musicDl.style.display=showDl?'block':'none';
+    if(!showDl){
+      var dlInput=musicDl.querySelector('[name="音源_期限"]');
+      if(dlInput) dlInput.value='';
+    }
+  }
   upd('動画','si-video','si-video-dl');
   upd('写真','si-photo','si-photo-dl');
   // 音源追加セクション
-  var mv=f.querySelector('[name="音源_要否"]').value;
   var bk=document.getElementById('si-music-backup');
   var ex=document.getElementById('si-music-cd-extra');
   if(bk) bk.style.display=(mv==='事前')?'block':'none';
@@ -2506,7 +2532,7 @@ function buildViewContent(c) {
   }
 
   // 基本情報
-  var bm={'エントリー予定':'b-entry','準備中':'b-ready','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
+  var bm={'エントリー予定':'b-entry','準備中':'b-ready','当日待ち':'b-dayof','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
   var vStat=calcAutoStatus(c);
   html+='<div class="vs"><div class="vst" style="display:flex;justify-content:space-between;align-items:center">基本情報<span class="badge '+(bm[vStat]||'b-def')+'">'+esc(vStat)+'</span></div>';
   if(c['コンテスト名']) html+='<div class="vr"><span class="vr-l">大会名</span><span class="vr-v" style="font-weight:700">'+esc(c['コンテスト名'])+'</span></div>';
