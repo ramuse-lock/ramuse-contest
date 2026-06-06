@@ -497,9 +497,10 @@ function toObj(headers, row, rowIndex) {
 // おでかけプロジェクト
 // ============================================================
 
-var TRIP_PROJ_SHEET = 'おでかけプロジェクト';
-var TRIP_REC_SHEET  = 'おでかけ記録';
-var CAR_SHEET       = '車設定';
+var TRIP_PROJ_SHEET  = 'おでかけプロジェクト';
+var TRIP_REC_SHEET   = 'おでかけ記録';
+var CAR_SHEET        = '車設定';
+var ROUTE_SHEET      = '高速ルート';
 
 function generateUid() {
   return Utilities.getUuid().replace(/-/g,'').substring(0,12);
@@ -563,6 +564,7 @@ function ensureTripSheets() {
   if (carSh.getLastRow() <= 1) {
     FAMILY_NAMES.forEach(function(n) { carSh.appendRow([n + 'の車', 15]); });
   }
+  makeSheet(ROUTE_SHEET, ['出発IC','到着IC','片道料金'], '#4A7CB0');
 }
 
 /**
@@ -687,8 +689,36 @@ function getAllTripData() {
     });
     var carSettings = sheetToRawObjects(getSheet(CAR_SHEET))
       .filter(function(r) { return r['名前']; });
-    return { projects: projects, recordsByProject: recordsByProject, carSettings: carSettings };
+    var savedRoutes = sheetToRawObjects(getSheet(ROUTE_SHEET))
+      .filter(function(r) { return r['出発IC'] || r['到着IC']; });
+    return { projects: projects, recordsByProject: recordsByProject, carSettings: carSettings, savedRoutes: savedRoutes };
   } catch(e) {
-    return { debugError: e.toString(), projects: [], recordsByProject: {}, carSettings: [] };
+    return { debugError: e.toString(), projects: [], recordsByProject: {}, carSettings: [], savedRoutes: [] };
   }
+}
+
+function saveRoute(from, to, amount) {
+  ensureTripSheets();
+  var sh = getSheet(ROUTE_SHEET);
+  var data = sh.getDataRange().getValues();
+  var fromN = String(from||'').trim();
+  var toN   = String(to||'').trim();
+  var amt   = parseFloat(amount) || 0;
+  // 既存の同ルートを上書き
+  if (data.length > 1) {
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === fromN && String(data[i][1]).trim() === toN) {
+        sh.getRange(i + 1, 3).setValue(amt);
+        return { success: true, rowIndex: i + 1, updated: true };
+      }
+    }
+  }
+  sh.appendRow([fromN, toN, amt]);
+  return { success: true, rowIndex: sh.getLastRow(), updated: false };
+}
+
+function deleteRoute(rowIndex) {
+  var sh = getSheet(ROUTE_SHEET);
+  if (sh && rowIndex >= 2) sh.deleteRow(rowIndex);
+  return { success: true };
 }
