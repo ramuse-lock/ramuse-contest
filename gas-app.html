@@ -3548,12 +3548,11 @@ function renderTripSettlement() {
     // 交通・駐車費（乗車メンバー割り）
     var sharedCost=costs.gas+costs.highway+costs.parking;
     if(sharedCost>0){
-      html+='<div style="margin-bottom:4px">';
-      if(costs.gas>0) html+='<span style="margin-right:8px">ガソリン代 ¥'+costs.gas.toLocaleString()+'</span>';
-      if(costs.highway>0) html+='<span style="margin-right:8px">高速代 ¥'+costs.highway.toLocaleString()+'</span>';
-      if(costs.parking>0) html+='<span>駐車場 ¥'+costs.parking.toLocaleString()+'</span>';
-      if(psgr.length>0) html+=' <span style="color:var(--TX);font-weight:600">→ 一人 ¥'+Math.floor(sharedCost/psgr.length).toLocaleString()+'</span>';
-      html+='</div>';
+      function costRow(lbl,amt){ return '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>'+lbl+'</span><span>¥'+amt.toLocaleString()+'</span></div>'; }
+      if(costs.gas>0) html+=costRow('ガソリン代',costs.gas);
+      if(costs.highway>0) html+=costRow('高速代',costs.highway);
+      if(costs.parking>0) html+=costRow('駐車場代',costs.parking);
+      if(psgr.length>0) html+='<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px;border-top:1px dashed var(--BD);font-weight:600;color:var(--TX)"><span>一人当たり（÷'+psgr.length+'人）</span><span>¥'+Math.floor(sharedCost/psgr.length).toLocaleString()+'</span></div>';
     }
     // その他費用：人別グループ
     var validOthers=costs.others.filter(function(o){ return (parseInt(o.amount)||0)>0&&Array.isArray(o.targets)&&o.targets.length>0; });
