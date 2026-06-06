@@ -369,11 +369,14 @@ button{cursor:pointer;border:none;background:none}
 .yr-bar{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none}
 .yr-bar::-webkit-scrollbar{display:none}
 .rc{background:var(--SFC);border-radius:var(--R);padding:16px;margin-bottom:10px;box-shadow:var(--SHM);border:1px solid var(--BD)}
-.rc-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
-.rc-name{font-size:15px;font-weight:700}
-.rc-date{font-size:12px;color:var(--MU)}
-.rc-div{font-size:12px;color:var(--MU);margin-bottom:5px}
-.rc-res{font-size:14px;white-space:pre-wrap;color:var(--TX)}
+.rc-date{font-size:12px;font-weight:600;color:var(--MU);margin-bottom:4px;letter-spacing:.02em}
+.rc-name{font-size:15px;font-weight:700;margin-bottom:3px}
+.rc-div{font-size:12px;color:var(--MU);margin-bottom:8px}
+.rc-res{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;padding:5px 10px;border-radius:999px}
+.rc-res.award{background:#FFF7DB;color:#8A6200;border:1.5px solid #F0C040}
+.rc-res.special{background:#F3EEFF;color:#6B2FA0;border:1.5px solid #C59EE8}
+.rc-res.qualify{background:#E6F3FF;color:#1A5FA8;border:1.5px solid #7BBCF0}
+.rc-res.plain{font-size:13px;color:var(--MU);font-weight:500;padding:0}
 .rc-empty{font-size:13px;color:var(--MU);font-style:italic}
 
 /* ===== Detail Overlay ===== */
@@ -3060,14 +3063,30 @@ function renderResults() {
   var filtered=past.filter(function(c){ return !S.resYear||c['開催日'].substring(0,4)===S.resYear; });
   if(!filtered.length){ rlist.innerHTML='<div class="empty"><p>開催済みの大会はありません</p></div>'; return; }
   rlist.innerHTML=filtered.map(function(c){
-    return '<div class="rc"><div class="rc-h"><div class="rc-name">'+esc(c['コンテスト名'])+'</div><div class="rc-date">'+(c['開催日']?fmtD(c['開催日']):'')+'</div></div>'+
-      (c['部門']?'<div class="rc-div">'+esc(c['部門'])+'</div>':'')+
-      (function(){
-        var detail=c['結果_詳細']?esc(c['結果_詳細']):'';
-        var kind=c['結果']?esc(c['結果']):'';
-        var res=detail&&kind?detail+' '+kind:(detail||kind);
-        return res?'<div class="rc-res">'+res+'</div>':'<div class="rc-empty">結果未入力</div>';
-      })()+
+    var kind=c['結果']||'';
+    var detail=c['結果_詳細']||'';
+    var resHtml;
+    if(kind==='入賞'||kind==='特別賞'||kind==='審査員賞'||kind==='予選通過'){
+      var cls=kind==='入賞'?'award':kind==='予選通過'?'qualify':'special';
+      var icon=kind==='入賞'
+        ?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>'
+        :kind==='予選通過'
+        ?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        :'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      var label=detail?esc(detail)+' '+esc(kind):esc(kind);
+      resHtml='<div class="rc-res '+cls+'">'+icon+label+'</div>';
+    } else if(kind){
+      resHtml='<div class="rc-res plain">'+esc(detail?detail+' ':'')+esc(kind)+'</div>';
+    } else if(detail){
+      resHtml='<div class="rc-res plain">'+esc(detail)+'</div>';
+    } else {
+      resHtml='<div class="rc-empty">結果未入力</div>';
+    }
+    return '<div class="rc">'+
+      '<div class="rc-date">'+(c['開催日']?fmtD(c['開催日']):'')+'</div>'+
+      '<div class="rc-name">'+esc(c['コンテスト名'])+'</div>'+
+      (c['部門']?'<div class="rc-div">'+esc(c['部門'])+'</div>':'<div class="rc-div" style="margin-bottom:8px"></div>')+
+      resHtml+
       '</div>';
   }).join('');
 }
