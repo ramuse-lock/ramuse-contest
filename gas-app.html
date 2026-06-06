@@ -814,6 +814,7 @@ button{cursor:pointer;border:none;background:none}
   </div>
 
   <div id="dbody">
+    <div id="form-err-banner" style="display:none;margin:0 0 10px;padding:10px 14px;background:var(--NG);color:#fff;border-radius:var(--RS);font-size:13px;font-weight:600;line-height:1.4"></div>
     <form id="cf" onsubmit="return false;">
 
       <!-- 基本 -->
@@ -1794,11 +1795,9 @@ function calcAutoStatus(c) {
   var adultP=parseInt(c['観覧費_大人_単価'])||0, childP=parseInt(c['観覧費_子供_単価'])||0;
   var tTotal=(parseInt(c['交通費_ガソリン代'])||0)+(parseInt(c['交通費_ETC'])||0);
   var cd2=c['開催日']?new Date(c['開催日']):null; var now2=new Date(); now2.setHours(0,0,0,0);
-  var afterContest=cd2&&cd2<now2;
   var unpaid=false;
   S.fams.forEach(function(fam){
-    // 当日払いは大会後のみ未払いとしてカウント
-    if(efAmt>0&&!parseBool(c[fam+'_エントリー費_支払済'])&&(efMeth2!=='当日'||afterContest)) unpaid=true;
+    if(efAmt>0&&!parseBool(c[fam+'_エントリー費_支払済'])) unpaid=true;
     var ad=parseInt(c[fam+'_観覧費_大人'])||0, ch=parseInt(c[fam+'_観覧費_子供'])||0;
     var kanFree=(c['観覧費_支払方法']==='不要');
     var freeOne=parseBool(c['観覧費_付き添い無料']);
@@ -2034,7 +2033,10 @@ function openNew(){
   if(S.page==='finance'&&S.finTab==='trips') openNewProject();
   else openDet(0);
 }
-function closeDet(){ document.getElementById('dov').classList.remove('on'); }
+function closeDet(){
+  document.getElementById('dov').classList.remove('on');
+  var b=document.getElementById('form-err-banner'); if(b){ b.style.display='none'; b.textContent=''; }
+}
 
 function setF(name, val) {
   var el=document.getElementById('cf').querySelector('[name="'+name+'"]');
@@ -2233,9 +2235,16 @@ function showCancelConfirm(){
     });
   }
 }
-function scrollToFormError(el) {
+function scrollToFormError(el, msg) {
   if(!el) return;
   el.style.borderColor='var(--NG)';
+  // エラーバナーを表示
+  var banner=document.getElementById('form-err-banner');
+  if(banner&&msg){
+    banner.textContent='⚠ '+msg;
+    banner.style.display='block';
+    document.getElementById('dbody').scrollTo({top:0,behavior:'smooth'});
+  }
   // アコーディオンが折りたたまれていれば展開
   var accBody=el.closest('[id^="acc-"]');
   if(accBody&&accBody.classList.contains('collapsed')){
@@ -2243,33 +2252,25 @@ function scrollToFormError(el) {
     var hd=accBody.previousElementSibling;
     if(hd&&hd.classList.contains('acc-hd')) hd.classList.remove('collapsed');
   }
-  var body=document.getElementById('dbody');
-  if(body){
-    var top=el.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
-    body.scrollTo({top:Math.max(0,top-60),behavior:'smooth'});
-  }
-  el.focus();
-  el.addEventListener('input',function clr(){ el.style.borderColor=''; el.removeEventListener('input',clr); });
+  el.addEventListener('input',function clr(){
+    el.style.borderColor='';
+    if(banner){ banner.style.display='none'; banner.textContent=''; }
+    el.removeEventListener('input',clr);
+  });
 }
 function showSaveConfirm(){
   var d=collectForm();
   if(!d['コンテスト名']){
-    var el=document.getElementById('cf').querySelector('[name="コンテスト名"]');
-    scrollToFormError(el); showToast('コンテスト名を入力してください'); return;
+    scrollToFormError(document.getElementById('cf').querySelector('[name="コンテスト名"]'),'コンテスト名を入力してください'); return;
   }
   if(!d['開催日']){
-    var el2=document.getElementById('cf').querySelector('[name="開催日"]');
-    scrollToFormError(el2); showToast('開催日を入力してください'); return;
+    scrollToFormError(document.getElementById('cf').querySelector('[name="開催日"]'),'開催日を入力してください'); return;
   }
-  // エントリー期限が開催日より後はNG
   if(d['エントリー_期限']&&d['エントリー_期限']>d['開催日']){
-    var el3=document.getElementById('cf').querySelector('[name="エントリー_期限"]');
-    scrollToFormError(el3); showToast('エントリー期限は開催日以前にしてください'); return;
+    scrollToFormError(document.getElementById('cf').querySelector('[name="エントリー_期限"]'),'エントリー期限は開催日以前にしてください'); return;
   }
-  // 終了時間が開始時間より前はNG
   if(d['開始時間']&&d['終了時間']&&d['終了時間']<d['開始時間']){
-    var el4=document.getElementById('cf').querySelector('[name="終了時間"]');
-    scrollToFormError(el4); showToast('終了時間は開始時間より後にしてください'); return;
+    scrollToFormError(document.getElementById('cf').querySelector('[name="終了時間"]'),'終了時間は開始時間より後にしてください'); return;
   }
   doSave();
 }
@@ -2627,12 +2628,12 @@ function buildFinViewContent(c) {
   var freeOne=parseBool(c['観覧費_付き添い無料']);
   var attending=S.fams.filter(function(f){ return parseInt(c[f+'_観覧費_大人'])>=1; });
   var gc=attending.length;
-  var repShare=gc>0?Math.round((gc-(freeOne?1:0))*adultP/gc):0;
+  var repShare=gc>0?r10((gc-(freeOne?1:0))*adultP/gc):0;
   var gAmt=parseInt(c['交通費_ガソリン代'])||0;
   var eAmt=parseInt(c['交通費_ETC'])||0;
   var tTotal=gAmt+eAmt;
   var tTargets=S.fams.filter(function(f){ return parseBool(c[f+'_交通費_対象']); });
-  var transPerPerson=tTargets.length>0&&tTotal>0?Math.round(tTotal/tTargets.length):0;
+  var transPerPerson=tTargets.length>0&&tTotal>0?r10(tTotal/tTargets.length):0;
   var html='';
 
   // 開催日
@@ -2656,7 +2657,7 @@ function buildFinViewContent(c) {
   var hasAny=false;
   S.fams.forEach(function(fam){
     var parts=[];
-    if(efAmt>0){ var ok=parseBool(c[fam+'_エントリー費_支払済']); parts.push({label:'エントリー費（'+efMeth+'）',amt:efPer,ok:ok,isDayOf:efMeth==='当日'}); }
+    if(efAmt>0){ var ok=parseBool(c[fam+'_エントリー費_支払済']); parts.push({label:'エントリー費（'+efMeth+'）',amt:efPer,ok:ok}); }
     var ad=parseInt(c[fam+'_観覧費_大人'])||0, ch=parseInt(c[fam+'_観覧費_子供'])||0;
     if(ad>0||ch>0){
       var ok=parseBool(c[fam+'_観覧費_支払済']);
@@ -2668,15 +2669,14 @@ function buildFinViewContent(c) {
     if(!parts.length) return;
     hasAny=true;
     var total=parts.reduce(function(s,p){ return s+p.amt; },0);
-    var hasRealUnpaid=parts.some(function(p){ return !p.ok&&!p.isDayOf; });
-    var hasDayOf=parts.some(function(p){ return p.isDayOf&&!p.ok; });
+    var hasRealUnpaid=parts.some(function(p){ return !p.ok; });
     var blockCls=hasRealUnpaid?'has-unpaid':'all-paid';
-    var badgeCls=hasRealUnpaid?'unpaid':(hasDayOf?'dayof':'paid');
-    var badgeTxt=hasRealUnpaid?'未払あり':(hasDayOf?'当日払い':'支払済');
+    var badgeCls=hasRealUnpaid?'unpaid':'paid';
+    var badgeTxt=hasRealUnpaid?'未集金':'集金済';
     html+='<div class="fam-fin-block '+blockCls+'" style="margin-bottom:8px">';
     html+='<div class="ffb-head"><span class="ffb-name">'+esc(fam)+'</span><span class="ffb-badge '+badgeCls+'">'+badgeTxt+'</span></div>';
     parts.forEach(function(p){
-      var rowCls=(!p.ok&&!p.isDayOf)?' unpaid':'';
+      var rowCls=!p.ok?' unpaid':'';
       html+='<div class="fc-row'+rowCls+'">'+
         '<span class="fc-row-label">'+esc(p.label)+'</span>'+
         '<span class="fc-row-val">'+(p.ok?'<svg class="chk-ic ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>':'<svg class="chk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>')+' ¥'+p.amt.toLocaleString()+'</span></div>';
@@ -2704,7 +2704,7 @@ function buildFinCollectSection(c) {
   var transPerPerson=tTargets.length>0&&tTotal>0?Math.round(tTotal/tTargets.length):0;
   var otherAmt=parseInt(c['その他_金額'])||0;
   var otherTargets=S.fams.filter(function(f){ return parseBool(c[f+'_その他_対象']); });
-  var otherPer=otherTargets.length>0&&otherAmt>0?Math.round(otherAmt/otherTargets.length):0;
+  var otherPer=otherTargets.length>0&&otherAmt>0?r10(otherAmt/otherTargets.length):0;
   var kanFree=(c['観覧費_支払方法']==='不要');
 
   var html='';
@@ -2885,7 +2885,7 @@ function calcFamUnpaid(c, fam) {
   if(parseBool(c[fam+'_交通費_対象'])&&transPerPerson>0&&!parseBool(c[fam+'_交通費_支払済'])) amt+=transPerPerson;
   var otherAmt=parseInt(c['その他_金額'])||0;
   var otherTargets=S.fams.filter(function(f){ return parseBool(c[f+'_その他_対象']); });
-  var otherPer=otherTargets.length>0&&otherAmt>0?Math.round(otherAmt/otherTargets.length):0;
+  var otherPer=otherTargets.length>0&&otherAmt>0?r10(otherAmt/otherTargets.length):0;
   if(parseBool(c[fam+'_その他_対象'])&&otherPer>0&&!parseBool(c[fam+'_その他_集金済'])) amt+=otherPer;
   return amt;
 }
@@ -2903,7 +2903,7 @@ function calcFamTotal(c, fam) {
   var transPerPerson=tTargets.length>0&&tTotal>0?Math.round(tTotal/tTargets.length):0;
   var otherAmt=parseInt(c['その他_金額'])||0;
   var otherTargets=S.fams.filter(function(f){ return parseBool(c[f+'_その他_対象']); });
-  var otherPer=otherTargets.length>0&&otherAmt>0?Math.round(otherAmt/otherTargets.length):0;
+  var otherPer=otherTargets.length>0&&otherAmt>0?r10(otherAmt/otherTargets.length):0;
   var amt=0;
   if(efAmt>0) amt+=efAmt;
   var ad=parseInt(c[fam+'_観覧費_大人'])||0, ch=parseInt(c[fam+'_観覧費_子供'])||0;
@@ -3092,6 +3092,8 @@ function showToast(m){
 // ============================================================
 // Utils
 // ============================================================
+// 10円単位に丸める
+function r10(n){ return Math.round(n/10)*10; }
 function parseBool(v){
   if(v===true||v===false) return v;
   if(v===null||v===undefined||v==='') return false;
@@ -3260,13 +3262,13 @@ function calcProjectSettlement(records) {
       if(payer&&paid[payer]!==undefined) paid[payer]+=parseInt(o.amount)||0;
     });
     if(passengers.length>0){
-      var perP=Math.floor(sharedTotal/passengers.length);
+      var perP=r10(sharedTotal/passengers.length);
       passengers.forEach(function(p){ if(owed[p]!==undefined) owed[p]+=perP; });
     }
     costs.others.forEach(function(o){
       var tgts=Array.isArray(o.targets)?o.targets.filter(function(t){return t;}):[];
       if(tgts.length>0){
-        var pp=Math.floor((parseInt(o.amount)||0)/tgts.length);
+        var pp=r10((parseInt(o.amount)||0)/tgts.length);
         tgts.forEach(function(t){ if(owed[t]!==undefined) owed[t]+=pp; });
       }
     });
@@ -3552,7 +3554,7 @@ function renderTripSettlement() {
       if(costs.gas>0) html+=costRow('ガソリン代',costs.gas);
       if(costs.highway>0) html+=costRow('高速代',costs.highway);
       if(costs.parking>0) html+=costRow('駐車場代',costs.parking);
-      if(psgr.length>0) html+='<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px;border-top:1px dashed var(--BD);font-weight:600;color:var(--TX)"><span>一人当たり（÷'+psgr.length+'人）</span><span>¥'+Math.floor(sharedCost/psgr.length).toLocaleString()+'</span></div>';
+      if(psgr.length>0) html+='<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px;border-top:1px dashed var(--BD);font-weight:600;color:var(--TX)"><span>一人当たり（÷'+psgr.length+'人）</span><span>¥'+r10(sharedCost/psgr.length).toLocaleString()+'</span></div>';
     }
     // その他費用：人別グループ
     var validOthers=costs.others.filter(function(o){ return (parseInt(o.amount)||0)>0&&Array.isArray(o.targets)&&o.targets.length>0; });
@@ -3562,11 +3564,11 @@ function renderTripSettlement() {
       S.fams.forEach(function(fam){
         var myItems=validOthers.filter(function(o){ return o.targets.indexOf(fam)>=0; });
         if(myItems.length===0) return;
-        var myTotal=myItems.reduce(function(s,o){ return s+Math.floor((parseInt(o.amount)||0)/o.targets.length); },0);
+        var myTotal=myItems.reduce(function(s,o){ return s+r10((parseInt(o.amount)||0)/o.targets.length); },0);
         html+='<div style="margin-bottom:4px">';
         html+='<div style="font-weight:700;color:var(--TX);padding:1px 0">'+esc(fam)+'</div>';
         myItems.forEach(function(o){
-          var perAmt=Math.floor((parseInt(o.amount)||0)/o.targets.length);
+          var perAmt=r10((parseInt(o.amount)||0)/o.targets.length);
           html+='<div style="display:flex;justify-content:space-between;padding:2px 0 2px 8px"><span>'+esc(o.label||'その他')+(o.targets.length>1?' （÷'+o.targets.length+'人）':'')+'</span><span>¥'+perAmt.toLocaleString()+'</span></div>';
         });
         if(myItems.length>1) html+='<div style="display:flex;justify-content:space-between;padding:4px 0 2px 8px;border-top:1px dashed var(--BD);font-weight:600;color:var(--TX)"><span>小計</span><span>¥'+myTotal.toLocaleString()+'</span></div>';
@@ -3766,6 +3768,16 @@ function buildRecordForm(r) {
   document.getElementById('triprecform').innerHTML=html;
   updateGasCalc();
   onICChange();
+  // carSettingsが空のまま開いた場合、ドライバー変更時に燃費を自動補完
+  if(!r&&(!S.carSettings||!S.carSettings.length)){
+    var driverEl=document.getElementById('tr-driver');
+    if(driverEl) driverEl.addEventListener('change',function onceLoad(){
+      if(S.carSettings&&S.carSettings.length){
+        onTRDriverChange(driverEl.value);
+        driverEl.removeEventListener('change',onceLoad);
+      }
+    });
+  }
 }
 
 function buildOtherExpRow(idx,label,amount,targets) {
@@ -3933,7 +3945,14 @@ function saveTripRecordForm() {
     var tgts=[];
     var tgtEls=document.querySelectorAll('#oexp-targets-'+id+' .mtog.on');
     tgtEls.forEach(function(b){ tgts.push(b.textContent.trim()); });
-    if(lbl||amt>0) others.push({label:lbl,amount:amt,targets:tgts});
+    if(lbl||amt>0){
+      if(amt>0&&tgts.length===0){
+        showToast('「'+(lbl||'その他費用'+(parseInt(id)+1))+'」の対象者を選択してください');
+        if(btn){ btn.disabled=false; btn.style.opacity=''; }
+        return;
+      }
+      others.push({label:lbl,amount:amt,targets:tgts});
+    }
   });
 
   var data={
