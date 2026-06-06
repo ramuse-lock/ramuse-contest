@@ -1,0 +1,9 @@
+# GitHub Pages 用ファイル（GASには不要）
+index.html
+manifest.json
+*.png
+# その他
+.DS_Store
+.gitignore
+.claspignore
+README*
