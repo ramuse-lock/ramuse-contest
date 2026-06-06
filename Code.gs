@@ -211,7 +211,28 @@ function deleteContest(rowIndex) {
 function syncCalendar(data, rowIndex, sheet, headers) {
   var dateVal = data['開催日'];
   var name = data['コンテスト名'];
-  if (!dateVal || !name) return;
+  if (!name) return;
+
+  var cal = CalendarApp.getDefaultCalendar();
+  var calIdCol = headers.indexOf('カレンダーID') + 1;
+
+  var existingId = '';
+  if (calIdCol > 0 && rowIndex >= 2) {
+    try { existingId = String(sheet.getRange(rowIndex, calIdCol).getValue() || '').trim(); } catch(e) {}
+  }
+  if (!existingId) {
+    existingId = String(data['カレンダーID'] || '').trim();
+  }
+
+  // 開催日が空の場合：孤立したカレンダーイベントを削除してリターン
+  if (!dateVal) {
+    if (existingId) {
+      try { var orphan = cal.getEventById(existingId); if (orphan) orphan.deleteEvent(); } catch(e) {}
+      if (calIdCol > 0 && rowIndex >= 2) sheet.getRange(rowIndex, calIdCol).setValue('');
+    }
+    return;
+  }
+
   var date = new Date(dateVal);
   if (isNaN(date.getTime())) return;
 
@@ -233,17 +254,6 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   var desc = lines.join('\n');
   var loc = data['会場'] || '';
 
-  var cal = CalendarApp.getDefaultCalendar();
-  var calIdCol = headers.indexOf('カレンダーID') + 1;
-
-  var existingId = '';
-  if (calIdCol > 0 && rowIndex >= 2) {
-    try { existingId = String(sheet.getRange(rowIndex, calIdCol).getValue() || '').trim(); } catch(e) {}
-  }
-  if (!existingId) {
-    existingId = String(data['カレンダーID'] || '').trim();
-  }
-
   if (existingId) {
     try {
       var ev = cal.getEventById(existingId);
@@ -264,7 +274,6 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   // 既存IDなし or イベント削除済みの場合のみ新規作成
   var newEvent = cal.createAllDayEvent(name, date, { location: loc, description: desc });
   var newId = newEvent.getId();
-  // IDを先に保存してから色を設定（setColorが失敗してもIDは保持される）
   if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(newId);
   try { newEvent.setColor('5'); } catch(ce) { Logger.log('setColor(new): ' + ce); }
 }

@@ -327,6 +327,10 @@ button{cursor:pointer;border:none;background:none}
 .loading-dots span:nth-child(2){animation-delay:.18s}
 .loading-dots span:nth-child(3){animation-delay:.36s}
 @keyframes ldot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+@keyframes calSlideLeft{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes calSlideRight{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:translateX(0)}}
+.cal-slide-left{animation:calSlideLeft .22s ease-out}
+.cal-slide-right{animation:calSlideRight .22s ease-out}
 
 /* Progress Card */
 .pc{background:var(--SFC);border-radius:var(--R);padding:16px;margin-bottom:10px;box-shadow:var(--SHM);border:1px solid var(--BD);cursor:pointer;transition:transform var(--t)}
@@ -607,11 +611,15 @@ button{cursor:pointer;border:none;background:none}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
     </div>
-    <div id="contest-search-bar" style="display:none;margin-bottom:12px">
-      <div class="search-wrap" style="margin-bottom:0">
+    <div id="contest-search-bar" style="display:none;margin-bottom:8px">
+      <div class="search-wrap" style="margin-bottom:0;position:relative">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search-input" id="contest-search" type="search" placeholder="大会名・会場で検索…" oninput="setSearch(this.value)" autocomplete="off">
+        <input class="search-input" id="contest-search" type="search" placeholder="大会名・会場で検索…" oninput="setSearch(this.value)" autocomplete="off" style="padding-right:36px">
+        <button id="search-clear-btn" onclick="clearSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--MU);padding:4px;cursor:pointer;line-height:0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
+      <div id="search-count" style="display:none;font-size:12px;color:var(--MU);margin-top:6px;padding:0 2px"></div>
     </div>
 
     <div id="p-contests" class="panel on">
@@ -865,8 +873,12 @@ button{cursor:pointer;border:none;background:none}
             <input type="url" name="Instagram_URL" class="fi" placeholder="https://www.instagram.com/...">
           </div>
         </div>
-        <div class="fs">
-          <div class="fst">資料リンク（ドライブ等）</div>
+        <div class="fs" style="padding-bottom:0">
+          <div onclick="toggleInnerSec('doc-links')" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding-bottom:10px;margin-bottom:0">
+            <span class="fst" style="margin-bottom:0">資料リンク（ドライブ等）</span>
+            <svg id="doc-links-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;transform:rotate(-90deg);color:var(--MU)"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div id="doc-links-body" style="display:none;padding-bottom:10px">
           <div class="fg" style="margin-bottom:8px">
             <div style="display:flex;gap:6px">
               <input type="text" name="資料1_ラベル" class="fi" placeholder="名称（例: 要項PDF）" style="flex:1;min-width:0">
@@ -896,6 +908,7 @@ button{cursor:pointer;border:none;background:none}
               <input type="text" name="資料5_ラベル" class="fi" placeholder="名称" style="flex:1;min-width:0">
               <input type="url" name="資料5_URL" class="fi" placeholder="URL" style="flex:2;min-width:0">
             </div>
+          </div>
           </div>
         </div>
         <div class="fs">
@@ -1114,11 +1127,11 @@ button{cursor:pointer;border:none;background:none}
 
       <!-- メモ -->
       <div id="dtab-memo" class="dtab">
-        <div class="acc-hd" onclick="toggleAcc('memo')">
+        <div class="acc-hd collapsed" onclick="toggleAcc('memo')">
           <span class="acc-hd-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>メモ・結果</span>
           <svg class="acc-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
-        <div class="acc-body" id="acc-memo">
+        <div class="acc-body collapsed" id="acc-memo">
         <div class="fs">
           <div class="fst">衣装</div>
           <div class="fg">
@@ -1243,7 +1256,7 @@ button{cursor:pointer;border:none;background:none}
 var S = {
   page:'home', tab:'contests', dtab:'basic', finTab:'contest',
   contests:[], fams:['Airi','Miha','Rinka'],
-  filter:'all', search:'', editRow:0, viewRow:0, progRow:0, finDetRow:0, conCb:null, resYear:'', finFilter:'all',
+  filter:'all', search:'', editRow:0, viewRow:0, progRow:0, finDetRow:0, conCb:null, resYear:'', finFilter:'all', contestScrollTop:0,
   tripProjects:null, tripRecords:{}, carSettings:[], savedRoutes:[], activeProj:null, tripTab:'records', editRecordData:null,
   calYear:null, calMonth:null, calEvents:{}, weekEvents:null
 };
@@ -1404,7 +1417,17 @@ function setFilter(f) {
 }
 function setSearch(v) {
   S.search=v.trim();
+  var clr=document.getElementById('search-clear-btn');
+  if(clr) clr.style.display=S.search?'block':'none';
   renderContests();
+}
+function clearSearch() {
+  S.search='';
+  var si=document.getElementById('contest-search'); if(si) si.value='';
+  var clr=document.getElementById('search-clear-btn'); if(clr) clr.style.display='none';
+  var cnt=document.getElementById('search-count'); if(cnt) cnt.style.display='none';
+  renderContests();
+  document.getElementById('contest-search').focus();
 }
 
 // ============================================================
@@ -1543,7 +1566,7 @@ function navigateCalendar(dir) {
   S.calMonth+=dir;
   if(S.calMonth>12){ S.calMonth=1; S.calYear++; }
   if(S.calMonth<1){ S.calMonth=12; S.calYear--; }
-  renderCalendarGrid();
+  renderCalendarGrid(dir>0?'left':'right');
   var key=S.calYear+'-'+S.calMonth;
   if(!S.calEvents[key]) loadCalendarMonth(S.calYear, S.calMonth);
 }
@@ -1565,7 +1588,7 @@ function loadCalendarMonth(year, month) {
     .getCalendarEvents(year, month);
 }
 
-function renderCalendarGrid() {
+function renderCalendarGrid(slideDir) {
   var year=S.calYear, month=S.calMonth;
   var lbl=document.getElementById('cal-month-lbl');
   if(lbl) lbl.textContent=year+'年'+month+'月';
@@ -1634,6 +1657,11 @@ function renderCalendarGrid() {
   }
 
   grid.innerHTML=html;
+  if(slideDir){
+    grid.classList.remove('cal-slide-left','cal-slide-right');
+    void grid.offsetWidth; // reflow
+    grid.classList.add(slideDir==='left'?'cal-slide-left':'cal-slide-right');
+  }
 }
 
 function openContest(rowIndex) {
@@ -1773,7 +1801,10 @@ function calcAutoStatus(c) {
     if(efAmt>0&&!parseBool(c[fam+'_エントリー費_支払済'])&&(efMeth2!=='当日'||afterContest)) unpaid=true;
     var ad=parseInt(c[fam+'_観覧費_大人'])||0, ch=parseInt(c[fam+'_観覧費_子供'])||0;
     var kanFree=(c['観覧費_支払方法']==='不要');
-    if(!kanFree&&(ad>0||ch>0)&&(adultP>0||childP>0)&&!parseBool(c[fam+'_観覧費_支払済'])) unpaid=true;
+    var freeOne=parseBool(c['観覧費_付き添い無料']);
+    var effAdAmt=ad>0?adultP*(freeOne?Math.max(0,ad-1):ad):0;
+    var effChAmt=ch>0?childP*ch:0;
+    if(!kanFree&&(effAdAmt>0||effChAmt>0)&&!parseBool(c[fam+'_観覧費_支払済'])) unpaid=true;
     if(tTotal>0&&parseBool(c[fam+'_交通費_対象'])&&!parseBool(c[fam+'_交通費_支払済'])) unpaid=true;
   });
   if(unpaid) return '会計待ち';
@@ -1786,6 +1817,7 @@ function renderContests() {
   var emptyHtml='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg><p style="margin-bottom:12px">大会がまだありません</p><button onclick="openNew()" style="padding:10px 24px;border-radius:999px;background:var(--Y);color:#fff;font-size:14px;font-weight:700;border:none">＋ 大会を追加</button></div>';
   var all=S.contests.filter(function(c){ return c['コンテスト名']; });
   if(!all.length){ el.innerHTML=emptyHtml; renderTodayBanner([]); return; }
+  var totalCount=all.length;
   // Search filter
   if(S.search){
     var q=S.search.toLowerCase();
@@ -1794,7 +1826,11 @@ function renderContests() {
              (c['会場']||'').toLowerCase().indexOf(q)>=0||
              (c['部門']||'').toLowerCase().indexOf(q)>=0;
     });
+    var cnt=document.getElementById('search-count');
+    if(cnt){ cnt.style.display='block'; cnt.textContent=totalCount+'件中 '+all.length+'件を表示'; }
     if(!all.length){ el.innerHTML='<div class="empty"><p>「'+esc(S.search)+'」に一致する大会はありません</p></div>'; renderTodayBanner([]); return; }
+  } else {
+    var cnt2=document.getElementById('search-count'); if(cnt2) cnt2.style.display='none';
   }
   var f=S.filter;
   var now0=new Date(); now0.setHours(0,0,0,0);
@@ -1910,6 +1946,14 @@ function toggleAcc(t) {
   body.classList.toggle('collapsed',!isCollapsed);
   if(hd) hd.classList.toggle('collapsed',!isCollapsed);
 }
+function toggleInnerSec(id) {
+  var body=document.getElementById(id+'-body');
+  var chev=document.getElementById(id+'-chev');
+  if(!body) return;
+  var open=body.style.display==='none'||body.style.display==='';
+  body.style.display=open?'block':'none';
+  if(chev) chev.style.transform=open?'rotate(0deg)':'rotate(-90deg)';
+}
 
 function openDet(row) {
   var c=row>0 ? S.contests.filter(function(x){ return x._rowIndex===row; })[0] : null;
@@ -1939,6 +1983,12 @@ function openDet(row) {
     setF('資料3_ラベル',c['資料3_ラベル']); setF('資料3_URL',c['資料3_URL']);
     setF('資料4_ラベル',c['資料4_ラベル']); setF('資料4_URL',c['資料4_URL']);
     setF('資料5_ラベル',c['資料5_ラベル']); setF('資料5_URL',c['資料5_URL']);
+    // 資料リンクが1件でもある場合は展開
+    var hasDoc=c['資料1_URL']||c['資料2_URL']||c['資料3_URL']||c['資料4_URL']||c['資料5_URL'];
+    var dlBody=document.getElementById('doc-links-body');
+    var dlChev=document.getElementById('doc-links-chev');
+    if(dlBody){ dlBody.style.display=hasDoc?'block':'none'; }
+    if(dlChev){ dlChev.style.transform=hasDoc?'rotate(0deg)':'rotate(-90deg)'; }
     setF('観覧費_支払方法',c['観覧費_支払方法']||''); setF('観覧費_期限',c['観覧費_期限']);
     setFChk('観覧費_振込済',parseBool(c['観覧費_振込済'])); updateKanranSubmit();
     setF('エントリー費_支払方法',c['エントリー費_支払方法']||''); setF('エントリー費_期限',c['エントリー費_期限']);
@@ -1954,6 +2004,13 @@ function openDet(row) {
     // メモ
     setF('衣装_メモ',c['衣装_メモ']); setF('問い合わせメモ',c['問い合わせメモ']);
     setF('備考',c['備考']); setF('結果',c['結果']); setF('結果_詳細',c['結果_詳細']);
+    // メモ・結果タブにデータがあれば展開
+    if(c['衣装_メモ']||c['問い合わせメモ']||c['備考']||c['結果']||c['結果_詳細']){
+      var memoBody=document.getElementById('acc-memo');
+      var memoHd=document.getElementById('dtab-memo')&&document.getElementById('dtab-memo').querySelector('.acc-hd');
+      if(memoBody){ memoBody.classList.remove('collapsed'); }
+      if(memoHd){ memoHd.classList.remove('collapsed'); }
+    }
     setF('_rowIndex',row); setF('カレンダーID',c['カレンダーID']||'');
     var isCancelled=c['ステータス']==='キャンセル';
     var dzone=document.getElementById('danger-zone');
@@ -1998,6 +2055,11 @@ function resetForm() {
   setF('開催形式','オフライン');
   var entryChk=document.getElementById('entry-submitted-chk');
   if(entryChk) entryChk.checked=false;
+  // 資料リンクは初期非表示
+  var dlBody=document.getElementById('doc-links-body');
+  var dlChev=document.getElementById('doc-links-chev');
+  if(dlBody) dlBody.style.display='none';
+  if(dlChev) dlChev.style.transform='rotate(-90deg)';
   toggleRound();
   updateSubs();
   updateEFSubmit();
@@ -2171,17 +2233,43 @@ function showCancelConfirm(){
     });
   }
 }
+function scrollToFormError(el) {
+  if(!el) return;
+  el.style.borderColor='var(--NG)';
+  // アコーディオンが折りたたまれていれば展開
+  var accBody=el.closest('[id^="acc-"]');
+  if(accBody&&accBody.classList.contains('collapsed')){
+    accBody.classList.remove('collapsed');
+    var hd=accBody.previousElementSibling;
+    if(hd&&hd.classList.contains('acc-hd')) hd.classList.remove('collapsed');
+  }
+  var body=document.getElementById('dbody');
+  if(body){
+    var top=el.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
+    body.scrollTo({top:Math.max(0,top-60),behavior:'smooth'});
+  }
+  el.focus();
+  el.addEventListener('input',function clr(){ el.style.borderColor=''; el.removeEventListener('input',clr); });
+}
 function showSaveConfirm(){
   var d=collectForm();
   if(!d['コンテスト名']){
     var el=document.getElementById('cf').querySelector('[name="コンテスト名"]');
-    if(el){ el.focus(); el.style.borderColor='var(--NG)'; setTimeout(function(){ el.style.borderColor=''; },2000); }
-    showToast('コンテスト名を入力してください'); return;
+    scrollToFormError(el); showToast('コンテスト名を入力してください'); return;
   }
   if(!d['開催日']){
     var el2=document.getElementById('cf').querySelector('[name="開催日"]');
-    if(el2){ el2.focus(); el2.style.borderColor='var(--NG)'; setTimeout(function(){ el2.style.borderColor=''; },2000); }
-    showToast('開催日を入力してください'); return;
+    scrollToFormError(el2); showToast('開催日を入力してください'); return;
+  }
+  // エントリー期限が開催日より後はNG
+  if(d['エントリー_期限']&&d['エントリー_期限']>d['開催日']){
+    var el3=document.getElementById('cf').querySelector('[name="エントリー_期限"]');
+    scrollToFormError(el3); showToast('エントリー期限は開催日以前にしてください'); return;
+  }
+  // 終了時間が開始時間より前はNG
+  if(d['開始時間']&&d['終了時間']&&d['終了時間']<d['開始時間']){
+    var el4=document.getElementById('cf').querySelector('[name="終了時間"]');
+    scrollToFormError(el4); showToast('終了時間は開始時間より後にしてください'); return;
   }
   doSave();
 }
@@ -2328,10 +2416,22 @@ function mkProgCard(c) {
       '<span class="pi-status '+sc+'">'+esc(item.status)+'</span></div>';
   }).join('')+'</div>';
   var cosNote=c['衣装_メモ']?'<div class="costume-note" style="margin-top:8px"><span class="cn-label">👗 衣装</span>'+esc(c['衣装_メモ'])+'</div>':'';
+  // 次にやること
+  var nextItem=items.find(function(i){ return !i.ok; });
+  var nextHint='';
+  if(nextItem){
+    var hintColor=nextItem.required?'var(--NG)':'var(--WN)';
+    nextHint='<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--BG);border:1px solid var(--BD);font-size:12px;display:flex;align-items:center;gap:6px">'
+      +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="'+hintColor+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
+      +'<span style="color:var(--MU)">次にやること：</span>'
+      +'<span style="font-weight:700;color:'+hintColor+'">'+esc(nextItem.label)+'</span>'
+      +(nextItem.deadline&&!nextItem.ok?'<span style="color:var(--MU);margin-left:auto;font-size:11px">〆'+fmtD(nextItem.deadline)+'</span>':'')
+      +'</div>';
+  }
   return '<div class="pc" onclick="openProgStatus('+c._rowIndex+')">' +
     '<div class="pc-top"><div class="pc-name">'+esc(c['コンテスト名'])+'</div></div>'+
     '<div class="pc-date">'+(c['開催日']?fmtD(c['開催日']):'日程未定')+'</div>'+
-    bar+ihtml+cosNote+'</div>';
+    bar+ihtml+nextHint+cosNote+'</div>';
 }
 
 function openDetOnTab(row, tab) { openDet(row); switchDTab(tab); }
@@ -2340,6 +2440,8 @@ function openDetOnTab(row, tab) { openDet(row); switchDTab(tab); }
 // View Overlay (read-only detail)
 // ============================================================
 function openView(row) {
+  var clist=document.getElementById('clist');
+  if(clist) S.contestScrollTop=clist.scrollTop;
   var c=S.contests.filter(function(x){ return x._rowIndex===row; })[0];
   if(!c) return;
   S.viewRow=row;
@@ -2351,7 +2453,11 @@ function openView(row) {
   document.getElementById('viewov').classList.add('on');
   document.getElementById('vbody').scrollTop=0;
 }
-function closeView(){ document.getElementById('viewov').classList.remove('on'); }
+function closeView(){
+  document.getElementById('viewov').classList.remove('on');
+  var clist=document.getElementById('clist');
+  if(clist&&S.contestScrollTop) requestAnimationFrame(function(){ clist.scrollTop=S.contestScrollTop; });
+}
 function editFromView(){
   closeView();
   openDet(S.viewRow);
@@ -3388,6 +3494,15 @@ function mkTripRecCard(r) {
   return html;
 }
 
+function toggleSettleRow(i) {
+  var row=document.getElementById('settle-row-'+i);
+  var chev=document.getElementById('settle-chev-'+i);
+  if(!row) return;
+  var open=row.style.display==='none'||row.style.display==='';
+  row.style.display=open?'block':'none';
+  if(chev) chev.style.transform=open?'rotate(180deg)':'';
+}
+
 function renderTripSettlement() {
   var el=document.getElementById('tdbody');
   if(!el||!S.activeProj) return;
@@ -3414,11 +3529,38 @@ function renderTripSettlement() {
     html+='</div></div>';
   });
   html+='</div>';
+  // 内訳（各記録）
+  html+='<div style="font-size:11px;font-weight:700;color:var(--MU);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">内訳</div>';
+  html+='<div id="settle-breakdown-wrap">';
+  recs.forEach(function(r,i){
+    var costs=calcTripCost(r);
+    var total=costs.total;
+    var psgr=(r['乗車メンバー']||'').split(',').map(function(s){return s.trim();}).filter(function(s){return s;});
+    html+='<div style="background:var(--SFC);border-radius:10px;border:1px solid var(--BD);margin-bottom:6px;overflow:hidden">';
+    html+='<button type="button" onclick="toggleSettleRow('+i+')" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:none;border:none;cursor:pointer;text-align:left">';
+    html+='<div style="font-size:13px;font-weight:600">'+(r['日付']?fmtD(r['日付'])+' ':'')+esc(r['目的']||r['目的地']||'記録'+(i+1))+'</div>';
+    html+='<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">';
+    html+='<span style="font-size:13px;font-weight:700">¥'+total.toLocaleString()+'</span>';
+    html+='<svg id="settle-chev-'+i+'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;color:var(--MU)"><polyline points="6 9 12 15 18 9"/></svg>';
+    html+='</div></button>';
+    html+='<div id="settle-row-'+i+'" style="display:none;padding:0 12px 10px;font-size:12px;color:var(--MU)">';
+    html+='<div>支払者: <b>'+esc(r['支払者']||'未設定')+'</b> / 乗車: <b>'+(psgr.join('・')||'未設定')+'</b></div>';
+    if(costs.gas>0) html+='<div>ガソリン代: ¥'+costs.gas.toLocaleString()+'</div>';
+    if(costs.highway>0) html+='<div>高速代: ¥'+costs.highway.toLocaleString()+'</div>';
+    if(costs.parking>0) html+='<div>駐車場: ¥'+costs.parking.toLocaleString()+'</div>';
+    costs.others.forEach(function(o){ if((parseInt(o.amount)||0)>0) html+='<div>'+esc(o.label||'その他')+': ¥'+(parseInt(o.amount)||0).toLocaleString()+'</div>'; });
+    if(psgr.length>0){
+      var shared=costs.gas+costs.highway+costs.parking;
+      html+='<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--BD)">一人当たり: ¥'+Math.floor(shared/psgr.length).toLocaleString()+'</div>';
+    }
+    html+='</div></div>';
+  });
+  html+='</div>';
   // 精算方法
   if(res.transfers.length===0){
     html+='<div class="settle-card" style="text-align:center;padding:20px"><div style="font-size:16px;font-weight:700;color:var(--OK-t)">精算不要</div><div style="font-size:13px;color:var(--MU);margin-top:4px">全員の負担が均等です</div></div>';
   } else {
-    html+='<div style="font-size:11px;font-weight:700;color:var(--MU);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">精算方法</div>';
+    html+='<div style="font-size:11px;font-weight:700;color:var(--MU);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 10px">精算方法</div>';
     res.transfers.forEach(function(t){
       html+='<div class="settle-transfer">';
       html+='<div class="settle-arrow">';
