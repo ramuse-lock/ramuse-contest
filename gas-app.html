@@ -3083,7 +3083,7 @@ function renderResults() {
       resHtml='<div class="rc-empty">結果未入力</div>';
     }
     return '<div class="rc">'+
-      '<div class="rc-date">'+(c['開催日']?fmtD(c['開催日']):'')+'</div>'+
+      '<div class="rc-date">'+(c['開催日']?(function(s){var d=new Date(s);var dw=['日','月','火','水','木','金','土'];return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日('+dw[d.getDay()]+')';})(c['開催日']):'')+'</div>'+
       '<div class="rc-name">'+esc(c['コンテスト名'])+'</div>'+
       (c['部門']?'<div class="rc-div">'+esc(c['部門'])+'</div>':'<div class="rc-div" style="margin-bottom:8px"></div>')+
       resHtml+
