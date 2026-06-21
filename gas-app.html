@@ -3422,17 +3422,17 @@ function mkProjectCard(p) {
   var isDone=String(p['ステータス']||'').trim()==='完了';
   var recs=(S.tripRecords&&S.tripRecords[p['ID']])||[];
   var totalCost=0; recs.forEach(function(r){totalCost+=calcTripCost(r).total;});
-  // 回収バッジ
+  // 集金バッジ（進行中プロジェクトのみ）
   var collectBadge='';
-  if(recs.length>0){
+  if(recs.length>0 && !isDone){
     var res=calcProjectSettlement(recs);
     if(res.transfers.length>0){
       var cSt={}; try{if(p['回収ステータス'])cSt=JSON.parse(p['回収ステータス']);}catch(e){}
       var done=res.transfers.filter(function(t){return !!cSt[t.from];}).length;
       var tot=res.transfers.length;
-      if(done===tot) collectBadge='<span class="collect-pill done">✓ 回収完了</span>';
-      else if(done>0) collectBadge='<span class="collect-pill partial">'+done+'/'+tot+' 回収済み</span>';
-      else collectBadge='<span class="collect-pill none">未回収</span>';
+      if(done===tot) collectBadge='<span class="collect-pill done">✓ 集金完了</span>';
+      else if(done>0) collectBadge='<span class="collect-pill partial">'+done+'/'+tot+' 集金済み</span>';
+      else collectBadge='<span class="collect-pill none">未集金</span>';
     }
   }
   var html='<div class="trip-proj-card" onclick="openTripDetail(\''+p['ID']+'\')">';
@@ -3654,7 +3654,7 @@ function renderTripSettlement() {
   } else {
     var doneCount=res.transfers.filter(function(t){return !!cSt[t.from];}).length;
     var ttlCount=res.transfers.length;
-    var summaryBadge=doneCount===ttlCount?'<span class="collect-pill done">✓ 全員回収完了</span>':doneCount>0?'<span class="collect-pill partial">'+doneCount+'/'+ttlCount+' 回収済み</span>':'<span class="collect-pill none">未回収</span>';
+    var summaryBadge=doneCount===ttlCount?'<span class="collect-pill done">✓ 全員集金済み</span>':doneCount>0?'<span class="collect-pill partial">'+doneCount+'/'+ttlCount+' 集金済み</span>':'<span class="collect-pill none">未集金</span>';
     html+='<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px">';
     html+='<div style="font-size:11px;font-weight:700;color:var(--MU);text-transform:uppercase;letter-spacing:.06em">精算方法</div>';
     html+=summaryBadge;
@@ -3671,7 +3671,7 @@ function renderTripSettlement() {
       html+='<div class="settle-amount">¥'+t.amount.toLocaleString()+'</div>';
       html+='</div>';
       html+='<button type="button" onclick="toggleCollectionStatus(\''+esc(t.from)+'\')" class="collect-toggle '+(isOn?'on':'off')+'">';
-      html+=isOn?'✓ 回収済み':'未回収';
+      html+=isOn?'✓ 集金済み':'未集金';
       html+='</button>';
       html+='</div>';
     });
