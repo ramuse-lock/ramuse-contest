@@ -3274,8 +3274,9 @@ function isETCDay(dateStr) {
 
 function calcTripCost(r) {
   var roundTrip=parseBool(r['往復']);
-  var highwayRaw=parseFloat(r['高速料金'])||0;
-  if(roundTrip) highwayRaw*=2;
+  var outAmt=parseFloat(r['高速料金'])||0;
+  var retAmt=parseFloat(r['復路料金'])||0;
+  var highwayRaw=retAmt>0?(outAmt+retAmt):roundTrip?outAmt*2:outAmt;
   var etcOn=parseBool(r['ETC割引']);
   var highway=etcOn?Math.floor(highwayRaw*0.7):highwayRaw;
   var gasPerL=parseFloat(r['ガソリン単価'])||0;
@@ -3523,7 +3524,7 @@ function mkTripRecCard(r) {
   html+='</div>';
   var breakdown=[];
   if(costs.gas>0) breakdown.push('ガソリン¥'+costs.gas.toLocaleString()+(parseBool(r['往復'])?' (往復)':''));
-  if(costs.highway>0) breakdown.push('高速¥'+costs.highway.toLocaleString()+(parseBool(r['ETC割引'])?'(ETC)':'')+(parseBool(r['往復'])?' (往復)':''));
+  if(costs.highway>0){var hwNote=(parseBool(r['ETC割引'])?'(ETC)':'');var rAmt=parseFloat(r['復路料金'])||0;var rtLabel=rAmt>0?'往路+復路':parseBool(r['往復'])?'往復':'片道';breakdown.push('高速('+rtLabel+')¥'+costs.highway.toLocaleString()+hwNote);}
   if(costs.parking>0) breakdown.push('駐車場¥'+costs.parking.toLocaleString());
   costs.others.forEach(function(o){ if(o.amount>0) breakdown.push(esc(o.label||'その他')+'¥'+(parseInt(o.amount)||0).toLocaleString()); });
   html+='<div class="trc-cost-row">';
@@ -3735,6 +3736,7 @@ function buildRecordForm(r) {
     var hwParts=highwaySec.split('→'); hwFrom=hwParts[0].trim(); hwTo=hwParts.slice(1).join('→').trim();
   } else if(highwaySec){ hwFrom=highwaySec; }
   var highwayAmt=r?(parseInt(r['高速料金'])||0):'';
+  var returnAmt=r?(parseInt(r['復路料金'])||0):'';
   var roundTrip=r?parseBool(r['往復']):true;
   var gasPerL=r?(parseFloat(r['ガソリン単価'])||''):'';
   var dist=r?(parseFloat(r['走行距離'])||''):'';
@@ -3774,12 +3776,15 @@ function buildRecordForm(r) {
   html+='<div class="fg" style="margin-bottom:0"><label class="fl">到着IC</label><input type="text" id="tr-hw-to" class="fi" value="'+esc(hwTo)+'" placeholder="例: 名古屋西" oninput="onICChange()"></div>';
   html+='</div>';
   html+='<div id="tr-route-hint" style="font-size:12px;margin-bottom:6px;display:none"></div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">';
+  html+='<div class="fg" style="margin-bottom:0"><label class="fl">往路料金（円）</label><input type="number" id="tr-hw-amt" class="fi" value="'+esc(String(highwayAmt))+'" placeholder="0" min="0" oninput="onICChange();updateGasCalc()"></div>';
+  html+='<div class="fg" style="margin-bottom:0"><label class="fl">復路料金（円）</label><input type="number" id="tr-hw-return-amt" class="fi" value="'+esc(String(returnAmt))+'" placeholder="空欄=往路と同額" min="0" oninput="updateGasCalc()"></div>';
+  html+='</div>';
   html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
-  html+='<div class="fg" style="margin-bottom:0;flex:1"><label class="fl">片道料金（円）</label><input type="number" id="tr-hw-amt" class="fi" value="'+esc(String(highwayAmt))+'" placeholder="0" min="0" oninput="onICChange();updateGasCalc()"></div>';
-  html+='<button type="button" id="tr-route-save-btn" onclick="saveRouteFromForm()" style="display:none;flex-shrink:0;margin-top:18px;padding:8px 12px;border-radius:999px;background:var(--YBG);color:var(--Y);font-size:12px;font-weight:700;border:1px solid rgba(200,162,0,.3)">☆ 保存</button>';
+  html+='<button type="button" id="tr-route-save-btn" onclick="saveRouteFromForm()" style="display:none;flex-shrink:0;padding:8px 12px;border-radius:999px;background:var(--YBG);color:var(--Y);font-size:12px;font-weight:700;border:1px solid rgba(200,162,0,.3)">☆ 保存</button>';
   html+='</div>';
   html+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:4px 0;margin-bottom:0">';
-  html+='<input type="checkbox" id="tr-roundtrip" style="width:20px;height:20px;accent-color:var(--Y)"'+(roundTrip?' checked':'')+' onchange="updateGasCalc()"> 往復（距離・高速料金を2倍で計算）';
+  html+='<input type="checkbox" id="tr-roundtrip" style="width:20px;height:20px;accent-color:var(--Y)"'+(roundTrip?' checked':'')+' onchange="updateGasCalc()"> 往復（ガソリン距離を2倍で計算）';
   html+='</label>';
   html+='</div>';
 
@@ -3947,13 +3952,16 @@ function updateGasCalc() {
   var totalDist=rt?d*2:d;
   var gas=(p>0&&totalDist>0&&fe>0)?Math.floor(p*totalDist/fe):0;
   var hwAmt=parseFloat((document.getElementById('tr-hw-amt')||{}).value)||0;
-  var totalHw=rt?hwAmt*2:hwAmt;
-  var highway=totalHw;
+  var hwRetAmt=parseFloat((document.getElementById('tr-hw-return-amt')||{}).value)||0;
+  var highway=hwRetAmt>0?(hwAmt+hwRetAmt):rt?hwAmt*2:hwAmt;
   var el=document.getElementById('gas-calc-display');
   if(!el) return;
   var parts=[];
   if(gas>0) parts.push('ガソリン代'+(rt?' (往復)':'')+' ¥'+gas.toLocaleString());
-  if(highway>0) parts.push('高速'+(rt?' (往復)':'')+' ¥'+highway.toLocaleString());
+  if(highway>0){
+    var hwLabel=hwRetAmt>0?'高速(往路+復路)':rt?'高速(往復)':'高速(片道)';
+    parts.push(hwLabel+' ¥'+highway.toLocaleString());
+  }
   if(parts.length>0){ el.style.display='block'; el.textContent=parts.join(' + '); }
   else el.style.display='none';
 }
@@ -3975,6 +3983,7 @@ function saveTripRecordForm() {
   var hwTo=(document.getElementById('tr-hw-to')||{}).value||'';
   var highwaySec=hwFrom&&hwTo?(hwFrom+'→'+hwTo):(hwFrom||hwTo);
   var highwayAmt=parseInt((document.getElementById('tr-hw-amt')||{}).value)||0;
+  var returnHighwayAmt=parseInt((document.getElementById('tr-hw-return-amt')||{}).value)||0;
   var roundTrip=(document.getElementById('tr-roundtrip')||{}).checked?true:false;
   var gasPrice=parseFloat((document.getElementById('tr-gas-price')||{}).value)||0;
   var distance=parseFloat((document.getElementById('tr-distance')||{}).value)||0;
@@ -4005,7 +4014,7 @@ function saveTripRecordForm() {
     '日付': date, '目的': purpose, '目的地': dest,
     '支払者': driver, '運転者': driver,
     '乗車メンバー': passengers.join(','),
-    '高速区間': highwaySec, '高速料金': highwayAmt, 'ETC割引': false,
+    '高速区間': highwaySec, '高速料金': highwayAmt, '復路料金': returnHighwayAmt, 'ETC割引': false,
     '往復': roundTrip,
     'ガソリン単価': gasPrice, '走行距離': distance, '燃費': fuelEff,
     '駐車場有無': hasParking, '駐車場料金': parkingAmt,
@@ -4068,7 +4077,7 @@ function duplicateRecord(recId) {
   for(var i=0;i<recs.length;i++){if(recs[i]['ID']===recId){orig=recs[i];break;}}
   if(!orig) return;
   var copy={};
-  var keys=['プロジェクトID','日付','目的','目的地','支払者','運転者','乗車メンバー','高速区間','高速料金','ETC割引','往復','ガソリン単価','走行距離','燃費','駐車場有無','駐車場料金','その他費用JSON'];
+  var keys=['プロジェクトID','日付','目的','目的地','支払者','運転者','乗車メンバー','高速区間','高速料金','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費','駐車場有無','駐車場料金','その他費用JSON'];
   keys.forEach(function(k){ copy[k]=orig[k]!==undefined?orig[k]:''; });
   copy['プロジェクトID']=S.activeProj['ID'];
   google.script.run
