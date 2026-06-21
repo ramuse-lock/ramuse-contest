@@ -566,7 +566,7 @@ function ensureTripSheets() {
     '#4A7CB0');
   makeSheet(TRIP_REC_SHEET,
     ['ID','プロジェクトID','日付','目的','目的地','支払者','運転者',
-     '乗車メンバー','高速区間','高速料金','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
+     '乗車メンバー','高速区間','高速料金','復路区間','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
      '駐車場有無','駐車場料金','その他費用JSON'],
     '#4A7CB0');
   var carSh = makeSheet(CAR_SHEET, ['名前','燃費'], '#4A7CB0');
@@ -595,7 +595,7 @@ function resetTripRecordSheet() {
   }
   // 正しい19列ヘッダーで上書き
   var headers = ['ID','プロジェクトID','日付','目的','目的地','支払者','運転者',
-                 '乗車メンバー','高速区間','高速料金','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
+                 '乗車メンバー','高速区間','高速料金','復路区間','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
                  '駐車場有無','駐車場料金','その他費用JSON'];
   sh.getRange(1, 1, 1, headers.length).setValues([headers])
     .setBackground('#4A7CB0').setFontColor('#fff').setFontWeight('bold');
@@ -650,7 +650,7 @@ function saveTripRecord(d) {
   ensureTripSheets();
   var sh = getSheet(TRIP_REC_SHEET);
   var h  = ['ID','プロジェクトID','日付','目的','目的地','支払者','運転者',
-            '乗車メンバー','高速区間','高速料金','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
+            '乗車メンバー','高速区間','高速料金','復路区間','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
             '駐車場有無','駐車場料金','その他費用JSON'];
   if (!d['ID']) d['ID'] = generateUid();
   var row = h.map(function(k) { return d[k] !== undefined ? d[k] : ''; });
