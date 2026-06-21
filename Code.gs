@@ -603,6 +603,83 @@ function resetTripRecordSheet() {
   Logger.log('完了: おでかけ記録をリセットし、正しいヘッダー（復路料金列追加）に修正しました。');
 }
 
+/**
+ * 【一回限り実行】スキーマ変更で列ずれしたおでかけ記録を修正する。
+ * GASエディタで関数を選択して実行してください。
+ *
+ * 対象: 今日（2026-06-22）の変更前に保存されたレコード
+ *   旧18列: 列10=ETC割引, 列11=往復, ...
+ *   旧19列: 列10=復路料金, 列11=ETC割引, 列12=往復, ...
+ *   → 現21列ヘッダーに正しくマッピングし直す
+ */
+function migrateTripRecordSchema() {
+  var ss = getSpreadsheet();
+  var sh = ss.getSheetByName(TRIP_REC_SHEET);
+  if (!sh) { Logger.log('シートが見つかりません'); return; }
+
+  var data = sh.getDataRange().getValues();
+  if (data.length <= 1) { Logger.log('データなし'); return; }
+
+  var migrated = 0;
+  var logs = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row[0]) continue; // IDなし行はスキップ
+
+    var newRow = null;
+
+    // 旧18列判定: 位置[10]がboolean = ETC割引(旧)が復路区間(新)列にある
+    if (typeof row[10] === 'boolean') {
+      newRow = [
+        row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],
+        '',       // 復路区間（新規）
+        '',       // 復路料金（新規）
+        row[10],  // ETC割引
+        row[11],  // 往復
+        row[12],  // ガソリン単価
+        row[13],  // 走行距離
+        row[14],  // 燃費
+        row[15],  // 駐車場有無
+        row[16],  // 駐車場料金
+        row[17],  // その他費用JSON
+        ''        // 復路距離（新規）
+      ];
+      logs.push('18列→修正 行' + (i+1) + ': ' + row[3]);
+
+    // 旧19列判定: 位置[11]がboolean = ETC割引(旧)が復路料金(新)列にある
+    } else if (typeof row[11] === 'boolean') {
+      newRow = [
+        row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],
+        '',       // 復路区間（新規）
+        row[10],  // 復路料金（旧[10]にあった値）
+        row[11],  // ETC割引
+        row[12],  // 往復
+        row[13],  // ガソリン単価
+        row[14],  // 走行距離
+        row[15],  // 燃費
+        row[16],  // 駐車場有無
+        row[17],  // 駐車場料金
+        row[18],  // その他費用JSON
+        ''        // 復路距離（新規）
+      ];
+      logs.push('19列→修正 行' + (i+1) + ': ' + row[3]);
+    }
+
+    if (newRow) {
+      sh.getRange(i + 1, 1, 1, 21).setValues([newRow]);
+      migrated++;
+    }
+  }
+
+  if (migrated === 0) {
+    Logger.log('列ずれの行は見つかりませんでした（すべて正常）');
+  } else {
+    Logger.log('【完了】' + migrated + '行を修正しました');
+    logs.forEach(function(l) { Logger.log(l); });
+  }
+}
+
 function getProjects() {
   ensureTripSheets();
   return sheetToRawObjects(getSheet(TRIP_PROJ_SHEET))
