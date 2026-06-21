@@ -567,13 +567,13 @@ function ensureTripSheets() {
   makeSheet(TRIP_REC_SHEET,
     ['ID','プロジェクトID','日付','目的','目的地','支払者','運転者',
      '乗車メンバー','高速区間','高速料金','復路区間','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
-     '駐車場有無','駐車場料金','その他費用JSON'],
+     '駐車場有無','駐車場料金','その他費用JSON','復路距離'],
     '#4A7CB0');
   var carSh = makeSheet(CAR_SHEET, ['名前','燃費'], '#4A7CB0');
   if (carSh.getLastRow() <= 1) {
     FAMILY_NAMES.forEach(function(n) { carSh.appendRow([n + 'の車', 15]); });
   }
-  makeSheet(ROUTE_SHEET, ['出発IC','到着IC','片道料金'], '#4A7CB0');
+  makeSheet(ROUTE_SHEET, ['出発IC','到着IC','片道料金','片道距離'], '#4A7CB0');
 }
 
 /**
@@ -596,7 +596,7 @@ function resetTripRecordSheet() {
   // 正しい19列ヘッダーで上書き
   var headers = ['ID','プロジェクトID','日付','目的','目的地','支払者','運転者',
                  '乗車メンバー','高速区間','高速料金','復路区間','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
-                 '駐車場有無','駐車場料金','その他費用JSON'];
+                 '駐車場有無','駐車場料金','その他費用JSON','復路距離'];
   sh.getRange(1, 1, 1, headers.length).setValues([headers])
     .setBackground('#4A7CB0').setFontColor('#fff').setFontWeight('bold');
   sh.setFrozenRows(1);
@@ -651,7 +651,7 @@ function saveTripRecord(d) {
   var sh = getSheet(TRIP_REC_SHEET);
   var h  = ['ID','プロジェクトID','日付','目的','目的地','支払者','運転者',
             '乗車メンバー','高速区間','高速料金','復路区間','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費',
-            '駐車場有無','駐車場料金','その他費用JSON'];
+            '駐車場有無','駐車場料金','その他費用JSON','復路距離'];
   if (!d['ID']) d['ID'] = generateUid();
   var row = h.map(function(k) { return d[k] !== undefined ? d[k] : ''; });
   var ri = parseInt(d['_rowIndex']) || 0;
@@ -706,23 +706,23 @@ function getAllTripData() {
   }
 }
 
-function saveRoute(from, to, amount) {
+function saveRoute(from, to, amount, distance) {
   ensureTripSheets();
   var sh = getSheet(ROUTE_SHEET);
   var data = sh.getDataRange().getValues();
   var fromN = String(from||'').trim();
   var toN   = String(to||'').trim();
   var amt   = parseFloat(amount) || 0;
-  // 既存の同ルートを上書き
+  var dist  = parseFloat(distance) || 0;
   if (data.length > 1) {
     for (var i = 1; i < data.length; i++) {
       if (String(data[i][0]).trim() === fromN && String(data[i][1]).trim() === toN) {
-        sh.getRange(i + 1, 3).setValue(amt);
+        sh.getRange(i + 1, 3, 1, 2).setValues([[amt, dist]]);
         return { success: true, rowIndex: i + 1, updated: true };
       }
     }
   }
-  sh.appendRow([fromN, toN, amt]);
+  sh.appendRow([fromN, toN, amt, dist]);
   return { success: true, rowIndex: sh.getLastRow(), updated: false };
 }
 

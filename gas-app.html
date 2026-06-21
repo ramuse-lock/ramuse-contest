@@ -3273,15 +3273,17 @@ function isETCDay(dateStr) {
 }
 
 function calcTripCost(r) {
-  var roundTrip=parseBool(r['往復']);
+  var sameRoute=parseBool(r['往復']);
   var outAmt=parseFloat(r['高速料金'])||0;
   var retAmt=parseFloat(r['復路料金'])||0;
-  var highwayRaw=retAmt>0?(outAmt+retAmt):roundTrip?outAmt*2:outAmt;
+  var outDist=parseFloat(r['走行距離'])||0;
+  var retDist=parseFloat(r['復路距離'])||0;
+  var highwayRaw=sameRoute?outAmt*2:outAmt+retAmt;
+  var totalDist=sameRoute?outDist*2:outDist+retDist;
   var etcOn=parseBool(r['ETC割引']);
   var highway=etcOn?Math.floor(highwayRaw*0.7):highwayRaw;
   var gasPerL=parseFloat(r['ガソリン単価'])||0;
-  var dist=parseFloat(r['走行距離'])||0;
-  if(roundTrip) dist*=2;
+  var dist=totalDist;
   var fe=parseFloat(r['燃費'])||15;
   var gas=(gasPerL>0&&dist>0&&fe>0)?Math.floor(gasPerL*dist/fe):0;
   var hasP=parseBool(r['駐車場有無']);
@@ -3523,8 +3525,8 @@ function mkTripRecCard(r) {
   if(r['運転者']||r['支払者']) html+='<span class="trc-payer">'+esc(r['運転者']||r['支払者'])+'が運転</span>';
   html+='</div>';
   var breakdown=[];
-  if(costs.gas>0) breakdown.push('ガソリン¥'+costs.gas.toLocaleString()+(parseBool(r['往復'])?' (往復)':''));
-  if(costs.highway>0){var hwNote=(parseBool(r['ETC割引'])?'(ETC)':'');var rAmt=parseFloat(r['復路料金'])||0;var rtLabel=rAmt>0?'往路+復路':parseBool(r['往復'])?'往復':'片道';breakdown.push('高速('+rtLabel+')¥'+costs.highway.toLocaleString()+hwNote);}
+  if(costs.gas>0){var sr=parseBool(r['往復']);var od=parseFloat(r['走行距離'])||0;var rd=parseFloat(r['復路距離'])||0;var td=sr?od*2:od+rd;breakdown.push('ガソリン¥'+costs.gas.toLocaleString()+'('+td.toFixed(1)+'km)');}
+  if(costs.highway>0){var hwNote=(parseBool(r['ETC割引'])?'(ETC)':'');var sr2=parseBool(r['往復']);var rAmt=parseFloat(r['復路料金'])||0;var rtLabel=sr2?'往復':rAmt>0?'往路+復路':'片道';breakdown.push('高速('+rtLabel+')¥'+costs.highway.toLocaleString()+hwNote);}
   if(costs.parking>0) breakdown.push('駐車場¥'+costs.parking.toLocaleString());
   costs.others.forEach(function(o){ if(o.amount>0) breakdown.push(esc(o.label||'その他')+'¥'+(parseInt(o.amount)||0).toLocaleString()); });
   html+='<div class="trc-cost-row">';
@@ -3742,7 +3744,8 @@ function buildRecordForm(r) {
   } else if(returnSec){ hwReturnFrom=returnSec; }
   var highwayAmt=r?(parseInt(r['高速料金'])||0):'';
   var returnAmt=r?(parseInt(r['復路料金'])||0):'';
-  var roundTrip=r?parseBool(r['往復']):true;
+  var returnDist=r?(parseFloat(r['復路距離'])||0):0;
+  var sameRoute=r?parseBool(r['往復']):true;
   var gasPerL=r?(parseFloat(r['ガソリン単価'])||''):'';
   var dist=r?(parseFloat(r['走行距離'])||''):'';
   var fe=r?(parseFloat(r['燃費'])||getFuelEff(driver)):getFuelEff(driver);
@@ -3776,6 +3779,11 @@ function buildRecordForm(r) {
 
   // Highway
   html+='<div class="fs"><div class="fst">高速道路</div>';
+  // モードトグル
+  html+='<div style="display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--Bd);margin-bottom:14px">';
+  html+='<button type="button" id="tr-mode-same" onclick="setRouteMode(\'same\')" style="flex:1;padding:9px 6px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:background .15s;background:'+(sameRoute?'var(--Y)':'transparent')+';color:'+(sameRoute?'#fff':'var(--Fg2)')+'">往復（同ルート）</button>';
+  html+='<button type="button" id="tr-mode-sep" onclick="setRouteMode(\'sep\')" style="flex:1;padding:9px 6px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:background .15s;background:'+(!sameRoute?'var(--Y)':'transparent')+';color:'+(!sameRoute?'#fff':'var(--Fg2)')+'">別ルート / 片道</button>';
+  html+='</div>';
   // 往路
   html+='<div style="font-size:11px;font-weight:700;color:var(--Y);letter-spacing:.06em;margin-bottom:6px">往路</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">';
@@ -3783,30 +3791,32 @@ function buildRecordForm(r) {
   html+='<div class="fg" style="margin-bottom:0"><label class="fl">到着IC</label><input type="text" id="tr-hw-to" class="fi" value="'+esc(hwTo)+'" placeholder="例: 名古屋西" oninput="onICChange()"></div>';
   html+='</div>';
   html+='<div id="tr-route-hint" style="font-size:12px;margin-bottom:6px;display:none"></div>';
-  html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
-  html+='<div class="fg" style="margin-bottom:0;flex:1"><label class="fl">料金（円）</label><input type="number" id="tr-hw-amt" class="fi" value="'+esc(String(highwayAmt))+'" placeholder="0" min="0" oninput="onICChange();updateGasCalc()"></div>';
-  html+='<button type="button" id="tr-route-save-btn" onclick="saveRouteFromForm()" style="display:none;flex-shrink:0;margin-top:18px;padding:8px 12px;border-radius:999px;background:var(--YBG);color:var(--Y);font-size:12px;font-weight:700;border:1px solid rgba(200,162,0,.3)">☆ 保存</button>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">';
+  html+='<div class="fg" style="margin-bottom:0"><label class="fl">料金（円）</label><input type="number" id="tr-hw-amt" class="fi" value="'+esc(String(highwayAmt))+'" placeholder="0" min="0" oninput="onICChange();updateGasCalc()"></div>';
+  html+='<div class="fg" style="margin-bottom:0"><label class="fl">距離（km）</label><input type="number" id="tr-hw-dist" class="fi" value="'+esc(String(dist))+'" placeholder="例: 60" min="0" step="0.1" oninput="updateGasCalc()"></div>';
   html+='</div>';
-  // 復路
-  html+='<div style="border-top:1px solid var(--Bd);margin-bottom:10px"></div>';
+  html+='<div style="display:flex;justify-content:flex-end;margin-bottom:4px">';
+  html+='<button type="button" id="tr-route-save-btn" onclick="saveRouteFromForm()" style="display:none;padding:7px 12px;border-radius:999px;background:var(--YBG);color:var(--Y);font-size:12px;font-weight:700;border:1px solid rgba(200,162,0,.3)">☆ 保存</button>';
+  html+='</div>';
+  // 復路（別ルートモード時のみ表示）
+  html+='<div id="tr-return-section" style="'+(sameRoute?'display:none;':'')+'border-top:1px solid var(--Bd);padding-top:10px;margin-top:6px">';
   html+='<div style="font-size:11px;font-weight:700;color:var(--Y);letter-spacing:.06em;margin-bottom:6px">復路</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">';
   html+='<div class="fg" style="margin-bottom:0"><label class="fl">出発IC</label><input type="text" id="tr-hw-return-from" class="fi" value="'+esc(hwReturnFrom)+'" placeholder="省略可" oninput="updateGasCalc()"></div>';
   html+='<div class="fg" style="margin-bottom:0"><label class="fl">到着IC</label><input type="text" id="tr-hw-return-to" class="fi" value="'+esc(hwReturnTo)+'" placeholder="省略可" oninput="updateGasCalc()"></div>';
   html+='</div>';
-  html+='<div class="fg" style="margin-bottom:10px"><label class="fl">料金（円）</label><input type="number" id="tr-hw-return-amt" class="fi" value="'+esc(String(returnAmt))+'" placeholder="空欄=往路と同額" min="0" oninput="updateGasCalc()"></div>';
-  // 往復チェック
-  html+='<div style="border-top:1px solid var(--Bd);margin-bottom:10px"></div>';
-  html+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:4px 0;margin-bottom:0">';
-  html+='<input type="checkbox" id="tr-roundtrip" style="width:20px;height:20px;accent-color:var(--Y)"'+(roundTrip?' checked':'')+' onchange="updateGasCalc()"> 往復（ガソリン距離を2倍で計算）';
-  html+='</label>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">';
+  html+='<div class="fg" style="margin-bottom:0"><label class="fl">料金（円）</label><input type="number" id="tr-hw-return-amt" class="fi" value="'+esc(String(returnAmt))+'" placeholder="0 = 片道" min="0" oninput="updateGasCalc()"></div>';
+  html+='<div class="fg" style="margin-bottom:0"><label class="fl">距離（km）</label><input type="number" id="tr-hw-return-dist" class="fi" value="'+esc(String(returnDist))+'" placeholder="0 = 片道" min="0" step="0.1" oninput="updateGasCalc()"></div>';
+  html+='</div>';
+  html+='</div>';
   html+='</div>';
 
   // Gas
   html+='<div class="fs"><div class="fst">ガソリン代</div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px">';
+  html+='<div style="font-size:12px;color:var(--Fg2);margin-bottom:8px">距離は上の高速道路セクションで入力した値を使用します</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">';
   html+='<div class="fg" style="margin-bottom:0"><label class="fl">単価（円/L）</label><input type="number" id="tr-gas-price" class="fi" value="'+esc(String(gasPerL))+'" placeholder="例: 168" min="0" step="0.1" oninput="updateGasCalc()"></div>';
-  html+='<div class="fg" style="margin-bottom:0"><label class="fl">片道距離（km）</label><input type="number" id="tr-distance" class="fi" value="'+esc(String(dist))+'" placeholder="例: 60" min="0" step="0.1" oninput="updateGasCalc()"></div>';
   html+='<div class="fg" style="margin-bottom:0"><label class="fl">燃費（km/L）</label><input type="number" id="tr-fuel-eff" class="fi" value="'+esc(String(fe))+'" placeholder="15" min="1" step="0.1" oninput="updateGasCalc()"></div>';
   html+='</div>';
   html+='<div id="gas-calc-display" class="gas-calc-display" style="display:none"></div>';
@@ -3909,36 +3919,39 @@ function onICChange() {
     if(String(r['出発IC']).trim()===fromN&&String(r['到着IC']).trim()===toN) match=r;
   });
   if(match) {
-    // 自動補完
     var amtEl=document.getElementById('tr-hw-amt');
     if(amtEl&&(!amtEl.value||amtEl.value==='0')) amtEl.value=parseInt(match['片道料金'])||0;
+    var distEl=document.getElementById('tr-hw-dist');
+    if(distEl&&(!distEl.value||distEl.value==='0')&&parseFloat(match['片道距離'])) distEl.value=parseFloat(match['片道距離']);
+    var distNote=parseFloat(match['片道距離'])?' · '+parseFloat(match['片道距離'])+'km':'';
     hint.style.display='block';
-    hint.innerHTML='<span style="color:var(--OK-t);background:var(--OK-bg);padding:2px 8px;border-radius:999px">✓ 保存済みルート ¥'+(parseInt(match['片道料金'])||0).toLocaleString()+'</span>';
+    hint.innerHTML='<span style="color:var(--OK-t);background:var(--OK-bg);padding:2px 8px;border-radius:999px">✓ 保存済みルート ¥'+(parseInt(match['片道料金'])||0).toLocaleString()+distNote+'</span>';
     saveBtn.style.display='block';
     saveBtn.textContent='✎ 更新';
     saveBtn.disabled=false;
     updateGasCalc();
   } else {
     hint.style.display='none';
-    // IC と料金が揃っていれば保存ボタンを表示
     var amt=parseFloat((document.getElementById('tr-hw-amt')||{}).value)||0;
-    saveBtn.style.display=(amt>0)?'block':'none';
+    var dist=parseFloat((document.getElementById('tr-hw-dist')||{}).value)||0;
+    saveBtn.style.display=(amt>0||dist>0)?'block':'none';
   }
 }
 function saveRouteFromForm() {
   var from=(document.getElementById('tr-hw-from')||{}).value||'';
   var to=(document.getElementById('tr-hw-to')||{}).value||'';
   var amt=parseFloat((document.getElementById('tr-hw-amt')||{}).value)||0;
-  if(!from.trim()||!to.trim()||!amt) return;
+  var dist=parseFloat((document.getElementById('tr-hw-dist')||{}).value)||0;
+  if(!from.trim()||!to.trim()) return;
   var btn=document.getElementById('tr-route-save-btn');
   if(btn){ btn.disabled=true; btn.textContent='保存中...'; }
   google.script.run
     .withSuccessHandler(function(r){
       if(r&&r.success){
-        var newRoute={'出発IC':from.trim(),'到着IC':to.trim(),'片道料金':amt,'_rowIndex':r.rowIndex};
+        var newRoute={'出発IC':from.trim(),'到着IC':to.trim(),'片道料金':amt,'片道距離':dist,'_rowIndex':r.rowIndex};
         S.savedRoutes=S.savedRoutes.filter(function(x){return !(String(x['出発IC']).trim()===from.trim()&&String(x['到着IC']).trim()===to.trim());});
         S.savedRoutes.push(newRoute);
-        onICChange(); // ヒントを更新
+        onICChange();
         showToast('ルートを保存しました');
       }
     })
@@ -3946,11 +3959,21 @@ function saveRouteFromForm() {
       if(btn){ btn.disabled=false; btn.textContent='☆ 保存'; }
       showToast('保存に失敗しました');
     })
-    .saveRoute(from.trim(), to.trim(), amt);
+    .saveRoute(from.trim(), to.trim(), amt, dist);
 }
 function onTRDriverChange(val) {
   var feEl=document.getElementById('tr-fuel-eff');
   if(feEl) feEl.value=getFuelEff(val);
+  updateGasCalc();
+}
+function setRouteMode(mode) {
+  var sameBtn=document.getElementById('tr-mode-same');
+  var sepBtn=document.getElementById('tr-mode-sep');
+  var retSec=document.getElementById('tr-return-section');
+  var isSame=mode==='same';
+  if(sameBtn){ sameBtn.style.background=isSame?'var(--Y)':'transparent'; sameBtn.style.color=isSame?'#fff':'var(--Fg2)'; }
+  if(sepBtn){ sepBtn.style.background=isSame?'transparent':'var(--Y)'; sepBtn.style.color=isSame?'var(--Fg2)':'#fff'; }
+  if(retSec) retSec.style.display=isSame?'none':'block';
   updateGasCalc();
 }
 function toggleParkingInput() {
@@ -3960,21 +3983,26 @@ function toggleParkingInput() {
 }
 function updateGasCalc() {
   var p=parseFloat((document.getElementById('tr-gas-price')||{}).value)||0;
-  var d=parseFloat((document.getElementById('tr-distance')||{}).value)||0;
   var fe=parseFloat((document.getElementById('tr-fuel-eff')||{}).value)||15;
-  var rt=(document.getElementById('tr-roundtrip')||{}).checked;
-  var totalDist=rt?d*2:d;
+  var retSec=document.getElementById('tr-return-section');
+  var isSame=!retSec||retSec.style.display==='none';
+  var outDist=parseFloat((document.getElementById('tr-hw-dist')||{}).value)||0;
+  var retDist=isSame?0:(parseFloat((document.getElementById('tr-hw-return-dist')||{}).value)||0);
+  var totalDist=isSame?outDist*2:outDist+retDist;
   var gas=(p>0&&totalDist>0&&fe>0)?Math.floor(p*totalDist/fe):0;
   var hwAmt=parseFloat((document.getElementById('tr-hw-amt')||{}).value)||0;
-  var hwRetAmt=parseFloat((document.getElementById('tr-hw-return-amt')||{}).value)||0;
-  var highway=hwRetAmt>0?(hwAmt+hwRetAmt):rt?hwAmt*2:hwAmt;
+  var hwRetAmt=isSame?0:(parseFloat((document.getElementById('tr-hw-return-amt')||{}).value)||0);
+  var highway=isSame?hwAmt*2:hwAmt+hwRetAmt;
   var el=document.getElementById('gas-calc-display');
   if(!el) return;
   var parts=[];
-  if(gas>0) parts.push('ガソリン代'+(rt?' (往復)':'')+' ¥'+gas.toLocaleString());
+  if(gas>0){
+    var distLabel=isSame?'往復 '+(outDist*2).toFixed(1)+'km':'計 '+totalDist.toFixed(1)+'km';
+    parts.push('ガソリン('+distLabel+') ¥'+gas.toLocaleString());
+  }
   if(highway>0){
-    var hwLabel=hwRetAmt>0?'高速(往路+復路)':rt?'高速(往復)':'高速(片道)';
-    parts.push(hwLabel+' ¥'+highway.toLocaleString());
+    var hwLabel=isSame?'往復':hwRetAmt>0?'往路+復路':'片道';
+    parts.push('高速('+hwLabel+') ¥'+highway.toLocaleString());
   }
   if(parts.length>0){ el.style.display='block'; el.textContent=parts.join(' + '); }
   else el.style.display='none';
@@ -4000,10 +4028,12 @@ function saveTripRecordForm() {
   var hwReturnTo=(document.getElementById('tr-hw-return-to')||{}).value||'';
   var returnSec=hwReturnFrom&&hwReturnTo?(hwReturnFrom+'→'+hwReturnTo):(hwReturnFrom||hwReturnTo);
   var highwayAmt=parseInt((document.getElementById('tr-hw-amt')||{}).value)||0;
-  var returnHighwayAmt=parseInt((document.getElementById('tr-hw-return-amt')||{}).value)||0;
-  var roundTrip=(document.getElementById('tr-roundtrip')||{}).checked?true:false;
+  var outDist=parseFloat((document.getElementById('tr-hw-dist')||{}).value)||0;
+  var retSec=document.getElementById('tr-return-section');
+  var isSameRoute=!retSec||retSec.style.display==='none';
+  var returnHighwayAmt=isSameRoute?0:(parseInt((document.getElementById('tr-hw-return-amt')||{}).value)||0);
+  var returnDist=isSameRoute?0:(parseFloat((document.getElementById('tr-hw-return-dist')||{}).value)||0);
   var gasPrice=parseFloat((document.getElementById('tr-gas-price')||{}).value)||0;
-  var distance=parseFloat((document.getElementById('tr-distance')||{}).value)||0;
   var fuelEff=parseFloat((document.getElementById('tr-fuel-eff')||{}).value)||15;
   var hasParking=(document.getElementById('tr-parking-chk')||{}).checked?true:false;
   var parkingAmt=hasParking?(parseInt((document.getElementById('tr-parking-amt')||{}).value)||0):0;
@@ -4032,10 +4062,11 @@ function saveTripRecordForm() {
     '支払者': driver, '運転者': driver,
     '乗車メンバー': passengers.join(','),
     '高速区間': highwaySec, '高速料金': highwayAmt, '復路区間': returnSec, '復路料金': returnHighwayAmt, 'ETC割引': false,
-    '往復': roundTrip,
-    'ガソリン単価': gasPrice, '走行距離': distance, '燃費': fuelEff,
+    '往復': isSameRoute,
+    'ガソリン単価': gasPrice, '走行距離': outDist, '燃費': fuelEff,
     '駐車場有無': hasParking, '駐車場料金': parkingAmt,
-    'その他費用JSON': others.length>0?JSON.stringify(others):''
+    'その他費用JSON': others.length>0?JSON.stringify(others):'',
+    '復路距離': returnDist
   };
   if(S.editRecordData){ data['ID']=S.editRecordData['ID']; data['_rowIndex']=S.editRecordData['_rowIndex']; }
 
@@ -4094,7 +4125,7 @@ function duplicateRecord(recId) {
   for(var i=0;i<recs.length;i++){if(recs[i]['ID']===recId){orig=recs[i];break;}}
   if(!orig) return;
   var copy={};
-  var keys=['プロジェクトID','日付','目的','目的地','支払者','運転者','乗車メンバー','高速区間','高速料金','復路区間','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費','駐車場有無','駐車場料金','その他費用JSON'];
+  var keys=['プロジェクトID','日付','目的','目的地','支払者','運転者','乗車メンバー','高速区間','高速料金','復路区間','復路料金','ETC割引','往復','ガソリン単価','走行距離','燃費','駐車場有無','駐車場料金','その他費用JSON','復路距離'];
   keys.forEach(function(k){ copy[k]=orig[k]!==undefined?orig[k]:''; });
   copy['プロジェクトID']=S.activeProj['ID'];
   google.script.run
