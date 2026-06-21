@@ -1214,7 +1214,6 @@ button{cursor:pointer;border:none;background:none}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <span id="tdtitle"></span>
-    <button class="tdh-complete" id="tdcomplete-btn" onclick="completeTripProject()">完了にする</button>
     <button class="tdh-del" onclick="deleteTripProjectConfirm()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
     </button>
@@ -3493,8 +3492,6 @@ function openTripDetail(projId) {
   S.tripTab='records';
   document.getElementById('tdtitle').textContent=proj['プロジェクト名'];
   var isDone=String(proj['ステータス']||'').trim()==='完了';
-  var cb=document.getElementById('tdcomplete-btn');
-  if(cb) cb.style.display=isDone?'none':'';
   document.querySelectorAll('.tdsn-btn').forEach(function(b){b.classList.toggle('on',b.dataset.ts==='records');});
   renderTripRecords();
   var foot=document.getElementById('tdfoot');
@@ -3649,8 +3646,15 @@ function renderTripSettlement() {
   html+='</div>';
   // 精算方法
   var cSt={}; try{if(S.activeProj&&S.activeProj['回収ステータス'])cSt=JSON.parse(S.activeProj['回収ステータス']);}catch(e){}
+  var isAlreadyDone=String(S.activeProj['ステータス']||'').trim()==='完了';
   if(res.transfers.length===0){
-    html+='<div class="settle-card" style="text-align:center;padding:20px"><div style="font-size:16px;font-weight:700;color:var(--OK-t)">精算不要</div><div style="font-size:13px;color:var(--MU);margin-top:4px">全員の負担が均等です</div></div>';
+    html+='<div class="settle-card" style="text-align:center;padding:20px">';
+    html+='<div style="font-size:16px;font-weight:700;color:var(--OK-t)">精算不要</div>';
+    html+='<div style="font-size:13px;color:var(--MU);margin-top:4px">全員の負担が均等です</div>';
+    if(!isAlreadyDone){
+      html+='<button type="button" onclick="completeTripProjectManual()" style="margin-top:14px;padding:9px 22px;border-radius:999px;background:var(--OK-bg);color:var(--OK-t);font-size:13px;font-weight:700;border:1.5px solid var(--OK-t)">プロジェクトを完了にする</button>';
+    }
+    html+='</div>';
   } else {
     var doneCount=res.transfers.filter(function(t){return !!cSt[t.from];}).length;
     var ttlCount=res.transfers.length;
@@ -3685,34 +3689,65 @@ function toggleCollectionStatus(fromName) {
   cSt[fromName]=!cSt[fromName];
   var jsonStr=JSON.stringify(cSt);
   S.activeProj['回収ステータス']=jsonStr;
-  for(var i=0;i<(S.tripProjects||[]).length;i++){
-    if(S.tripProjects[i]['ID']===S.activeProj['ID']){S.tripProjects[i]['回収ステータス']=jsonStr;break;}
+
+  // 全員集金済みかチェックして自動完了 / 進行中に戻す
+  var recs=(S.tripRecords&&S.tripRecords[S.activeProj['ID']])||[];
+  var res=calcProjectSettlement(recs);
+  var allDone=res.transfers.length>0&&res.transfers.every(function(t){return !!cSt[t.from];});
+  var wasComplete=String(S.activeProj['ステータス']||'').trim()==='完了';
+  var statusChanged=false;
+  if(allDone&&!wasComplete){
+    var t=new Date(); S.activeProj['ステータス']='完了';
+    S.activeProj['完了日']=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+    statusChanged=true;
+  } else if(!allDone&&wasComplete){
+    S.activeProj['ステータス']='進行中'; S.activeProj['完了日']='';
+    statusChanged=true;
   }
+
+  // S.tripProjects も同期
+  for(var i=0;i<(S.tripProjects||[]).length;i++){
+    if(S.tripProjects[i]['ID']===S.activeProj['ID']){
+      S.tripProjects[i]['回収ステータス']=jsonStr;
+      if(statusChanged){ S.tripProjects[i]['ステータス']=S.activeProj['ステータス']; S.tripProjects[i]['完了日']=S.activeProj['完了日']||''; }
+      break;
+    }
+  }
+
   renderTripSettlement();
+  renderTrips();
+  // 記録追加フッターの表示を更新
+  var foot=document.getElementById('tdfoot');
+  if(foot) foot.style.display=(S.tripTab==='records'&&String(S.activeProj['ステータス']||'').trim()!=='完了')?'block':'none';
+
   google.script.run
     .withFailureHandler(function(){showToast('保存に失敗しました');})
     .saveCollectionStatus(S.activeProj['ID'],S.activeProj['_rowIndex']||0,jsonStr);
+  if(statusChanged){
+    google.script.run
+      .withSuccessHandler(function(){
+        showToast(allDone?'全員集金済み — 完了にしました':'進行中に戻しました');
+      })
+      .saveProject(S.activeProj);
+  }
 }
 
 // Complete / delete project
-function completeTripProject() {
+function completeTripProjectManual() {
   if(!S.activeProj) return;
-  showCon('プロジェクトを完了にする', '完了にすると記録の追加ができなくなります。よろしいですか？', false, function(){
-    S.activeProj['ステータス']='完了';
-    google.script.run
-      .withSuccessHandler(function(r){
-        if(r&&r.success){
-          for(var i=0;i<S.tripProjects.length;i++){
-            if(S.tripProjects[i]['ID']===S.activeProj['ID']){S.tripProjects[i]=S.activeProj;break;}
-          }
-          document.getElementById('tdcomplete-btn').style.display='none';
-          var foot=document.getElementById('tdfoot'); if(foot) foot.style.display='none';
-          renderTrips();
-          showToast('完了にしました');
-        }
-      })
-      .saveProject(S.activeProj);
-  });
+  var t=new Date(); S.activeProj['ステータス']='完了';
+  S.activeProj['完了日']=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+  for(var i=0;i<(S.tripProjects||[]).length;i++){
+    if(S.tripProjects[i]['ID']===S.activeProj['ID']){
+      S.tripProjects[i]['ステータス']='完了'; S.tripProjects[i]['完了日']=S.activeProj['完了日'];
+      break;
+    }
+  }
+  renderTripSettlement(); renderTrips();
+  var foot=document.getElementById('tdfoot'); if(foot) foot.style.display='none';
+  google.script.run
+    .withSuccessHandler(function(){showToast('完了にしました');})
+    .saveProject(S.activeProj);
 }
 function deleteTripProjectConfirm() {
   if(!S.activeProj) return;
