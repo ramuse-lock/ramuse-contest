@@ -243,7 +243,14 @@ button{cursor:pointer;border:none;background:none}
 .settle-net.pos{color:var(--OK-t)}
 .settle-net.neg{color:var(--NG-t)}
 .settle-net.zero{color:var(--MU)}
-.settle-transfer{background:var(--SFC);border-radius:var(--R);padding:14px 16px;margin-bottom:8px;border:1px solid var(--BD);box-shadow:var(--SH)}
+.settle-transfer{background:var(--SFC);border-radius:var(--R);padding:14px 16px;margin-bottom:8px;border:1px solid var(--BD);box-shadow:var(--SH);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.collect-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700}
+.collect-pill.done{background:#e6f4ea;color:#1a7f37}
+.collect-pill.partial{background:#fff8e1;color:#9c6e00}
+.collect-pill.none{background:#fff1f0;color:#d32f2f}
+.collect-toggle{padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1.5px solid;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s}
+.collect-toggle.on{background:#e6f4ea;color:#1a7f37;border-color:#b7dfbe}
+.collect-toggle.off{background:#fff1f0;color:#d32f2f;border-color:#ffc9c9}
 .settle-arrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .settle-from{font-size:15px;font-weight:700}
 .settle-to{font-size:13px;color:var(--MU)}
@@ -3415,10 +3422,23 @@ function mkProjectCard(p) {
   var isDone=String(p['ステータス']||'').trim()==='完了';
   var recs=(S.tripRecords&&S.tripRecords[p['ID']])||[];
   var totalCost=0; recs.forEach(function(r){totalCost+=calcTripCost(r).total;});
+  // 回収バッジ
+  var collectBadge='';
+  if(recs.length>0){
+    var res=calcProjectSettlement(recs);
+    if(res.transfers.length>0){
+      var cSt={}; try{if(p['回収ステータス'])cSt=JSON.parse(p['回収ステータス']);}catch(e){}
+      var done=res.transfers.filter(function(t){return !!cSt[t.from];}).length;
+      var tot=res.transfers.length;
+      if(done===tot) collectBadge='<span class="collect-pill done">✓ 回収完了</span>';
+      else if(done>0) collectBadge='<span class="collect-pill partial">'+done+'/'+tot+' 回収済み</span>';
+      else collectBadge='<span class="collect-pill none">未回収</span>';
+    }
+  }
   var html='<div class="trip-proj-card" onclick="openTripDetail(\''+p['ID']+'\')">';
   html+='<div class="trip-proj-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>';
   html+='<div class="trip-proj-body">';
-  html+='<div class="trip-proj-name">'+esc(p['プロジェクト名'])+'</div>';
+  html+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px"><span class="trip-proj-name" style="margin-bottom:0">'+esc(p['プロジェクト名'])+'</span>'+collectBadge+'</div>';
   var meta=[];
   if(recs.length>0) meta.push(recs.length+'件');
   if(totalCost>0) meta.push('¥'+totalCost.toLocaleString());
@@ -3628,12 +3648,21 @@ function renderTripSettlement() {
   });
   html+='</div>';
   // 精算方法
+  var cSt={}; try{if(S.activeProj&&S.activeProj['回収ステータス'])cSt=JSON.parse(S.activeProj['回収ステータス']);}catch(e){}
   if(res.transfers.length===0){
     html+='<div class="settle-card" style="text-align:center;padding:20px"><div style="font-size:16px;font-weight:700;color:var(--OK-t)">精算不要</div><div style="font-size:13px;color:var(--MU);margin-top:4px">全員の負担が均等です</div></div>';
   } else {
-    html+='<div style="font-size:11px;font-weight:700;color:var(--MU);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 10px">精算方法</div>';
+    var doneCount=res.transfers.filter(function(t){return !!cSt[t.from];}).length;
+    var ttlCount=res.transfers.length;
+    var summaryBadge=doneCount===ttlCount?'<span class="collect-pill done">✓ 全員回収完了</span>':doneCount>0?'<span class="collect-pill partial">'+doneCount+'/'+ttlCount+' 回収済み</span>':'<span class="collect-pill none">未回収</span>';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px">';
+    html+='<div style="font-size:11px;font-weight:700;color:var(--MU);text-transform:uppercase;letter-spacing:.06em">精算方法</div>';
+    html+=summaryBadge;
+    html+='</div>';
     res.transfers.forEach(function(t){
+      var isOn=!!cSt[t.from];
       html+='<div class="settle-transfer">';
+      html+='<div>';
       html+='<div class="settle-arrow">';
       html+='<span class="settle-from">'+esc(t.from)+'</span>';
       html+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--MU)"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
@@ -3641,9 +3670,28 @@ function renderTripSettlement() {
       html+='</div>';
       html+='<div class="settle-amount">¥'+t.amount.toLocaleString()+'</div>';
       html+='</div>';
+      html+='<button type="button" onclick="toggleCollectionStatus(\''+esc(t.from)+'\')" class="collect-toggle '+(isOn?'on':'off')+'">';
+      html+=isOn?'✓ 回収済み':'未回収';
+      html+='</button>';
+      html+='</div>';
     });
   }
   el.innerHTML=html;
+}
+
+function toggleCollectionStatus(fromName) {
+  if(!S.activeProj) return;
+  var cSt={}; try{if(S.activeProj['回収ステータス'])cSt=JSON.parse(S.activeProj['回収ステータス']);}catch(e){}
+  cSt[fromName]=!cSt[fromName];
+  var jsonStr=JSON.stringify(cSt);
+  S.activeProj['回収ステータス']=jsonStr;
+  for(var i=0;i<(S.tripProjects||[]).length;i++){
+    if(S.tripProjects[i]['ID']===S.activeProj['ID']){S.tripProjects[i]['回収ステータス']=jsonStr;break;}
+  }
+  renderTripSettlement();
+  google.script.run
+    .withFailureHandler(function(){showToast('保存に失敗しました');})
+    .saveCollectionStatus(S.activeProj['ID'],S.activeProj['_rowIndex']||0,jsonStr);
 }
 
 // Complete / delete project

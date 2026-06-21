@@ -562,7 +562,7 @@ function ensureTripSheets() {
     return sh;
   }
   makeSheet(TRIP_PROJ_SHEET,
-    ['ID','プロジェクト名','ステータス','作成日','完了日','メモ'],
+    ['ID','プロジェクト名','ステータス','作成日','完了日','メモ','回収ステータス'],
     '#4A7CB0');
   makeSheet(TRIP_REC_SHEET,
     ['ID','プロジェクトID','日付','目的','目的地','支払者','運転者',
@@ -689,7 +689,7 @@ function getProjects() {
 function saveProject(d) {
   ensureTripSheets();
   var sh = getSheet(TRIP_PROJ_SHEET);
-  var h  = ['ID','プロジェクト名','ステータス','作成日','完了日','メモ'];
+  var h  = ['ID','プロジェクト名','ステータス','作成日','完了日','メモ','回収ステータス'];
   if (!d['ID']) d['ID'] = generateUid();
   if (!d['作成日']) d['作成日'] = formatDateString(new Date());
   if (!d['ステータス']) d['ステータス'] = '進行中';
@@ -698,6 +698,25 @@ function saveProject(d) {
   if (ri >= 2) sh.getRange(ri, 1, 1, row.length).setValues([row]);
   else { sh.appendRow(row); ri = sh.getLastRow(); }
   return { success: true, rowIndex: ri, id: d['ID'] };
+}
+
+function saveCollectionStatus(projId, rowIndex, statusJson) {
+  ensureTripSheets();
+  var sh = getSheet(TRIP_PROJ_SHEET);
+  var ri = parseInt(rowIndex) || 0;
+  if (ri < 2) {
+    var data = sh.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(projId)) { ri = i + 1; break; }
+    }
+  }
+  if (ri < 2) return { success: false };
+  var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+                  .map(function(v){ return String(v).trim(); });
+  var col = headers.indexOf('回収ステータス') + 1;
+  if (col < 1) return { success: false };
+  sh.getRange(ri, col).setValue(statusJson || '');
+  return { success: true };
 }
 
 function deleteProject(rowIndex, projectId) {
