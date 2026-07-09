@@ -18,9 +18,19 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.action) {
     return serveApi(e);
   }
-  return HtmlService.createHtmlOutputFromFile('gas-app')
+  // embedded=true: 実アプリ本体（shell から同一オリジンiframeで読み込まれる）
+  if (e && e.parameter && e.parameter.embedded === 'true') {
+    return HtmlService.createHtmlOutputFromFile('gas-app')
+      .setTitle('RAMUSE')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+  // それ以外（直接アクセス・ホーム画面起動）: ローディング画面+同一オリジンiframeのshellを返す
+  // 別オリジンから直接埋め込むとGoogleのframe-ancestors制限でブロックされるため、
+  // shellもGAS自身から配信し同一オリジンiframeにすることで警告バナー表示とブロックを回避する
+  return HtmlService.createHtmlOutputFromFile('shell')
     .setTitle('RAMUSE')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
+    .addMetaTag('viewport', 'width=device-width,initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 

@@ -7,9 +7,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="RAMUSE">
   <meta name="theme-color" content="#efefec">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-512.png" sizes="512x512">
-  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="https://ramuse-lock.github.io/ramuse-contest/icon-192.png">
+  <link rel="apple-touch-icon" href="https://ramuse-lock.github.io/ramuse-contest/icon-512.png" sizes="512x512">
   <title>RAMUSE</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -57,12 +56,16 @@
     </div>
   </div>
 
+  <iframe id="app" src="?embedded=true" allow="autoplay"></iframe>
+
   <script>
-    // GASのexec URLはX-Frame-Options/CSPでiframe埋め込みを拒否するため、
-    // トップレベル遷移でリダイレクトする（PWAのアイコン/起動画面としてindex.htmlを利用）
-    window.location.replace(
-      "https://script.google.com/macros/s/AKfycbyvrQn4MX-Njz2HITaWAsddhHRdQA7zmw57F0PQe9WbvtlZFP1SA3FPYSqw5REfyuu-/exec"
-    );
+    // 2.2秒後にローディングを消す（同一オリジンiframeなのでGoogleの警告バナー/ブロックの対象外）
+    setTimeout(function() {
+      var ld = document.getElementById('loading');
+      if (!ld) return;
+      ld.classList.add('exit');
+      setTimeout(function() { ld.style.display = 'none'; }, 450);
+    }, 2200);
   </script>
 </body>
 </html>
