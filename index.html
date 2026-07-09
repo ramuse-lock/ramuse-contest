@@ -57,20 +57,12 @@
     </div>
   </div>
 
-  <iframe id="app"
-    src="https://script.google.com/macros/s/AKfycbyvrQn4MX-Njz2HITaWAsddhHRdQA7zmw57F0PQe9WbvtlZFP1SA3FPYSqw5REfyuu-/exec?embedded=true"
-    allow="autoplay">
-  </iframe>
-
   <script>
-    // 2.2秒後にローディングを消す
-    setTimeout(function() {
-      var ld = document.getElementById('loading');
-      if (!ld) return;
-      ld.classList.add('exit');
-      setTimeout(function() { ld.style.display = 'none'; }, 450);
-    }, 2200);
-
+    // GASのexec URLはX-Frame-Options/CSPでiframe埋め込みを拒否するため、
+    // トップレベル遷移でリダイレクトする（PWAのアイコン/起動画面としてindex.htmlを利用）
+    window.location.replace(
+      "https://script.google.com/macros/s/AKfycbyvrQn4MX-Njz2HITaWAsddhHRdQA7zmw57F0PQe9WbvtlZFP1SA3FPYSqw5REfyuu-/exec?embedded=true"
+    );
   </script>
 </body>
 </html>
