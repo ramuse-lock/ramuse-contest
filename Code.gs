@@ -18,19 +18,12 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.action) {
     return serveApi(e);
   }
-  // embedded=true: 実アプリ本体（shell から同一オリジンiframeで読み込まれる）
-  if (e && e.parameter && e.parameter.embedded === 'true') {
-    return HtmlService.createHtmlOutputFromFile('gas-app')
-      .setTitle('RAMUSE')
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  }
-  // それ以外（直接アクセス・ホーム画面起動）: ローディング画面+同一オリジンiframeのshellを返す
-  // 別オリジンから直接埋め込むとGoogleのframe-ancestors制限でブロックされるため、
-  // shellもGAS自身から配信し同一オリジンiframeにすることで警告バナー表示とブロックを回避する
-  return HtmlService.createHtmlOutputFromFile('shell')
+  // GAS の HtmlService 自体がサンドボックス iframe 内で実行されるため、
+  // shell からさらに相対 URL の iframe を作ると doGet に戻らず空画面になる。
+  // 通常アクセス・ホーム画面起動とも、実アプリ本体を直接返す。
+  return HtmlService.createHtmlOutputFromFile('gas-app')
     .setTitle('RAMUSE')
-    .addMetaTag('viewport', 'width=device-width,initial-scale=1')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
