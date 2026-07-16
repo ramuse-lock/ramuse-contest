@@ -32,7 +32,9 @@ function serveApi(e) {
   var cb = e.parameter.callback || '';
   var result;
   try {
-    if (action === 'init') {
+    if (action === 'rpc') {
+      result = serveRpc(e);
+    } else if (action === 'init') {
       result = { families: getFamilyNames(), contests: getContests() };
     } else if (action === 'calendar') {
       result = getCalendarEvents(parseInt(e.parameter.year), parseInt(e.parameter.month));
@@ -45,12 +47,56 @@ function serveApi(e) {
     result = { error: err.toString() };
   }
   var json = JSON.stringify(result);
-  if (cb) {
+  if (cb && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(cb)) {
     return ContentService.createTextOutput(cb + '(' + json + ')')
       .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
   return ContentService.createTextOutput(json)
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// GitHub Pages 版の大人用画面から既存の google.script.run と同じ操作を行う。
+// 呼び出せる関数は明示したものだけに限定する。
+function serveRpc(e) {
+  var method = String(e.parameter.method || '');
+  var args = [];
+  try {
+    var argsJson = '[]';
+    if (e.parameter.args64) {
+      argsJson = Utilities.newBlob(Utilities.base64DecodeWebSafe(e.parameter.args64)).getDataAsString('UTF-8');
+    } else if (e.parameter.args) {
+      argsJson = e.parameter.args;
+    }
+    args = JSON.parse(argsJson);
+    if (!Array.isArray(args)) throw new Error('Invalid arguments');
+  } catch (err) {
+    return { ok: false, error: 'Invalid arguments: ' + err.message };
+  }
+
+  var methods = {
+    getFamilyNames: getFamilyNames,
+    getContests: getContests,
+    getThisWeekEvents: getThisWeekEvents,
+    getCalendarEvents: getCalendarEvents,
+    saveContest: saveContest,
+    deleteContest: deleteContest,
+    getAllTripData: getAllTripData,
+    saveProject: saveProject,
+    saveCollectionStatus: saveCollectionStatus,
+    deleteProject: deleteProject,
+    saveRoute: saveRoute,
+    saveTripRecord: saveTripRecord,
+    deleteTripRecord: deleteTripRecord,
+    saveCarSettings: saveCarSettings
+  };
+  if (!methods[method]) {
+    return { ok: false, error: 'Unknown RPC method: ' + method };
+  }
+  try {
+    return { ok: true, value: methods[method].apply(null, args) };
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
 }
 
 function getFamilyNames() {
