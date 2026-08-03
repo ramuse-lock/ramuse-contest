@@ -91,7 +91,8 @@ function serveRpc(e) {
     syncEntryPlannedContestsToCalendar: syncEntryPlannedContestsToCalendar,
     syncAllContestsToCalendar: syncAllContestsToCalendar,
     backupContestSheet: backupContestSheet,
-    migrateLegacySeriesFinals: migrateLegacySeriesFinals
+    migrateLegacySeriesFinals: migrateLegacySeriesFinals,
+    migrateFinalStatusLabels: migrateFinalStatusLabels
   };
   if (!methods[method]) {
     return { ok: false, error: 'Unknown RPC method: ' + method };
@@ -148,7 +149,7 @@ function migrateLegacySeriesFinals() {
       '開催形式': source['開催形式'] || 'オフライン',
       'ラウンド': '決勝',
       '大会シリーズ名': series,
-      '決勝_ステータス': source['決勝_ステータス'] || '決勝予定',
+      '決勝_ステータス': source['決勝_ステータス'] === '決勝予定' ? '進出未定' : (source['決勝_ステータス'] || '進出未定'),
       'エントリー_状況': '提出済',
       'URL': source['URL']
     };
@@ -156,6 +157,27 @@ function migrateLegacySeriesFinals() {
     created.push({ series: series, rowIndex: result.rowIndex, status: finalData['決勝_ステータス'] });
   });
   return { success: true, created: created };
+}
+
+function migrateFinalStatusLabels() {
+  ensureSheets();
+  var sheet = getSheet('コンテスト管理');
+  var values = sheet.getDataRange().getValues();
+  if (values.length <= 1) return { success: true, updated: 0 };
+  var headers = values[0].map(function(h) { return String(h).trim(); });
+  var statusCol = headers.indexOf('決勝_ステータス');
+  if (statusCol < 0) return { success: true, updated: 0 };
+  var updated = 0;
+  values.slice(1).forEach(function(row, index) {
+    if (String(row[statusCol] || '') !== '決勝予定') return;
+    var rowIndex = index + 2;
+    sheet.getRange(rowIndex, statusCol + 1).setValue('進出未定');
+    var data = toObj(headers, row, rowIndex);
+    data['決勝_ステータス'] = '進出未定';
+    if (data['ラウンド'] === '決勝') syncCalendar(data, rowIndex, sheet, headers);
+    updated++;
+  });
+  return { success: true, updated: updated };
 }
 
 // ============================================================
@@ -331,9 +353,10 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   var name = data['コンテスト名'];
   if (!name) return;
   var isFinalRound = data['ラウンド'] === '決勝';
-  var finalStatus = data['決勝_ステータス'] || '決勝予定';
+  var finalStatus = data['決勝_ステータス'] || '進出未定';
+  if (finalStatus === '決勝予定') finalStatus = '進出未定';
   var eventTitle = isFinalRound ?
-    (finalStatus === '進出決定' ? '【決勝進出】' + name : '【決勝予定】' + name) : name;
+    (finalStatus === '進出決定' ? '【決勝進出】' + name : '【決勝・進出未定】' + name) : name;
   var eventColor = isFinalRound && finalStatus !== '進出決定' ? '8' : '5';
 
   var cal = CalendarApp.getDefaultCalendar();
@@ -354,6 +377,7 @@ function syncCalendar(data, rowIndex, sheet, headers) {
     }
     if (dateVal) {
       removeCalendarEventsByTitle_(cal, '【決勝予定】' + name, dateVal, '');
+      removeCalendarEventsByTitle_(cal, '【決勝・進出未定】' + name, dateVal, '');
       removeCalendarEventsByTitle_(cal, '【決勝進出】' + name, dateVal, '');
     }
     syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers);
@@ -383,8 +407,9 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   var date = new Date(dateVal);
   if (isNaN(date.getTime())) return;
   if (isFinalRound) {
-    var obsoleteFinalTitle = finalStatus === '進出決定' ? '【決勝予定】' + name : '【決勝進出】' + name;
+    var obsoleteFinalTitle = finalStatus === '進出決定' ? '【決勝・進出未定】' + name : '【決勝進出】' + name;
     removeCalendarEventsByTitle_(cal, obsoleteFinalTitle, dateVal, existingId);
+    removeCalendarEventsByTitle_(cal, '【決勝予定】' + name, dateVal, existingId);
   }
 
   var lines = [];

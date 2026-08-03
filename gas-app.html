@@ -322,6 +322,14 @@ button{cursor:pointer;border:none;background:none}
 .b-def{background:var(--s-ready-bg);color:var(--s-ready-t)}
 .b-final-plan{background:#e5e5ea;color:#55565a}
 .b-final-confirmed{background:#F4D44D;color:#4A3500;border:1px solid #D8AF00;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.b-has-final{background:#E8EEF8;color:#3D557A;border:1px solid #C8D5E8}
+.type-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.type-btn{padding:12px 6px;border:1.5px solid var(--BD);border-radius:12px;background:var(--SFC);color:var(--TX);font-size:13px;font-weight:700;text-align:center;transition:.15s}
+.type-btn.on{border-color:var(--Y);background:var(--YBG);color:#594400;box-shadow:0 0 0 2px rgba(200,162,0,.1)}
+.type-help{font-size:11px;color:var(--MU);margin-top:7px;line-height:1.5}
+.final-status-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:6px}
+.final-status-btn{padding:10px 5px;border:1px solid var(--BD);border-radius:10px;background:var(--SFC);color:var(--TX);font-size:11px;font-weight:700}
+.final-status-btn.on{border-color:var(--Y);background:#FFF7D1;color:#594400}
 .cc-badges{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
 /* Finance filter select */
 .fin-filter-sel{padding:5px 28px 5px 10px;border:1px solid var(--BD);border-radius:100px;font-size:12px;font-weight:500;color:var(--MU);background:var(--SFC);-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;outline:none}
@@ -849,31 +857,32 @@ button{cursor:pointer;border:none;background:none}
             <div class="fg"><label class="fl">開催日</label><input type="date" name="開催日" class="fi"></div>
             <input type="hidden" name="ステータス" value="">
           </div>
-          <div class="frow">
-            <div class="fg"><label class="fl">部門</label>
-              <input type="text" name="部門" class="fi" placeholder="例: キッズ / ジュニア"></div>
-            <div class="fg"><label class="fl">ラウンド</label>
-              <select name="ラウンド" class="fsl" onchange="toggleRound()">
-                <option value="">未設定</option>
-                <option value="単発">単発</option>
-                <option value="予選">予選</option>
-                <option value="決勝">決勝</option>
-              </select>
+          <div class="fg"><label class="fl">部門</label>
+            <input type="text" name="部門" class="fi" placeholder="例: キッズ / ジュニア"></div>
+          <div class="fg"><label class="fl">大会タイプ *</label>
+            <div class="type-picker" id="round-type-picker">
+              <button type="button" class="type-btn" data-v="単発" onclick="setRoundType('単発')">単発</button>
+              <button type="button" class="type-btn" data-v="予選" onclick="setRoundType('予選')">予選</button>
+              <button type="button" class="type-btn" data-v="決勝" onclick="setRoundType('決勝')">決勝</button>
             </div>
+            <input type="hidden" name="ラウンド" value="単発">
+            <div class="type-help" id="round-type-help">この大会だけで完結する大会です</div>
           </div>
-          <div class="fg"><label class="fl">大会シリーズ名</label>
-            <input type="text" name="大会シリーズ名" class="fi" placeholder="例: A大会2026">
-            <div class="fh">同じ大会の予選と決勝に、同じシリーズ名を入力してください</div>
+          <div class="fg" id="series-wrap" style="display:none"><label class="fl">大会シリーズ名 *</label>
+            <input type="text" name="大会シリーズ名" class="fi" list="series-options" placeholder="例: A大会2026">
+            <datalist id="series-options"></datalist>
+            <div class="fh">同じ大会の予選と決勝は、同じシリーズ名を選びます</div>
           </div>
           <div id="round-final-wrap" style="display:none">
-            <div class="fst" style="margin-top:4px;margin-bottom:8px">決勝ステータス</div>
-            <div class="fg"><label class="fl">決勝ステータス</label>
-              <select name="決勝_ステータス" class="fsl">
-                <option value="">未設定</option>
-                <option value="決勝予定">決勝予定（進出未定）</option>
-                <option value="進出決定">進出決定</option>
-                <option value="不参加">敗退・不参加</option>
-              </select>
+            <div class="fst" style="margin-top:4px;margin-bottom:8px">決勝への進出状況</div>
+            <div class="fg"><label class="fl">進出状況</label>
+              <div class="final-status-picker" id="final-status-picker">
+                <button type="button" class="final-status-btn" data-v="進出未定" onclick="setFinalStatus('進出未定')">進出未定</button>
+                <button type="button" class="final-status-btn" data-v="進出決定" onclick="setFinalStatus('進出決定')">進出決定</button>
+                <button type="button" class="final-status-btn" data-v="不参加" onclick="setFinalStatus('不参加')">不参加</button>
+              </div>
+              <input type="hidden" name="決勝_ステータス" value="進出未定">
+              <div class="type-help">進出未定はグレー、進出決定はバナナ色でカレンダーに表示されます</div>
             </div>
           </div>
           <div class="fg">
@@ -1898,8 +1907,10 @@ function mkCard(c) {
   var bm={'エントリー予定':'b-entry','準備中':'b-ready','当日待ち':'b-dayof','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
   var bc=bm[autoStat]||'b-def';
   var finalStat=c['ラウンド']==='決勝'?(c['決勝_ステータス']||''):'';
-  var finalBadge=finalStat==='決勝予定'?'<span class="badge b-final-plan">決勝予定</span>':
-    (finalStat==='進出決定'?'<span class="badge b-final-confirmed">決勝進出</span>':'');
+  if(finalStat==='決勝予定') finalStat='進出未定';
+  var hasFinal=c['ラウンド']==='予選'&&c['大会シリーズ名']&&(S.contests||[]).some(function(x){return x['ラウンド']==='決勝'&&x['大会シリーズ名']===c['大会シリーズ名']&&x['決勝_ステータス']!=='不参加';});
+  var finalBadge=hasFinal?'<span class="badge b-has-final">決勝あり</span>':(finalStat==='進出未定'?'<span class="badge b-final-plan">進出未定</span>':
+    (finalStat==='進出決定'?'<span class="badge b-final-confirmed">決勝進出</span>':''));
   // 今後7日以内の大会はupcomingクラス
   var isUpcoming=false;
   if(c['開催日']&&autoStat!=='完了'&&autoStat!=='キャンセル'){
@@ -1998,14 +2009,16 @@ function openDet(row) {
   var f=document.getElementById('cf');
   f.reset();
   resetForm();
+  updateSeriesOptions();
 
   if(c) {
     document.getElementById('dtitle').textContent=c['コンテスト名']||'大会詳細';
     // 基本
     setF('コンテスト名',c['コンテスト名']); setF('開催日',c['開催日']);
     setF('ステータス',c['ステータス']); setF('部門',c['部門']);
-    setF('ラウンド',c['ラウンド']||''); toggleRound(); setF('大会シリーズ名',c['大会シリーズ名']||'');
-    setF('決勝_ステータス',c['決勝_ステータス']||''); setF('決勝_開催日',c['決勝_開催日']);
+    setF('ラウンド',c['ラウンド']||'単発'); setF('大会シリーズ名',c['大会シリーズ名']||'');
+    setF('決勝_ステータス',c['決勝_ステータス']==='決勝予定'?'進出未定':(c['決勝_ステータス']||'')); toggleRound();
+    setF('決勝_開催日',c['決勝_開催日']);
     setF('決勝_開始時間',c['決勝_開始時間']); setF('決勝_終了時間',c['決勝_終了時間']);
     setF('決勝_場所',c['決勝_場所']); setF('決勝_会場',c['決勝_会場']);
     setF('会場',c['会場']); setF('URL',c['URL']); setF('Instagram_URL',c['Instagram_URL']);
@@ -2110,8 +2123,25 @@ function resetForm() {
 function toggleRound() {
   var f=document.getElementById('cf');
   var v=f.querySelector('[name="ラウンド"]').value;
+  document.querySelectorAll('#round-type-picker .type-btn').forEach(function(btn){ btn.classList.toggle('on',btn.dataset.v===v); });
+  var help={'単発':'この大会だけで完結する大会です','予選':'同じシリーズ名の決勝大会とつながります','決勝':'予選とは別の大会として、シリーズに1件だけ登録します'};
+  document.getElementById('round-type-help').textContent=help[v]||'大会タイプを選んでください';
+  document.getElementById('series-wrap').style.display=(v==='予選'||v==='決勝')?'block':'none';
   document.getElementById('round-final-wrap').style.display=(v==='決勝')?'block':'none';
-  if(v==='決勝'&&S.editRow===0&&!f.querySelector('[name="決勝_ステータス"]').value) setF('決勝_ステータス','決勝予定');
+  if(v==='決勝'&&!f.querySelector('[name="決勝_ステータス"]').value) setF('決勝_ステータス','進出未定');
+  syncFinalStatusButtons();
+}
+function setRoundType(value){ setF('ラウンド',value); toggleRound(); }
+function setFinalStatus(value){ setF('決勝_ステータス',value); syncFinalStatusButtons(); }
+function syncFinalStatusButtons(){
+  var f=document.getElementById('cf'); if(!f)return;
+  var value=f.querySelector('[name="決勝_ステータス"]').value;
+  if(value==='決勝予定') value='進出未定';
+  document.querySelectorAll('#final-status-picker .final-status-btn').forEach(function(btn){ btn.classList.toggle('on',btn.dataset.v===value); });
+}
+function updateSeriesOptions(){
+  var el=document.getElementById('series-options'); if(!el)return;
+  var seen={}; el.innerHTML=(S.contests||[]).map(function(c){return String(c['大会シリーズ名']||'').trim();}).filter(function(v){if(!v||seen[v])return false;seen[v]=true;return true;}).map(function(v){return '<option value="'+esc(v)+'"></option>';}).join('');
 }
 function setFmt(val, btn) {
   setRV('開催形式', val, 'rg-fmt');
@@ -2318,6 +2348,12 @@ function showSaveConfirm(){
   }
   if(!d['開催日']){
     scrollToFormError(document.getElementById('cf').querySelector('[name="開催日"]'),'開催日を入力してください'); return;
+  }
+  if(!d['ラウンド']){
+    scrollToFormError(document.getElementById('round-type-picker'),'大会タイプを選んでください'); return;
+  }
+  if((d['ラウンド']==='予選'||d['ラウンド']==='決勝')&&!String(d['大会シリーズ名']||'').trim()){
+    scrollToFormError(document.getElementById('cf').querySelector('[name="大会シリーズ名"]'),'予選・決勝には大会シリーズ名が必要です'); return;
   }
   if(d['エントリー_期限']&&d['エントリー_期限']>d['開催日']){
     scrollToFormError(document.getElementById('cf').querySelector('[name="エントリー_期限"]'),'エントリー期限は開催日以前にしてください'); return;
@@ -2562,7 +2598,9 @@ function buildViewContent(c) {
   var bm={'エントリー予定':'b-entry','準備中':'b-ready','当日待ち':'b-dayof','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
   var vStat=calcAutoStatus(c);
   var vfStat=c['ラウンド']==='決勝'?(c['決勝_ステータス']||''):'';
-  var vfBadge=vfStat==='決勝予定'?'<span class="badge b-final-plan">決勝予定</span>':(vfStat==='進出決定'?'<span class="badge b-final-confirmed">決勝進出</span>':'');
+  if(vfStat==='決勝予定') vfStat='進出未定';
+  var vfHasFinal=c['ラウンド']==='予選'&&c['大会シリーズ名']&&(S.contests||[]).some(function(x){return x['ラウンド']==='決勝'&&x['大会シリーズ名']===c['大会シリーズ名']&&x['決勝_ステータス']!=='不参加';});
+  var vfBadge=vfHasFinal?'<span class="badge b-has-final">決勝あり</span>':(vfStat==='進出未定'?'<span class="badge b-final-plan">進出未定</span>':(vfStat==='進出決定'?'<span class="badge b-final-confirmed">決勝進出</span>':''));
   html+='<div class="vs"><div class="vst" style="display:flex;justify-content:space-between;align-items:center">基本情報<span class="cc-badges"><span class="badge '+(bm[vStat]||'b-def')+'">'+esc(vStat)+'</span>'+vfBadge+'</span></div>';
   if(c['コンテスト名']) html+='<div class="vr"><span class="vr-l">大会名</span><span class="vr-v" style="font-weight:700">'+esc(c['コンテスト名'])+'</span></div>';
   if(c['部門'])   html+='<div class="vr"><span class="vr-l">部門</span><span class="vr-v">'+esc(c['部門'])+'</span></div>';
