@@ -862,6 +862,10 @@ button{cursor:pointer;border:none;background:none}
           </div>
           <div id="round-final-wrap" style="display:none">
             <div class="fst" style="margin-top:4px;margin-bottom:8px">決勝大会情報</div>
+            <div class="fg"><label class="fl">大会シリーズ名</label>
+              <input type="text" name="大会シリーズ名" class="fi" placeholder="例: A大会2026（複数予選で同じ名前を入力）">
+              <div class="fh">同じシリーズ名の予選は、決勝情報とカレンダー予定を1件共有します</div>
+            </div>
             <div class="fg"><label class="fl">決勝ステータス</label>
               <select name="決勝_ステータス" class="fsl">
                 <option value="">未設定</option>
@@ -1919,6 +1923,7 @@ function mkCard(c) {
     meta+='<span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(c['会場'])+'</span>';
   }
   if(c['部門']) meta+='<span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>'+esc(c['部門'])+'</span>';
+  if(c['大会シリーズ名']) meta+='<span class="mi">シリーズ: '+esc(c['大会シリーズ名'])+'</span>';
   var tp=[];
   if(c['集合時間']) tp.push('集合 '+c['集合時間']);
   if(c['開始時間']){ var tStr='開始 '+c['開始時間']; if(c['終了時間']) tStr+='〜'+c['終了時間']; tp.push(tStr); }
@@ -2010,7 +2015,7 @@ function openDet(row) {
     // 基本
     setF('コンテスト名',c['コンテスト名']); setF('開催日',c['開催日']);
     setF('ステータス',c['ステータス']); setF('部門',c['部門']);
-    setF('ラウンド',c['ラウンド']||''); toggleRound();
+    setF('ラウンド',c['ラウンド']||''); toggleRound(); setF('大会シリーズ名',c['大会シリーズ名']||'');
     setF('決勝_ステータス',c['決勝_ステータス']||''); setF('決勝_開催日',c['決勝_開催日']);
     setF('決勝_開始時間',c['決勝_開始時間']); setF('決勝_終了時間',c['決勝_終了時間']);
     setF('決勝_場所',c['決勝_場所']); setF('決勝_会場',c['決勝_会場']);
@@ -2386,7 +2391,7 @@ function dupContest(){
     var src=S.contests.filter(function(x){ return x._rowIndex===S.editRow; })[0]||{};
     var clearFields=['開催日','集合時間','開始時間','終了時間','出演順番','総組数',
       'エントリー_状況','音源_状況','動画_状況','写真_状況',
-      'エントリー費_振込済','観覧費_振込済','カレンダーID','決勝_カレンダーID','エントリー_カレンダーID','決勝_ステータス','_rowIndex',
+      'エントリー費_振込済','観覧費_振込済','カレンダーID','決勝_カレンダーID','エントリー_カレンダーID','決勝_ステータス','大会シリーズ名','_rowIndex',
       '結果','結果_詳細'];
     S.fams.forEach(function(f){
       clearFields.push(f+'_エントリー費_支払済',f+'_観覧費_支払済',f+'_交通費_支払済',f+'_その他_集金済');
@@ -2640,8 +2645,9 @@ function buildViewContent(c) {
   }
 
   // 決勝大会情報
-  if(c['ラウンド']==='予選'&&(c['決勝_ステータス']||c['決勝_開催日']||c['決勝_場所']||c['決勝_会場'])) {
+  if(c['ラウンド']==='予選'&&(c['大会シリーズ名']||c['決勝_ステータス']||c['決勝_開催日']||c['決勝_場所']||c['決勝_会場'])) {
     html+='<div class="vs"><div class="vst">決勝大会情報</div>';
+    if(c['大会シリーズ名']) html+='<div class="vr"><span class="vr-l">大会シリーズ</span><span class="vr-v">'+esc(c['大会シリーズ名'])+'</span></div>';
     if(c['決勝_ステータス']) html+='<div class="vr"><span class="vr-l">決勝ステータス</span><span class="vr-v">'+esc(c['決勝_ステータス'])+'</span></div>';
     if(c['決勝_開催日']) html+='<div class="vr"><span class="vr-l">決勝開催日</span><span class="vr-v">'+fmtD(c['決勝_開催日'])+'</span></div>';
     if(c['決勝_開始時間']) html+='<div class="vr"><span class="vr-l">決勝時間</span><span class="vr-v">'+esc(c['決勝_開始時間']+(c['決勝_終了時間']?'〜'+c['決勝_終了時間']:''))+'</span></div>';
