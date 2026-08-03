@@ -60,6 +60,15 @@
 html{overflow-x:hidden;width:100%}
 html,body{height:100%;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue','Hiragino Sans',sans-serif;background:var(--BG);color:var(--TX);font-size:15px;line-height:1.5;overflow-x:hidden;width:100%}
+#opening-screen{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:var(--BG);opacity:1;visibility:visible;transition:opacity .42s ease,visibility .42s ease}
+#opening-screen.out{opacity:0;visibility:hidden;pointer-events:none}
+.opening-mark{text-align:center;animation:openingFloat 1.8s ease-in-out infinite}
+.opening-logo{font-size:34px;font-weight:800;letter-spacing:.18em;color:var(--TX);padding-left:.18em}
+.opening-gem{width:9px;height:9px;margin:17px auto 0;background:var(--Y);transform:rotate(45deg);border-radius:2px;animation:openingGem 1.25s ease-in-out infinite}
+.opening-text{margin-top:14px;font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--MU)}
+@keyframes openingFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes openingGem{0%,100%{opacity:.45;transform:rotate(45deg) scale(.72);box-shadow:0 0 0 0 rgba(200,162,0,.32)}50%{opacity:1;transform:rotate(45deg) scale(1);box-shadow:0 0 0 9px rgba(200,162,0,0)}}
+@media(prefers-reduced-motion:reduce){.opening-mark,.opening-gem{animation:none}}
 input,select,textarea,button{font-family:inherit}
 button{cursor:pointer;border:none;background:none}
 .orb3{display:none}
@@ -621,6 +630,7 @@ button{cursor:pointer;border:none;background:none}
 </style>
 </head>
 <body>
+<div id="opening-screen" aria-label="読み込み中"><div class="opening-mark"><div class="opening-logo">RAMUSÉ</div><div class="opening-gem"></div><div class="opening-text">LOADING</div></div></div>
 <div id="app">
 
 <header id="hdr">
@@ -1396,6 +1406,14 @@ var S = {
 // Init
 // ============================================================
 var CACHE_KEY = 'ramuse_v1';
+var openingStartedAt = Date.now();
+var openingFinished = false;
+function finishOpening() {
+  if(openingFinished) return;
+  openingFinished = true;
+  var wait=Math.max(0,900-(Date.now()-openingStartedAt));
+  setTimeout(function(){ var op=document.getElementById('opening-screen'); if(op) op.classList.add('out'); },wait);
+}
 
 window.onload = function() {
   // ① キャッシュがあれば即座に描画（初回以外はここで表示完了）
@@ -1415,6 +1433,7 @@ window.onload = function() {
     if (el && el.querySelector('.loading-dots')) {
       el.innerHTML = '<div class="empty"><p style="margin-bottom:12px">読み込みがタイムアウトしました</p><button onclick="location.reload()" style="padding:10px 20px;border-radius:999px;background:var(--Y);color:#fff;font-size:14px;font-weight:700;border:none">再読み込み</button></div>';
     }
+    finishOpening();
   }, 20000);
 
   google.script.run
@@ -1433,11 +1452,13 @@ window.onload = function() {
       try { renderResults(); } catch(e) {}
       try { renderTodayBanner(S.contests); } catch(e) {}
       try { renderHome(); } catch(e) {}
+      finishOpening();
     })
     .withFailureHandler(function(e) {
       loadDone = true; clearTimeout(loadTimer);
       var el = document.getElementById('clist');
       if (el) el.innerHTML = '<div class="empty"><p style="margin-bottom:12px">読み込み失敗:<br><span style="font-size:12px;color:var(--MU)">'+esc(String(e))+'</span></p><button onclick="location.reload()" style="padding:10px 20px;border-radius:999px;background:var(--Y);color:#fff;font-size:14px;font-weight:700;border:none">再読み込み</button></div>';
+      finishOpening();
     })
     .getContests();
 
