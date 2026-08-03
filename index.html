@@ -63,12 +63,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue'
 #opening-screen{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:var(--BG);opacity:1;visibility:visible;transition:opacity .42s ease,visibility .42s ease}
 #opening-screen.out{opacity:0;visibility:hidden;pointer-events:none}
 .opening-mark{text-align:center;animation:openingFloat 1.8s ease-in-out infinite}
-.opening-logo{font-size:34px;font-weight:800;letter-spacing:.18em;color:var(--TX);padding-left:.18em}
+.opening-logo-picture{display:block;width:min(300px,64vw);margin:0 auto}
+.opening-logo-img{display:block;width:100%;height:auto;border-radius:20px}
 .opening-gem{width:9px;height:9px;margin:17px auto 0;background:var(--Y);transform:rotate(45deg);border-radius:2px;animation:openingGem 1.25s ease-in-out infinite}
 .opening-text{margin-top:14px;font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--MU)}
 @keyframes openingFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes openingGem{0%,100%{opacity:.45;transform:rotate(45deg) scale(.72);box-shadow:0 0 0 0 rgba(200,162,0,.32)}50%{opacity:1;transform:rotate(45deg) scale(1);box-shadow:0 0 0 9px rgba(200,162,0,0)}}
 @media(prefers-reduced-motion:reduce){.opening-mark,.opening-gem{animation:none}}
+@media(max-width:600px){#opening-screen{display:none}}
 input,select,textarea,button{font-family:inherit}
 button{cursor:pointer;border:none;background:none}
 .orb3{display:none}
@@ -630,7 +632,7 @@ button{cursor:pointer;border:none;background:none}
 </style>
 </head>
 <body>
-<div id="opening-screen" aria-label="読み込み中"><div class="opening-mark"><div class="opening-logo">RAMUSÉ</div><div class="opening-gem"></div><div class="opening-text">LOADING</div></div></div>
+<div id="opening-screen" aria-label="読み込み中"><div class="opening-mark"><picture class="opening-logo-picture"><source srcset="logo-transparent-dark.png" media="(prefers-color-scheme: dark)"><img class="opening-logo-img" src="logo-transparent.png" alt="RAMUSÉ"></picture><div class="opening-gem"></div><div class="opening-text">LOADING</div></div></div>
 <div id="app">
 
 <header id="hdr">
@@ -1414,8 +1416,26 @@ function finishOpening() {
   var wait=Math.max(0,900-(Date.now()-openingStartedAt));
   setTimeout(function(){ var op=document.getElementById('opening-screen'); if(op) op.classList.add('out'); },wait);
 }
+var WEEK_CACHE_KEY = 'ramuse_week_v1';
+var weekEventsLoading = false;
+function weekDayKey(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function restoreWeekEventsCache(){
+  try { var c=JSON.parse(localStorage.getItem(WEEK_CACHE_KEY)||'null'); if(c&&c.day===weekDayKey()&&Array.isArray(c.data)) S.weekEvents=c.data; } catch(e) {}
+}
+function saveWeekEventsCache(){ try { localStorage.setItem(WEEK_CACHE_KEY,JSON.stringify({day:weekDayKey(),data:S.weekEvents||[]})); } catch(e) {} }
+function loadWeekEvents(){
+  if(weekEventsLoading) return;
+  weekEventsLoading=true;
+  google.script.run.withSuccessHandler(function(data){
+    weekEventsLoading=false; S.weekEvents=Array.isArray(data)?data:[]; saveWeekEventsCache(); if(S.page==='home') renderHome();
+  }).withFailureHandler(function(){
+    weekEventsLoading=false; if(S.weekEvents===null) S.weekEvents=[]; if(S.page==='home') renderHome();
+  }).getThisWeekEvents();
+}
 
 window.onload = function() {
+  restoreWeekEventsCache();
+  loadWeekEvents();
   // ① キャッシュがあれば即座に描画（初回以外はここで表示完了）
   try {
     var cached = sessionStorage.getItem(CACHE_KEY) || localStorage.getItem(CACHE_KEY);
@@ -1504,7 +1524,7 @@ function switchPage(p) {
     else if(p==='finance'&&S.finTab==='trips') fab.style.display='flex';
     else fab.style.display='none';
   }
-  if(p==='home'){ S.weekEvents=null; renderHome(); }
+  if(p==='home'){ renderHome(); if(S.weekEvents===null) loadWeekEvents(); }
   if(p==='finance') renderFinance();
   if(p==='calendar') initCalendar();
 }
@@ -1702,15 +1722,7 @@ function renderHome() {
 
   // 未取得なら取得開始
   if(S.weekEvents===null){
-    S.weekEvents=[];
-    google.script.run
-      .withSuccessHandler(function(data){
-        if(Array.isArray(data)) S.weekEvents=data;
-        else S.weekEvents=[];
-        if(S.page==='home') renderHome();
-      })
-      .withFailureHandler(function(){ S.weekEvents=[]; if(S.page==='home') renderHome(); })
-      .getThisWeekEvents();
+    loadWeekEvents();
   }
 }
 
