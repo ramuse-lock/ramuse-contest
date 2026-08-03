@@ -861,12 +861,12 @@ button{cursor:pointer;border:none;background:none}
               </select>
             </div>
           </div>
+          <div class="fg"><label class="fl">大会シリーズ名</label>
+            <input type="text" name="大会シリーズ名" class="fi" placeholder="例: A大会2026">
+            <div class="fh">同じ大会の予選と決勝に、同じシリーズ名を入力してください</div>
+          </div>
           <div id="round-final-wrap" style="display:none">
-            <div class="fst" style="margin-top:4px;margin-bottom:8px">決勝大会情報</div>
-            <div class="fg"><label class="fl">大会シリーズ名</label>
-              <input type="text" name="大会シリーズ名" class="fi" placeholder="例: A大会2026（複数予選で同じ名前を入力）">
-              <div class="fh">同じシリーズ名の予選は、決勝情報とカレンダー予定を1件共有します</div>
-            </div>
+            <div class="fst" style="margin-top:4px;margin-bottom:8px">決勝ステータス</div>
             <div class="fg"><label class="fl">決勝ステータス</label>
               <select name="決勝_ステータス" class="fsl">
                 <option value="">未設定</option>
@@ -874,18 +874,6 @@ button{cursor:pointer;border:none;background:none}
                 <option value="進出決定">進出決定</option>
                 <option value="不参加">敗退・不参加</option>
               </select>
-            </div>
-            <div class="fg"><label class="fl">決勝大会の開催日</label>
-              <input type="date" name="決勝_開催日" class="fi"></div>
-            <div class="frow">
-              <div class="fg"><label class="fl">決勝開始時間</label><input type="time" name="決勝_開始時間" class="fi"></div>
-              <div class="fg"><label class="fl">決勝終了時間</label><input type="time" name="決勝_終了時間" class="fi"></div>
-            </div>
-            <div class="frow">
-              <div class="fg"><label class="fl">開催場所（県）</label>
-                <input type="text" name="決勝_場所" class="fi" placeholder="例: 東京都"></div>
-              <div class="fg"><label class="fl">会場名</label>
-                <input type="text" name="決勝_会場" class="fi" placeholder="例: 〇〇ホール"></div>
             </div>
           </div>
           <div class="fg">
@@ -1909,7 +1897,7 @@ function mkCard(c) {
   var autoStat=calcAutoStatus(c);
   var bm={'エントリー予定':'b-entry','準備中':'b-ready','当日待ち':'b-dayof','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
   var bc=bm[autoStat]||'b-def';
-  var finalStat=c['決勝_ステータス']||'';
+  var finalStat=c['ラウンド']==='決勝'?(c['決勝_ステータス']||''):'';
   var finalBadge=finalStat==='決勝予定'?'<span class="badge b-final-plan">決勝予定</span>':
     (finalStat==='進出決定'?'<span class="badge b-final-confirmed">決勝進出</span>':'');
   // 今後7日以内の大会はupcomingクラス
@@ -2122,7 +2110,8 @@ function resetForm() {
 function toggleRound() {
   var f=document.getElementById('cf');
   var v=f.querySelector('[name="ラウンド"]').value;
-  document.getElementById('round-final-wrap').style.display=(v==='予選')?'block':'none';
+  document.getElementById('round-final-wrap').style.display=(v==='決勝')?'block':'none';
+  if(v==='決勝'&&S.editRow===0&&!f.querySelector('[name="決勝_ステータス"]').value) setF('決勝_ステータス','決勝予定');
 }
 function setFmt(val, btn) {
   setRV('開催形式', val, 'rg-fmt');
@@ -2572,11 +2561,13 @@ function buildViewContent(c) {
   // 基本情報
   var bm={'エントリー予定':'b-entry','準備中':'b-ready','当日待ち':'b-dayof','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
   var vStat=calcAutoStatus(c);
-  var vfStat=c['決勝_ステータス']||'';
+  var vfStat=c['ラウンド']==='決勝'?(c['決勝_ステータス']||''):'';
   var vfBadge=vfStat==='決勝予定'?'<span class="badge b-final-plan">決勝予定</span>':(vfStat==='進出決定'?'<span class="badge b-final-confirmed">決勝進出</span>':'');
   html+='<div class="vs"><div class="vst" style="display:flex;justify-content:space-between;align-items:center">基本情報<span class="cc-badges"><span class="badge '+(bm[vStat]||'b-def')+'">'+esc(vStat)+'</span>'+vfBadge+'</span></div>';
   if(c['コンテスト名']) html+='<div class="vr"><span class="vr-l">大会名</span><span class="vr-v" style="font-weight:700">'+esc(c['コンテスト名'])+'</span></div>';
   if(c['部門'])   html+='<div class="vr"><span class="vr-l">部門</span><span class="vr-v">'+esc(c['部門'])+'</span></div>';
+  if(c['ラウンド']) html+='<div class="vr"><span class="vr-l">ラウンド</span><span class="vr-v">'+esc(c['ラウンド'])+'</span></div>';
+  if(c['大会シリーズ名']) html+='<div class="vr"><span class="vr-l">大会シリーズ</span><span class="vr-v">'+esc(c['大会シリーズ名'])+'</span></div>';
   if(c['開催日'])  html+='<div class="vr"><span class="vr-l">開催日</span><span class="vr-v">'+fmtD(c['開催日'])+'</span></div>';
   var times=[];
   if(c['集合時間']) times.push('集合 '+c['集合時間']);
@@ -2642,18 +2633,6 @@ function buildViewContent(c) {
   if(memos.length) {
     html+='<div class="vs"><div class="vst">メモ</div>';
     memos.forEach(function(m){ html+='<div class="vr"><span class="vr-l">'+esc(m.l)+'</span><span class="vr-v" style="white-space:pre-wrap">'+esc(m.v)+'</span></div>'; });
-    html+='</div>';
-  }
-
-  // 決勝大会情報
-  if(c['ラウンド']==='予選'&&(c['大会シリーズ名']||c['決勝_ステータス']||c['決勝_開催日']||c['決勝_場所']||c['決勝_会場'])) {
-    html+='<div class="vs"><div class="vst">決勝大会情報</div>';
-    if(c['大会シリーズ名']) html+='<div class="vr"><span class="vr-l">大会シリーズ</span><span class="vr-v">'+esc(c['大会シリーズ名'])+'</span></div>';
-    if(c['決勝_ステータス']) html+='<div class="vr"><span class="vr-l">決勝ステータス</span><span class="vr-v">'+esc(c['決勝_ステータス'])+'</span></div>';
-    if(c['決勝_開催日']) html+='<div class="vr"><span class="vr-l">決勝開催日</span><span class="vr-v">'+fmtD(c['決勝_開催日'])+'</span></div>';
-    if(c['決勝_開始時間']) html+='<div class="vr"><span class="vr-l">決勝時間</span><span class="vr-v">'+esc(c['決勝_開始時間']+(c['決勝_終了時間']?'〜'+c['決勝_終了時間']:''))+'</span></div>';
-    if(c['決勝_場所'])  html+='<div class="vr"><span class="vr-l">開催場所</span><span class="vr-v">'+esc(c['決勝_場所'])+'</span></div>';
-    if(c['決勝_会場'])  html+='<div class="vr"><span class="vr-l">会場名</span><span class="vr-v">'+esc(c['決勝_会場'])+'</span></div>';
     html+='</div>';
   }
 

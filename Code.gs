@@ -90,7 +90,8 @@ function serveRpc(e) {
     saveCarSettings: saveCarSettings,
     syncEntryPlannedContestsToCalendar: syncEntryPlannedContestsToCalendar,
     syncAllContestsToCalendar: syncAllContestsToCalendar,
-    backupContestSheet: backupContestSheet
+    backupContestSheet: backupContestSheet,
+    migrateLegacySeriesFinals: migrateLegacySeriesFinals
   };
   if (!methods[method]) {
     return { ok: false, error: 'Unknown RPC method: ' + method };
@@ -114,6 +115,47 @@ function backupContestSheet() {
   var name = 'バックアップ_' + stamp;
   source.copyTo(ss).setName(name);
   return { success: true, sheetName: name, rows: source.getLastRow() };
+}
+
+function migrateLegacySeriesFinals() {
+  ensureSheets();
+  var sheet = getSheet('コンテスト管理');
+  var values = sheet.getDataRange().getValues();
+  if (values.length <= 1) return { success: true, created: [] };
+  var headers = values[0].map(function(h) { return String(h).trim(); });
+  var rows = values.slice(1).map(function(row, index) { return toObj(headers, row, index + 2); });
+  var existingFinals = {};
+  rows.forEach(function(row) {
+    var series = String(row['大会シリーズ名'] || '').trim();
+    if (series && row['ラウンド'] === '決勝') existingFinals[series] = true;
+  });
+  var sources = {};
+  rows.forEach(function(row) {
+    var series = String(row['大会シリーズ名'] || '').trim();
+    if (!series || existingFinals[series] || sources[series] || !row['決勝_開催日']) return;
+    sources[series] = row;
+  });
+  var created = [];
+  Object.keys(sources).forEach(function(series) {
+    var source = sources[series];
+    var finalData = {
+      'コンテスト名': series,
+      '開催日': source['決勝_開催日'],
+      '開始時間': source['決勝_開始時間'],
+      '終了時間': source['決勝_終了時間'],
+      '会場': [source['決勝_場所'], source['決勝_会場']].filter(function(v) { return !!v; }).join(' '),
+      '部門': source['部門'],
+      '開催形式': source['開催形式'] || 'オフライン',
+      'ラウンド': '決勝',
+      '大会シリーズ名': series,
+      '決勝_ステータス': source['決勝_ステータス'] || '決勝予定',
+      'エントリー_状況': '提出済',
+      'URL': source['URL']
+    };
+    var result = saveContest(finalData);
+    created.push({ series: series, rowIndex: result.rowIndex, status: finalData['決勝_ステータス'] });
+  });
+  return { success: true, created: created };
 }
 
 // ============================================================
@@ -241,76 +283,21 @@ function saveContest(formData) {
         }
       }
     });
+    // 旧方式の決勝詳細列は画面から外しても既存値を消さず、そのまま保持する。
+    ['決勝_開催日', '決勝_開始時間', '決勝_終了時間', '決勝_場所', '決勝_会場'].forEach(function(field) {
+      var col = headers.indexOf(field);
+      if (col >= 0 && !Object.prototype.hasOwnProperty.call(formData, field)) {
+        rowData[col] = sheet.getRange(rowIndex, col + 1).getValue();
+      }
+    });
     sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
   } else {
     sheet.appendRow(rowData);
     rowIndex = sheet.getLastRow();
   }
 
-  // 同じシリーズの予選は決勝情報を共有する。シリーズ未設定なら従来どおり個別管理。
-  formData = syncSeriesFinalData_(formData, rowIndex, sheet, headers);
   try { syncCalendar(formData, rowIndex, sheet, headers); } catch(e) { Logger.log('Calendar: ' + e); }
-  shareSeriesFinalCalendarId_(formData, rowIndex, sheet, headers);
   return { success: true, rowIndex: rowIndex };
-}
-
-function syncSeriesFinalData_(data, rowIndex, sheet, headers) {
-  var series = String(data['大会シリーズ名'] || '').trim();
-  if (!series) return data;
-  var seriesCol = headers.indexOf('大会シリーズ名');
-  if (seriesCol < 0 || sheet.getLastRow() < 2) return data;
-
-  var finalFields = ['決勝_ステータス', '決勝_開催日', '決勝_開始時間', '決勝_終了時間',
-    '決勝_場所', '決勝_会場'];
-  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
-  var members = [];
-  rows.forEach(function(row, index) {
-    if (String(row[seriesCol] || '').trim() === series) members.push({ row: index + 2, values: row });
-  });
-
-  // 新しく既存シリーズへ参加し、決勝欄が空なら既存の共有情報を引き継ぐ。
-  var hasCurrentFinal = finalFields.some(function(field) { return !!data[field]; });
-  if (!hasCurrentFinal) {
-    var source = members.filter(function(member) { return member.row !== rowIndex; }).find(function(member) {
-      return finalFields.some(function(field) { return !!member.values[headers.indexOf(field)]; });
-    });
-    if (source) {
-      finalFields.forEach(function(field) {
-        var value = source.values[headers.indexOf(field)];
-        data[field] = normalizeContestOutputValue_(field, value);
-      });
-      var sharedIdCol = headers.indexOf('決勝_カレンダーID');
-      if (sharedIdCol >= 0 && source.values[sharedIdCol]) data['決勝_カレンダーID'] = source.values[sharedIdCol];
-    }
-  }
-
-  members.forEach(function(member) {
-    finalFields.forEach(function(field) {
-      var col = headers.indexOf(field);
-      if (col >= 0) sheet.getRange(member.row, col + 1).setValue(normalizeContestValue(field, data[field]));
-    });
-  });
-  return data;
-}
-
-function shareSeriesFinalCalendarId_(data, rowIndex, sheet, headers) {
-  var series = String(data['大会シリーズ名'] || '').trim();
-  var seriesCol = headers.indexOf('大会シリーズ名');
-  var idCol = headers.indexOf('決勝_カレンダーID');
-  if (!series || seriesCol < 0 || idCol < 0 || sheet.getLastRow() < 2) return;
-  var eventId = sheet.getRange(rowIndex, idCol + 1).getValue();
-  var values = sheet.getRange(2, seriesCol + 1, sheet.getLastRow() - 1, 1).getValues();
-  values.forEach(function(row, index) {
-    if (String(row[0] || '').trim() === series) sheet.getRange(index + 2, idCol + 1).setValue(eventId || '');
-  });
-}
-
-function normalizeContestOutputValue_(header, value) {
-  if (value instanceof Date) {
-    if (isTimeHeader(header)) return Utilities.formatDate(value, Session.getScriptTimeZone(), 'HH:mm');
-    if (isDateHeader(header)) return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-  }
-  return value == null ? '' : value;
 }
 
 // ============================================================
@@ -322,17 +309,12 @@ function deleteContest(rowIndex) {
   if (!sheet) return { success: false };
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
     .map(function(h) { return String(h).trim(); });
-  var seriesCol = headers.indexOf('大会シリーズ名');
-  var deletingSeries = seriesCol >= 0 ? String(sheet.getRange(rowIndex, seriesCol + 1).getValue() || '').trim() : '';
-  var hasOtherSeriesMember = deletingSeries && sheet.getLastRow() > 2 &&
-    sheet.getRange(2, seriesCol + 1, sheet.getLastRow() - 1, 1).getValues().some(function(row, index) {
-      return index + 2 !== rowIndex && String(row[0] || '').trim() === deletingSeries;
-    });
-  ['カレンダーID', '決勝_カレンダーID', 'エントリー_カレンダーID'].forEach(function(idHeader) {
+  // 決勝_カレンダーID は旧方式で複数予選が共有している可能性があるため削除対象にしない。
+  ['カレンダーID', 'エントリー_カレンダーID'].forEach(function(idHeader) {
     var idCol = headers.indexOf(idHeader);
     if (idCol < 0) return;
     var eventId = sheet.getRange(rowIndex, idCol + 1).getValue();
-    if (eventId && !(idHeader === '決勝_カレンダーID' && hasOtherSeriesMember)) {
+    if (eventId) {
       try { var event = CalendarApp.getEventById(eventId); if (event) event.deleteEvent(); } catch(e) {}
     }
   });
@@ -348,6 +330,11 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   var dateVal = data['開催日'];
   var name = data['コンテスト名'];
   if (!name) return;
+  var isFinalRound = data['ラウンド'] === '決勝';
+  var finalStatus = data['決勝_ステータス'] || '決勝予定';
+  var eventTitle = isFinalRound ?
+    (finalStatus === '進出決定' ? '【決勝進出】' + name : '【決勝予定】' + name) : name;
+  var eventColor = isFinalRound && finalStatus !== '進出決定' ? '8' : '5';
 
   var cal = CalendarApp.getDefaultCalendar();
   var calIdCol = headers.indexOf('カレンダーID') + 1;
@@ -358,6 +345,19 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   }
   if (!existingId) {
     existingId = String(data['カレンダーID'] || '').trim();
+  }
+
+  if (isFinalRound && finalStatus === '不参加') {
+    if (existingId) {
+      try { var cancelledFinal = cal.getEventById(existingId); if (cancelledFinal) cancelledFinal.deleteEvent(); } catch(e) {}
+      if (calIdCol > 0 && rowIndex >= 2) sheet.getRange(rowIndex, calIdCol).setValue('');
+    }
+    if (dateVal) {
+      removeCalendarEventsByTitle_(cal, '【決勝予定】' + name, dateVal, '');
+      removeCalendarEventsByTitle_(cal, '【決勝進出】' + name, dateVal, '');
+    }
+    syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers);
+    return { action: 'removed-final' };
   }
 
   // 同じカレンダーIDが別の大会にも入っている場合、そのIDは信用しない。
@@ -382,8 +382,14 @@ function syncCalendar(data, rowIndex, sheet, headers) {
 
   var date = new Date(dateVal);
   if (isNaN(date.getTime())) return;
+  if (isFinalRound) {
+    var obsoleteFinalTitle = finalStatus === '進出決定' ? '【決勝予定】' + name : '【決勝進出】' + name;
+    removeCalendarEventsByTitle_(cal, obsoleteFinalTitle, dateVal, existingId);
+  }
 
   var lines = [];
+  if (data['大会シリーズ名']) lines.push('大会シリーズ: ' + data['大会シリーズ名']);
+  if (isFinalRound) lines.push('決勝ステータス: ' + finalStatus);
   if (!data['エントリー_状況'] || data['エントリー_状況'] !== '提出済') {
     lines.push('ステータス: エントリー予定');
   }
@@ -409,11 +415,11 @@ function syncCalendar(data, rowIndex, sheet, headers) {
       var ev = cal.getEventById(existingId);
       if (ev) {
         setCalendarEventSchedule_(ev, dateVal, data['開始時間'], data['終了時間'], 120);
-        ev.setTitle(name);
+        ev.setTitle(eventTitle);
         ev.setLocation(loc);
         ev.setDescription(desc);
-        try { ev.setColor('5'); } catch(ce) { Logger.log('setColor(update): ' + ce); }
-        removeDuplicateContestEvents_(cal, name, date, ev.getId());
+        try { ev.setColor(eventColor); } catch(ce) { Logger.log('setColor(update): ' + ce); }
+        removeDuplicateContestEvents_(cal, eventTitle, date, ev.getId());
         if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(ev.getId());
         syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers);
         return { action: 'updated', eventId: ev.getId() };
@@ -429,7 +435,7 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   var dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
   var dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
   var sameEvents = cal.getEvents(dayStart, dayEnd).filter(function(event) {
-    return event.getTitle() === name;
+    return event.getTitle() === eventTitle;
   });
   if (sameEvents.length > 0) {
     var existingEvent = sameEvents[0];
@@ -437,19 +443,19 @@ function syncCalendar(data, rowIndex, sheet, headers) {
     existingEvent.setLocation(loc);
     existingEvent.setDescription(desc);
     if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(existingEvent.getId());
-    try { existingEvent.setColor('5'); } catch(ce) { Logger.log('setColor(reuse): ' + ce); }
-    removeDuplicateContestEvents_(cal, name, date, existingEvent.getId());
+    try { existingEvent.setColor(eventColor); } catch(ce) { Logger.log('setColor(reuse): ' + ce); }
+    removeDuplicateContestEvents_(cal, eventTitle, date, existingEvent.getId());
     syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers);
     return { action: 'reused', eventId: existingEvent.getId() };
   }
 
   // 既存IDなし・イベント削除済み・同名イベントなしの場合のみ新規作成
-  var newEvent = createCalendarEvent_(cal, name, dateVal, data['開始時間'], data['終了時間'], 120,
+  var newEvent = createCalendarEvent_(cal, eventTitle, dateVal, data['開始時間'], data['終了時間'], 120,
     { location: loc, description: desc });
   var newId = newEvent.getId();
   if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(newId);
-  try { newEvent.setColor('5'); } catch(ce) { Logger.log('setColor(new): ' + ce); }
-  removeDuplicateContestEvents_(cal, name, date, newId);
+  try { newEvent.setColor(eventColor); } catch(ce) { Logger.log('setColor(new): ' + ce); }
+  removeDuplicateContestEvents_(cal, eventTitle, date, newId);
   syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers);
   return { action: 'created', eventId: newId };
 }
@@ -457,7 +463,6 @@ function syncCalendar(data, rowIndex, sheet, headers) {
 function syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers) {
   var name = data['コンテスト名'];
   if (!name) return;
-  var finalName = String(data['大会シリーズ名'] || '').trim() || name;
 
   // エントリー未提出かつ開始日がある場合だけ、開始予定をブルーで登録する。
   var entryActive = data['エントリー_状況'] !== '提出済' && !!data['エントリー_開始日'];
@@ -477,31 +482,6 @@ function syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers) {
     color: '7'
   }, rowIndex, sheet, headers);
 
-  // 決勝予定はグレー、進出決定はバナナ。同じイベントIDを更新して状態遷移させる。
-  var finalStatus = data['決勝_ステータス'] || '';
-  var finalActive = (finalStatus === '決勝予定' || finalStatus === '進出決定') && !!data['決勝_開催日'];
-  var finalLoc = [data['決勝_場所'], data['決勝_会場']].filter(function(v) { return !!v; }).join(' ');
-  syncNamedCalendarEvent_({
-    active: finalActive,
-    idHeader: '決勝_カレンダーID',
-    title: finalStatus === '進出決定' ? '【決勝進出】' + finalName : '【決勝予定】' + finalName,
-    date: data['決勝_開催日'],
-    startTime: data['決勝_開始時間'],
-    endTime: data['決勝_終了時間'],
-    defaultMinutes: 120,
-    location: finalLoc,
-    description: '決勝ステータス: ' + finalStatus,
-    color: finalStatus === '進出決定' ? '5' : '8'
-  }, rowIndex, sheet, headers);
-  if (finalActive) {
-    var obsoleteTitle = finalStatus === '進出決定' ? '【決勝予定】' + finalName : '【決勝進出】' + finalName;
-    removeCalendarEventsByTitle_(CalendarApp.getDefaultCalendar(), obsoleteTitle, data['決勝_開催日'], '');
-  } else if (data['決勝_開催日']) {
-    // IDが欠けている古いデータでも、ステータス解除時に決勝予定を残さない。
-    var finalCal = CalendarApp.getDefaultCalendar();
-    removeCalendarEventsByTitle_(finalCal, '【決勝予定】' + finalName, data['決勝_開催日'], '');
-    removeCalendarEventsByTitle_(finalCal, '【決勝進出】' + finalName, data['決勝_開催日'], '');
-  }
 }
 
 function syncNamedCalendarEvent_(config, rowIndex, sheet, headers) {
