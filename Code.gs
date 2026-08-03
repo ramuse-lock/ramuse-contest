@@ -327,6 +327,8 @@ function syncCalendar(data, rowIndex, sheet, headers) {
         ev.setLocation(loc);
         ev.setDescription(desc);
         try { ev.setColor('5'); } catch(ce) { Logger.log('setColor(update): ' + ce); }
+        removeDuplicateContestEvents_(cal, name, date, ev.getId());
+        if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(ev.getId());
         return { action: 'updated', eventId: ev.getId() };
       }
       // ev === null: イベントが削除済み → 下で再作成
@@ -349,6 +351,7 @@ function syncCalendar(data, rowIndex, sheet, headers) {
     existingEvent.setDescription(desc);
     if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(existingEvent.getId());
     try { existingEvent.setColor('5'); } catch(ce) { Logger.log('setColor(reuse): ' + ce); }
+    removeDuplicateContestEvents_(cal, name, date, existingEvent.getId());
     return { action: 'reused', eventId: existingEvent.getId() };
   }
 
@@ -357,7 +360,19 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   var newId = newEvent.getId();
   if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(newId);
   try { newEvent.setColor('5'); } catch(ce) { Logger.log('setColor(new): ' + ce); }
+  removeDuplicateContestEvents_(cal, name, date, newId);
   return { action: 'created', eventId: newId };
+}
+
+// 保存のたびに同日・同名イベントを1件へ統一する。
+// 既存IDが一時的に不整合でも、更新ごとにイベントが増え続けることを防ぐ。
+function removeDuplicateContestEvents_(cal, name, date, keepId) {
+  var start = new Date(date); start.setHours(0, 0, 0, 0);
+  var end = new Date(date); end.setHours(23, 59, 59, 999);
+  cal.getEvents(start, end).forEach(function(event) {
+    if (event.getTitle() !== name || event.getId() === keepId) return;
+    try { event.deleteEvent(); } catch (err) { Logger.log('delete duplicate failed: ' + err); }
+  });
 }
 
 // エントリー未提出の大会を一括同期する。古いカレンダーIDの復旧にも使用する。
