@@ -489,7 +489,7 @@ function syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers) {
   var name = data['コンテスト名'];
   if (!name) return;
 
-  // エントリー未提出かつ開始日がある場合だけ、開始予定をブルーで登録する。
+  // エントリー未提出かつ開始日がある場合だけ、受付開始を淡い緑（ユーカリ系）で登録する。
   var entryActive = data['エントリー_状況'] !== '提出済' && !!data['エントリー_開始日'];
   var entryDesc = [];
   if (data['エントリー_期限']) entryDesc.push('エントリー期限: ' + data['エントリー_期限']);
@@ -504,7 +504,7 @@ function syncSupplementalCalendarEvents_(data, rowIndex, sheet, headers) {
     defaultMinutes: 30,
     location: '',
     description: entryDesc.join('\n'),
-    color: '7'
+    color: '2'
   }, rowIndex, sheet, headers);
 
 }

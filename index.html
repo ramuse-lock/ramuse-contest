@@ -307,6 +307,7 @@ button{cursor:pointer;border:none;background:none}
 
 /* Contest Card */
 .cc{background:var(--SFC);border-radius:var(--R);padding:16px;margin-bottom:10px;box-shadow:var(--SHM);border:1px solid var(--BD);cursor:pointer;transition:transform var(--t);position:relative}
+.cc.entry-planned{background:#F0F1F3;border-color:#D9DCE1}
 .cc:active{transform:scale(.987)}
 /* Upcoming ≤7 days */
 .cc.upcoming{border-left:3px solid var(--Y)}
@@ -325,6 +326,12 @@ button{cursor:pointer;border:none;background:none}
 .b-final-plan{background:#e5e5ea;color:#55565a}
 .b-final-confirmed{background:#F4D44D;color:#4A3500;border:1px solid #D8AF00;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
 .b-has-final{background:#E8EEF8;color:#3D557A;border:1px solid #C8D5E8}
+.b-type-single{background:#DDF3E5;color:#21643A;border:1px solid #B8DFC6}
+.b-type-qualifier{background:#FFE8D2;color:#8A4300;border:1px solid #F5C896}
+.b-type-final-pending{background:#E5E5EA;color:#4D4D52;border:1px solid #CECED4}
+.b-type-final-confirmed{background:#F4D44D;color:#4A3500;border:1px solid #D8AF00}
+.cc-entry-start{margin-top:8px;padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.72);color:#50545B;font-size:12px;font-weight:700;border:1px solid rgba(60,60,67,.08)}
+@media(prefers-color-scheme:dark){.cc.entry-planned{background:#202124;border-color:#3A3B3E}.cc-entry-start{background:rgba(255,255,255,.06);color:#D1D1D6}}
 .type-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
 .type-btn{padding:12px 6px;border:1.5px solid var(--BD);border-radius:12px;background:var(--SFC);color:var(--TX);font-size:13px;font-weight:700;text-align:center;transition:.15s}
 .type-btn.on{border-color:var(--Y);background:var(--YBG);color:#594400;box-shadow:0 0 0 2px rgba(200,162,0,.1)}
@@ -1987,8 +1994,11 @@ function mkCard(c) {
   var finalStat=c['ラウンド']==='決勝'?(c['決勝_ステータス']||''):'';
   if(finalStat==='決勝予定') finalStat='進出未定';
   var hasFinal=c['ラウンド']==='予選'&&c['大会シリーズ名']&&(S.contests||[]).some(function(x){return x['ラウンド']==='決勝'&&x['大会シリーズ名']===c['大会シリーズ名']&&x['決勝_ステータス']!=='不参加';});
-  var finalBadge=hasFinal?'<span class="badge b-has-final">決勝あり</span>':(finalStat==='進出未定'?'<span class="badge b-final-plan">進出未定</span>':
-    (finalStat==='進出決定'?'<span class="badge b-final-confirmed">決勝進出</span>':''));
+  var typeBadge='';
+  if(c['ラウンド']==='単発'||!c['ラウンド']) typeBadge='<span class="badge b-type-single">単発</span>';
+  else if(c['ラウンド']==='予選') typeBadge='<span class="badge b-type-qualifier">予選</span>';
+  else if(c['ラウンド']==='決勝') typeBadge=finalStat==='進出決定'?'<span class="badge b-type-final-confirmed">決勝・進出決定</span>':'<span class="badge b-type-final-pending">決勝・'+esc(finalStat||'進出未定')+'</span>';
+  var finalBadge=hasFinal?'<span class="badge b-has-final">決勝あり</span>':'';
   // 今後7日以内の大会はupcomingクラス
   var isUpcoming=false;
   if(c['開催日']&&autoStat!=='完了'&&autoStat!=='キャンセル'){
@@ -2022,10 +2032,12 @@ function mkCard(c) {
   }
   // エントリー予定：開始日カウントダウン
   var entryCd='';
+  var entrySchedule='';
   if(autoStat==='エントリー予定'&&c['エントリー_開始日']){
     var esD=new Date(c['エントリー_開始日']); var now0=new Date(); now0.setHours(0,0,0,0);
     var diffD=Math.ceil((esD-now0)/(86400000));
     if(diffD>0&&diffD<=7) entryCd='<span class="entry-cd">エントリー開始まであと'+diffD+'日</span>';
+    entrySchedule='<div class="cc-entry-start">エントリー受付開始　'+fmtD(c['エントリー_開始日'])+(c['エントリー_開始時間']?' '+esc(c['エントリー_開始時間']):'')+'</div>';
   }
   var warnSvg='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
   var dlBadge=(dlNear||submDlNear)?'<span class="dl-alert">'+warnSvg+' 期限1週間以内</span>':'';
@@ -2038,10 +2050,10 @@ function mkCard(c) {
   for(var oi=0;oi<odls.length;oi++){
     if(odls[oi]){ var od=new Date(odls[oi]); if(!isNaN(od)&&od<now1){ isOverdue=true; break; } }
   }
-  var cls='cc'+(isUpcoming?' upcoming':'')+(isOverdue&&!isUpcoming?' overdue':'');
+  var cls='cc'+(autoStat==='エントリー予定'?' entry-planned':'')+(isUpcoming?' upcoming':'')+(isOverdue&&!isUpcoming?' overdue':'');
   return '<div class="'+cls+'" onclick="openView('+c._rowIndex+')">' +
-    '<div class="cc-top"><span class="cc-name">'+esc(c['コンテスト名'])+fmtTag+'</span><span class="cc-badges"><span class="badge '+bc+'">'+esc(autoStat)+'</span>'+finalBadge+'</span></div>' +
-    '<div class="cc-meta">'+meta+'</div>'+tc+dlRow+'</div>';
+    '<div class="cc-top"><span class="cc-name">'+esc(c['コンテスト名'])+fmtTag+'</span><span class="cc-badges"><span class="badge '+bc+'">'+esc(autoStat)+'</span>'+typeBadge+finalBadge+'</span></div>' +
+    '<div class="cc-meta">'+meta+'</div>'+tc+entrySchedule+dlRow+'</div>';
 }
 
 // ============================================================
