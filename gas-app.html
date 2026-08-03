@@ -1924,8 +1924,8 @@ function mkCard(c) {
   var typeBadge='';
   if(c['ラウンド']==='単発'||!c['ラウンド']) typeBadge='<span class="badge b-type-single">単発</span>';
   else if(c['ラウンド']==='予選') typeBadge='<span class="badge b-type-qualifier">予選</span>';
-  else if(c['ラウンド']==='決勝') typeBadge=finalStat==='進出決定'?'<span class="badge b-type-final-confirmed">決勝・進出決定</span>':'<span class="badge b-type-final-pending">決勝・'+esc(finalStat||'進出未定')+'</span>';
-  var finalBadge=hasFinal?'<span class="badge b-has-final">決勝あり</span>':'';
+  else if(c['ラウンド']==='決勝') typeBadge=finalStat==='進出決定'?'<span class="badge b-type-final-confirmed">決勝</span>':'<span class="badge b-type-final-pending">決勝</span>';
+  var finalBadge='';
   // 今後7日以内の大会はupcomingクラス
   var isUpcoming=false;
   if(c['開催日']&&autoStat!=='完了'&&autoStat!=='キャンセル'){
@@ -2614,11 +2614,7 @@ function buildViewContent(c) {
   // 基本情報
   var bm={'エントリー予定':'b-entry','準備中':'b-ready','当日待ち':'b-dayof','会計待ち':'b-waitpay','完了':'b-done','キャンセル':'b-cancel'};
   var vStat=calcAutoStatus(c);
-  var vfStat=c['ラウンド']==='決勝'?(c['決勝_ステータス']||''):'';
-  if(vfStat==='決勝予定') vfStat='進出未定';
-  var vfHasFinal=c['ラウンド']==='予選'&&c['大会シリーズ名']&&(S.contests||[]).some(function(x){return x['ラウンド']==='決勝'&&x['大会シリーズ名']===c['大会シリーズ名']&&x['決勝_ステータス']!=='不参加';});
-  var vfBadge=vfHasFinal?'<span class="badge b-has-final">決勝あり</span>':(vfStat==='進出未定'?'<span class="badge b-final-plan">進出未定</span>':(vfStat==='進出決定'?'<span class="badge b-final-confirmed">決勝進出</span>':''));
-  html+='<div class="vs"><div class="vst" style="display:flex;justify-content:space-between;align-items:center">基本情報<span class="cc-badges"><span class="badge '+(bm[vStat]||'b-def')+'">'+esc(vStat)+'</span>'+vfBadge+'</span></div>';
+  html+='<div class="vs"><div class="vst" style="display:flex;justify-content:space-between;align-items:center">基本情報<span class="cc-badges"><span class="badge '+(bm[vStat]||'b-def')+'">'+esc(vStat)+'</span></span></div>';
   if(c['コンテスト名']) html+='<div class="vr"><span class="vr-l">大会名</span><span class="vr-v" style="font-weight:700">'+esc(c['コンテスト名'])+'</span></div>';
   if(c['部門'])   html+='<div class="vr"><span class="vr-l">部門</span><span class="vr-v">'+esc(c['部門'])+'</span></div>';
   if(c['ラウンド']) html+='<div class="vr"><span class="vr-l">ラウンド</span><span class="vr-v">'+esc(c['ラウンド'])+'</span></div>';
