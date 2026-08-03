@@ -87,7 +87,9 @@ function serveRpc(e) {
     saveRoute: saveRoute,
     saveTripRecord: saveTripRecord,
     deleteTripRecord: deleteTripRecord,
-    saveCarSettings: saveCarSettings
+    saveCarSettings: saveCarSettings,
+    syncEntryPlannedContestsToCalendar: syncEntryPlannedContestsToCalendar,
+    syncAllContestsToCalendar: syncAllContestsToCalendar
   };
   if (!methods[method]) {
     return { ok: false, error: 'Unknown RPC method: ' + method };
@@ -273,6 +275,16 @@ function syncCalendar(data, rowIndex, sheet, headers) {
     existingId = String(data['カレンダーID'] || '').trim();
   }
 
+  // 同じカレンダーIDが別の大会にも入っている場合、そのIDは信用しない。
+  // 共有IDのイベントを上書きせず、後段で大会名＋開催日から個別に復旧する。
+  if (existingId && calIdCol > 0 && rowIndex >= 2) {
+    var idValues = sheet.getRange(2, calIdCol, Math.max(sheet.getLastRow() - 1, 1), 1).getValues();
+    var duplicateId = idValues.some(function(idRow, index) {
+      return index + 2 !== rowIndex && String(idRow[0] || '').trim() === existingId;
+    });
+    if (duplicateId) existingId = '';
+  }
+
   // 開催日が空の場合：孤立したカレンダーイベントを削除してリターン
   if (!dateVal) {
     if (existingId) {
@@ -286,6 +298,9 @@ function syncCalendar(data, rowIndex, sheet, headers) {
   if (isNaN(date.getTime())) return;
 
   var lines = [];
+  if (!data['エントリー_状況'] || data['エントリー_状況'] !== '提出済') {
+    lines.push('ステータス: エントリー予定');
+  }
   if (data['部門'])     lines.push('部門: ' + data['部門']);
   if (data['開催形式']) lines.push('形式: ' + data['開催形式']);
   if (data['集合時間']) lines.push('集合時間: ' + data['集合時間']);
@@ -307,24 +322,80 @@ function syncCalendar(data, rowIndex, sheet, headers) {
     try {
       var ev = cal.getEventById(existingId);
       if (ev) {
+        ev.setAllDayDate(date);
         ev.setTitle(name);
         ev.setLocation(loc);
         ev.setDescription(desc);
         try { ev.setColor('5'); } catch(ce) { Logger.log('setColor(update): ' + ce); }
-        return;
+        return { action: 'updated', eventId: ev.getId() };
       }
       // ev === null: イベントが削除済み → 下で再作成
     } catch(e) {
       Logger.log('getEventById failed: ' + e);
-      return;
+      // 古いID・削除済みIDでも終了せず、同名イベントの検索または再作成へ進む
     }
   }
 
-  // 既存IDなし or イベント削除済みの場合のみ新規作成
+  // IDが古い場合でも、同じ日付・同じタイトルのイベントがあれば再利用して重複を防ぐ
+  var dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
+  var dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+  var sameEvents = cal.getEvents(dayStart, dayEnd).filter(function(event) {
+    return event.getTitle() === name;
+  });
+  if (sameEvents.length > 0) {
+    var existingEvent = sameEvents[0];
+    existingEvent.setAllDayDate(date);
+    existingEvent.setLocation(loc);
+    existingEvent.setDescription(desc);
+    if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(existingEvent.getId());
+    try { existingEvent.setColor('5'); } catch(ce) { Logger.log('setColor(reuse): ' + ce); }
+    return { action: 'reused', eventId: existingEvent.getId() };
+  }
+
+  // 既存IDなし・イベント削除済み・同名イベントなしの場合のみ新規作成
   var newEvent = cal.createAllDayEvent(name, date, { location: loc, description: desc });
   var newId = newEvent.getId();
   if (calIdCol > 0) sheet.getRange(rowIndex, calIdCol).setValue(newId);
   try { newEvent.setColor('5'); } catch(ce) { Logger.log('setColor(new): ' + ce); }
+  return { action: 'created', eventId: newId };
+}
+
+// エントリー未提出の大会を一括同期する。古いカレンダーIDの復旧にも使用する。
+function syncEntryPlannedContestsToCalendar() {
+  return syncContestsToCalendar_(true);
+}
+
+// 全大会のカレンダーID重複・削除済みイベントを一括で正常化する。
+function syncAllContestsToCalendar() {
+  return syncContestsToCalendar_(false);
+}
+
+function syncContestsToCalendar_(entryPlannedOnly) {
+  ensureSheets();
+  var sheet = getSheet('コンテスト管理');
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { success: true, targets: 0, created: 0, updated: 0, reused: 0, errors: [] };
+  }
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    .map(function(h) { return String(h).trim(); });
+  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
+  var result = { success: true, targets: 0, created: 0, updated: 0, reused: 0, errors: [] };
+
+  rows.forEach(function(row, index) {
+    var rowIndex = index + 2;
+    var contest = toObj(headers, row, rowIndex);
+    if (!contest['コンテスト名'] || !contest['開催日']) return;
+    if (entryPlannedOnly && contest['エントリー_状況'] === '提出済') return;
+    result.targets++;
+    try {
+      var synced = syncCalendar(contest, rowIndex, sheet, headers) || {};
+      if (synced.action && result[synced.action] !== undefined) result[synced.action]++;
+    } catch (err) {
+      result.success = false;
+      result.errors.push({ rowIndex: rowIndex, name: contest['コンテスト名'], error: String(err) });
+    }
+  });
+  return result;
 }
 
 // ============================================================
