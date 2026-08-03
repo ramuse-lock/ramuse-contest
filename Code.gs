@@ -255,8 +255,8 @@ function getContestHeaders() {
 // ============================================================
 
 function getContests() {
-  ensureSheets();
   var sheet = getSheet('コンテスト管理');
+  if (!sheet) return [];
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
   var headers = data[0].map(function(h) { return String(h).trim(); });
