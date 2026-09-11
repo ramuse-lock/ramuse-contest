@@ -52,7 +52,8 @@ export function ReceiptForm() {
   return (
     <Sheet title="レシート" onClose={closeModal} footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />保存する {total ? yen(total) : ''}</button>}>
       <Glass className="fgrp">
-        <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} style="flex:0 0 150px" /><span class="unit" style="margin-left:auto">払った人</span><OnePicker small fams={fams} value={payer} onChange={setPayer} /></Field>
+        <Field label="払った人"><OnePicker fams={fams} value={payer} onChange={setPayer} /><span class="unit">{famJa(payer)}の財布から</span></Field>
+        <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} /></Field>
         <Field label="内容"><input value={title} placeholder="ROOKIES 昼ごはん" onInput={(e) => setTitle((e.target as HTMLInputElement).value)} /></Field>
         <Field label="大会"><ContestSelect value={contestId} onChange={(id) => { setContestId(id); const c = contests.value.find((x) => x.ID === id); if (c && !title) setTitle(c.コンテスト名); }} /></Field>
       </Glass>
@@ -159,8 +160,9 @@ export function CarForm() {
   return (
     <Sheet title="車" onClose={closeModal} footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />台帳に1行 {total ? yen(total) : ''}</button>}>
       <Glass className="fgrp">
+        <Field label="運転者"><OnePicker fams={fams} value={driver} onChange={setDriver} /><span class="unit">{car ? `${car.車名} · ${fe} km/L` : ''}</span></Field>
         <Field label="大会"><ContestSelect value={contestId} onChange={pickContest} /></Field>
-        <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} style="flex:0 0 150px" /></Field>
+        <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} /></Field>
         <Field label="行き先">
           <select value={destId} onChange={(e) => pickDest((e.target as HTMLSelectElement).value)}>
             <option value="">選ぶ</option>
@@ -175,8 +177,7 @@ export function CarForm() {
             <Field label="高速代"><input class="n" type="number" inputMode="numeric" value={String(newDest.行き高速代 || '')} placeholder="行き" onInput={(e) => { const v = (e.target as HTMLInputElement).value; setNewDest({ ...newDest, 行き高速代: num(v) }); setGoFare(v); setGoToll(num(v) > 0); }} /><span class="unit">行き</span><input class="n" type="number" inputMode="numeric" value={String(newDest.帰り高速代 || '')} placeholder="帰り" onInput={(e) => { const v = (e.target as HTMLInputElement).value; setNewDest({ ...newDest, 帰り高速代: num(v) }); setBackFare(v); setBackToll(num(v) > 0); }} /><span class="unit">帰り</span></Field>
           </>
         )}
-        <Field label="運転者"><OnePicker fams={fams} value={driver} onChange={setDriver} /><span class="unit" style="margin-left:auto">{car ? `${car.車名} · ${fe} km/L` : ''}</span></Field>
-        <Field label="乗った人"><WhoPicker fams={fams} value={riders} onChange={setRiders} /><span class="unit" style="margin-left:auto">{riders.length}人で割る</span></Field>
+        <Field label="乗った人"><WhoPicker fams={fams} value={riders} onChange={setRiders} /><span class="unit">{riders.length}人で割る</span></Field>
         <Field label="往復"><Seg small options={[{ v: 'rt', label: '往復' }, { v: 'ow', label: '片道' }]} value={roundTrip ? 'rt' : 'ow'} onChange={(v) => setRoundTrip(v === 'rt')} /><span class="unit">駐車場</span><input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={parking} onInput={(e) => setParking((e.target as HTMLInputElement).value)} /></Field>
         {dest && (
           <>
@@ -222,7 +223,7 @@ export function SettleForm({ from: f0, to: t0, amount: a0 }: { from?: string; to
         <Field label="払った人"><OnePicker fams={fams} value={from} onChange={setFrom} /></Field>
         <Field label="受け取った人"><OnePicker fams={fams} value={to} onChange={setTo} /></Field>
         <Field label="金額"><input class="n" type="number" inputMode="numeric" value={amount} placeholder="¥" onInput={(e) => setAmount((e.target as HTMLInputElement).value)} /></Field>
-        <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} style="flex:0 0 150px" /></Field>
+        <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} /></Field>
         <Field label="メモ"><input value={memo} placeholder="PayPay など" onInput={(e) => setMemo((e.target as HTMLInputElement).value)} /></Field>
       </Glass>
       <div class="empty" style="text-align:left;padding:14px 4px">{famJa(from)} が {famJa(to)} に {yen(num(amount))} 払った、として残高から差し引きます。</div>
