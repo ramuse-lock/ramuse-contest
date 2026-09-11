@@ -222,6 +222,23 @@ section.dir{padding:30px 0 10px;border-bottom:1px solid var(--pg-hair)}
 .who-chips{display:flex;gap:3px}
 .who-chips i{width:16px;height:16px;border-radius:999px;display:inline-block}
 .wa{background:var(--fa)}.wm{background:var(--fm)}.wr{background:var(--fr)}
+
+/* v2: hero as glass, gold only as glow + number */
+.v2 .hero{background:radial-gradient(120% 120% at 100% 0%,rgba(242,210,76,.42),transparent 62%),radial-gradient(80% 80% at 0% 100%,rgba(191,212,255,.35),transparent 60%),var(--sfc);color:var(--ink);border:var(--card-bd);box-shadow:var(--card-sh);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.v2 .hero .kicker{color:var(--mu)}
+.v2 .hero .ms.bgmark{color:var(--acc);opacity:.22}
+.v2 .hero .cd .big{color:var(--ink)}
+.v2 .hero .cd .u,.v2 .hero .cd .lbl{color:var(--mu);opacity:1}
+.v2 .hero .cd .dt{color:var(--acc-ink);opacity:1;background:var(--acc-bg);padding:3px 10px;border-radius:999px;font-size:12px}
+.v2 .hero .info{color:var(--mu)}
+.v2 .hero .info b{color:var(--ink)}
+.v2 .hero .name{color:var(--ink)}
+/* v2: + lives inside the floating tab bar */
+.v2 .tabbar{justify-content:space-between;padding:0 8px 0 4px;align-items:center}
+.v2 .tb{width:auto;flex:1}
+.v2 .tb.add{flex:0 0 46px;width:46px;height:46px;border-radius:999px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;gap:0}
+.v2 .tb.add .ms{font-size:24px;font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24}
+.v2 .logo i{background:var(--sfc);border:var(--card-bd);color:var(--acc-ink)}
 @media (max-width:640px){.wrap{padding:20px 14px 60px}.ph{width:340px;height:720px}.notes{grid-template-columns:1fr}.note{border-right:0;border-bottom:1px solid var(--pg-hair)}.note:last-child{border-bottom:0}}
 </style>
 
@@ -371,9 +388,9 @@ section.dir{padding:30px 0 10px;border-bottom:1px solid var(--pg-hair)}
 
 <!-- ================= A2 ================= -->
 <section class="dir v2" id="a2">
-  <div class="dir-hd"><div class="dir-letter">A2</div><div><h2>エア</h2><p>同じ骨格を、淡い色のにじみの上に半透明のガラスを重ねたApple調に。角を大きく、罫線を薄く、フォントは端末のシステム書体（iPhoneならSF）。下タブは浮いたガラスのピルにして、画面の下まで背景が抜ける。</p></div></div>
+  <div class="dir-hd"><div class="dir-letter">A2</div><div><h2>エア</h2><p>同じ骨格を、淡い色のにじみの上に半透明のガラスを重ねたApple調に。角を大きく、罫線を薄く、フォントは端末のシステム書体（iPhoneならSF）。下タブは浮いたガラスのピルにして、画面の下まで背景が抜ける。<b>改稿</b>：次の大会カードもガラスにし、金は右上のにじみと数字のラベルだけに。＋ボタンは独立させず、浮いたタブバーの右端に収めた。</p></div></div>
   <div class="notes">
-    <div class="note"><span class="kk">空気感の作り方</span>背景に青・金・藤のぼかしを置き、その上のカードだけ透過＋ぼかし。白地ではなく「光が抜ける」地</div>
+    <div class="note"><span class="kk">空気感の作り方</span>背景に青・金・藤のぼかしを置き、その上のカードだけ透過＋ぼかし。ヒーローも同じガラスで、金は面ではなく光として使う</div>
     <div class="note"><span class="kk">色の役割</span>A1と同じ割り当てを、iOSの系統色（青・緑・橙・紫）に置き換え。金はやや明るく</div>
     <div class="note"><span class="kk">アイコン</span>Material Symbolsの細い線（weight 300）。SF Symbolsに近い表情になる</div>
     <div class="note"><span class="kk">注意</span>ぼかしはAndroidの一部で重くなる。実装時は端末で確認し、必要なら不透明に落とす</div>
@@ -411,9 +428,9 @@ section.dir{padding:30px 0 10px;border-bottom:1px solid var(--pg-hair)}
           </div>
         </div>
       </div>
-      <nav class="tabbar"><span class="tb on"><span class="ms f">home</span>ホーム</span><span class="tb"><span class="ms">emoji_events</span>大会</span><span class="tb"><span class="ms">account_balance_wallet</span>お金</span></nav>
+      <nav class="tabbar"><span class="tb on"><span class="ms f">home</span>ホーム</span><span class="tb"><span class="ms">emoji_events</span>大会</span><span class="tb"><span class="ms">account_balance_wallet</span>お金</span><span class="tb add"><span class="ms">add</span></span></nav>
       </div>
-    </div><div class="cap"><b>ホーム</b>にじみの上にガラスのカード。下タブは浮いたピル</div></div>
+    </div><div class="cap"><b>ホーム</b>ヒーローもガラス。金は右上の光と「単発」ラベルだけ。＋はタブバーの中</div></div>
 
     <div class="shot"><div class="ph"><span class="blob3"></span>
       <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
@@ -429,10 +446,9 @@ section.dir{padding:30px 0 10px;border-bottom:1px solid var(--pg-hair)}
         <div class="month">11月</div>
         <div class="ccard"><div class="dtile t-blue"><b>7</b><small>土</small></div><div class="cb"><div class="cn">ダンスモンスター vol.11</div><div class="cm"><span class="type ty-single">単発</span><span class="ms">schedule</span>12:00 – 15:30</div></div></div>
       </div>
-      <div class="fab"><span class="ms">add</span></div>
-      <nav class="tabbar"><span class="tb"><span class="ms">home</span>ホーム</span><span class="tb on"><span class="ms f">emoji_events</span>大会</span><span class="tb"><span class="ms">account_balance_wallet</span>お金</span></nav>
+            <nav class="tabbar"><span class="tb"><span class="ms">home</span>ホーム</span><span class="tb on"><span class="ms f">emoji_events</span>大会</span><span class="tb"><span class="ms">account_balance_wallet</span>お金</span><span class="tb add"><span class="ms">add</span></span></nav>
       </div>
-    </div><div class="cap"><b>大会一覧</b>同じ情報量でも地が抜けて軽い</div></div>
+    </div><div class="cap"><b>大会一覧</b>＋はタブバー右端。画面上に浮く要素をなくした</div></div>
 
     <div class="shot"><div class="ph"><span class="blob3"></span>
       <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
@@ -465,7 +481,7 @@ section.dir{padding:30px 0 10px;border-bottom:1px solid var(--pg-hair)}
           <div class="doc"><span><span class="ms">description</span>ファイナリスト様へ</span><span><span class="ms">description</span>当日の流れ</span><span><span class="ms">description</span>音源提出</span><span><span class="ms">description</span>スケジュール</span><span><span class="ms">description</span>出演順</span></div>
         </div>
       </div>
-      <nav class="tabbar"><span class="tb"><span class="ms">home</span>ホーム</span><span class="tb on"><span class="ms f">emoji_events</span>大会</span><span class="tb"><span class="ms">account_balance_wallet</span>お金</span></nav>
+      <nav class="tabbar"><span class="tb"><span class="ms">home</span>ホーム</span><span class="tb on"><span class="ms f">emoji_events</span>大会</span><span class="tb"><span class="ms">account_balance_wallet</span>お金</span><span class="tb add"><span class="ms">add</span></span></nav>
       </div>
     </div><div class="cap"><b>大会詳細</b>数字はシステム書体で締める</div></div>
 
@@ -491,8 +507,7 @@ section.dir{padding:30px 0 10px;border-bottom:1px solid var(--pg-hair)}
           </div>
         </div>
       </div>
-      <div class="fab"><span class="ms">add</span></div>
-      <nav class="tabbar"><span class="tb"><span class="ms">home</span>ホーム</span><span class="tb"><span class="ms">emoji_events</span>大会</span><span class="tb on"><span class="ms f">account_balance_wallet</span>お金</span></nav>
+            <nav class="tabbar"><span class="tb"><span class="ms">home</span>ホーム</span><span class="tb"><span class="ms">emoji_events</span>大会</span><span class="tb on"><span class="ms f">account_balance_wallet</span>お金</span><span class="tb add"><span class="ms">add</span></span></nav>
       </div>
     </div><div class="cap"><b>お金</b>残高カードに緑のにじみ</div></div>
 
