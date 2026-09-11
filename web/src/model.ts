@@ -191,3 +191,11 @@ export function participation(c: Contest, ts: Task[]): Participation {
   return 'confirmed';
 }
 export const PARTICIPATION_LABEL: Record<Participation, string> = { confirmed: '', unentered: '未エントリー', tentative: '進出待ち' };
+
+// 日付タイルの色。面＝種別（単発=青／予選=紫／決勝=金）、左のぼかし＝結果（予選通過=緑／入賞=金）
+export function dtileClass(c: Contest): string {
+  const base = c.ラウンド === '決勝' ? 'dt-final' : c.ラウンド === '予選' ? 'dt-qual' : 'dt-single';
+  const r = String(c.結果 || '');
+  const accent = /入賞|優勝/.test(r) ? ' dt-prize' : /通過|進出/.test(r) ? ' dt-pass' : '';
+  return base + accent;
+}

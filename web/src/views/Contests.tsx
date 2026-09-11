@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { IS_KID } from '../api';
 import { upcoming, past, tasks, today } from '../store';
-import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDate, MONEY_KINDS, yen, taskAmount, roundClass, participation, PARTICIPATION_LABEL } from '../model';
+import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDate, MONEY_KINDS, yen, taskAmount, roundClass, participation, PARTICIPATION_LABEL, dtileClass } from '../model';
 import type { Contest } from '../types';
 import { Icon, Pill, TypeBadge, Glass } from '../ui';
 import { go } from '../router';
@@ -52,7 +52,7 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
   const finalLink = c.ラウンド === '予選' && c.シリーズ名 ? findFinal(c) : null;
   return (
     <button class={`ccard glass${!pastMode && part !== 'confirmed' ? ' tentative' : ''}`} onClick={() => go(`/contest/${encodeURIComponent(c.ID)}`)}>
-      <div class={`dtile ${tileTone(c.ラウンド)}`}><b>{fmtDay(c.開催日)}</b><small>{fmtDow(c.開催日)}</small></div>
+      <div class={`dtile ${dtileClass(c)}`}><b>{fmtDay(c.開催日)}</b><small>{fmtDow(c.開催日)}</small></div>
       <div class="cb">
         <div class="cn">{c.コンテスト名}</div>
         <div class="cm"><TypeBadge round={c.ラウンド} />{c.会場 && <><Icon name="location_on" />{c.会場}</>}{!c.会場 && c.開始時間 && <><Icon name="schedule" />{c.開始時間}{c.終了時間 && ` – ${c.終了時間}`}</>}</div>
@@ -107,7 +107,6 @@ function findFinal(c: Contest) {
   const all = [...upcoming.value, ...past.value];
   return all.find((x) => x.ラウンド === '決勝' && x.シリーズ名 === c.シリーズ名) || null;
 }
-function tileTone(round: string) { return round === '決勝' ? 't-acc' : round === '予選' ? 't-violet' : 't-blue'; }
 function fmtMonthDay(s: string) { const d = parseDate(s); return d ? `${d.getMonth() + 1}/${d.getDate()}` : ''; }
 function shortName(s: string) { return s.replace(/ (事前振込|振込|事前|持参)$/, ''); }
 
@@ -117,7 +116,7 @@ function YearStats() {
   const prize = list.filter((c) => /入賞|優勝/.test(c.結果)).length;
   const pass = list.filter((c) => /通過|進出/.test(c.結果)).length;
   return (
-    <Glass className="result" style="margin-bottom:10px;background:radial-gradient(120% 120% at 100% 0%,rgba(242,210,76,.35),transparent 60%),var(--sfc)">
+    <Glass className="result yearcard" style="margin-bottom:10px">
       <div style="flex:1">
         <div class="kicker">{y}年の結果</div>
         <div class="stats3">

@@ -59,9 +59,17 @@ a{color:inherit;text-decoration:none}
 .sec-hd .more .ms{font-size:16px}
 .row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair2);font-size:13.5px;width:100%;text-align:left}
 .row:first-child{border-top:0}
-.tile{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tile{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background-color:var(--sfc2)}
 .tile .ms{font-size:20px}
-.t-acc{background:var(--acc-bg);color:var(--acc-ink)}.t-blue{background:var(--blue-bg);color:var(--blue)}.t-green{background:var(--green-bg);color:var(--green)}.t-red{background:var(--red-bg);color:var(--red)}.t-violet{background:var(--violet-bg);color:var(--violet)}.t-orange{background:var(--orange-bg);color:var(--orange)}.t-teal{background:var(--teal-bg);color:var(--teal)}.t-mu{background:var(--hair2);color:var(--mu)}
+/* 面の色は background-image で重ねる。下地は不透明なので、背景のにじみで色が変わらない */
+.t-acc{background-image:linear-gradient(var(--acc-bg),var(--acc-bg));color:var(--acc-ink)}
+.t-blue{background-image:linear-gradient(var(--blue-bg),var(--blue-bg));color:var(--blue)}
+.t-green{background-image:linear-gradient(var(--green-bg),var(--green-bg));color:var(--green)}
+.t-red{background-image:linear-gradient(var(--red-bg),var(--red-bg));color:var(--red)}
+.t-violet{background-image:linear-gradient(var(--violet-bg),var(--violet-bg));color:var(--violet)}
+.t-orange{background-image:linear-gradient(var(--orange-bg),var(--orange-bg));color:var(--orange)}
+.t-teal{background-image:linear-gradient(var(--teal-bg),var(--teal-bg));color:var(--teal)}
+.t-mu{background-image:linear-gradient(var(--hair2),var(--hair2));color:var(--mu)}
 .row .t{flex:1;min-width:0;line-height:1.35}
 .row .t small{display:block;color:var(--mu);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .row .t .nm{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -69,7 +77,15 @@ a{color:inherit;text-decoration:none}
 .row .v small{display:block;font-size:11px;color:var(--mu);font-weight:500}
 .pill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;line-height:1.5;white-space:nowrap}
 .pill .ms{font-size:12px}
-.p-ok{background:var(--green-bg);color:var(--green)}.p-wn{background:var(--orange-bg);color:var(--orange)}.p-acc{background:var(--acc-bg);color:var(--acc-ink)}.p-mu{background:var(--hair2);color:var(--mu)}.p-violet{background:var(--violet-bg);color:var(--violet)}.p-blue{background:var(--blue-bg);color:var(--blue)}.p-red{background:var(--red-bg);color:var(--red)}
+/* ピルも同じ。下地を不透明にしてから色を重ねる */
+.pill{background-color:var(--sfc2)}
+.p-ok{background-image:linear-gradient(var(--green-bg),var(--green-bg));color:var(--green)}
+.p-wn{background-image:linear-gradient(var(--orange-bg),var(--orange-bg));color:var(--orange)}
+.p-acc{background-image:linear-gradient(var(--acc-bg),var(--acc-bg));color:var(--acc-ink)}
+.p-mu{background-image:linear-gradient(var(--hair2),var(--hair2));color:var(--mu)}
+.p-violet{background-image:linear-gradient(var(--violet-bg),var(--violet-bg));color:var(--violet)}
+.p-blue{background-image:linear-gradient(var(--blue-bg),var(--blue-bg));color:var(--blue)}
+.p-red{background-image:linear-gradient(var(--red-bg),var(--red-bg));color:var(--red)}
 .type{font-family:var(--num);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;color:#fff;white-space:nowrap}
 .ty-single{background:var(--blue)}.ty-qual{background:var(--violet)}.ty-final{background:var(--acc);color:#1C1B17}
 .chk{width:22px;height:22px;border-radius:999px;border:1.6px solid var(--mu2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
@@ -308,3 +324,22 @@ body.sheet-open .blobs,body.sheet-open .tabbar,body.sheet-open .fab{display:none
 .settle-group{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair2);width:100%;text-align:left;color:var(--mu);font-size:13px}
 .settle-group .v{margin-left:auto;font-family:var(--num);font-weight:600}
 .sub-row{padding-left:48px;font-size:12.5px;color:var(--mu)}
+
+/* ===== 日付タイル：面＝種別、左のぼかし＝結果 ===== */
+.dtile{--tile:transparent;--res:transparent;background-color:var(--sfc2);
+  background-image:linear-gradient(to right,var(--res) 0%,rgba(0,0,0,0) 58%),linear-gradient(var(--tile),var(--tile))}
+.dt-single{--tile:rgba(10,122,255,.18)}
+.dt-qual{--tile:rgba(94,92,230,.18)}
+.dt-final{--tile:rgba(209,168,0,.24)}
+.dt-pass{--res:rgba(40,167,69,.55)}   /* 予選通過 */
+.dt-prize{--res:rgba(209,168,0,.85)}  /* 入賞・優勝 */
+@media (prefers-color-scheme: dark){
+  .dt-single{--tile:rgba(90,163,255,.26)}
+  .dt-qual{--tile:rgba(142,140,255,.26)}
+  .dt-final{--tile:rgba(240,196,0,.26)}
+  .dt-pass{--res:rgba(61,209,110,.6)}
+  .dt-prize{--res:rgba(240,196,0,.85)}
+}
+/* 年間成績カード：大きな数字が左に寄りすぎて見えるので余白を足す */
+.yearcard{padding:16px 20px;background-image:radial-gradient(120% 120% at 100% 0%,rgba(242,210,76,.32),rgba(0,0,0,0) 60%)}
+.yearcard .stats3{margin-top:6px}
