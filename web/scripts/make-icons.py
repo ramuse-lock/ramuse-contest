@@ -4,10 +4,11 @@
 作り＝白地に黒ロゴ（幅0.92）、左上から光の艶、下にごく薄い影。子供用は下に紫のKIDS札。
 出力＝public/ と public/kid/ の icon-512 / icon-192 / apple-touch-icon"""
 from PIL import Image, ImageDraw, ImageFilter, ImageChops, ImageFont
-import os
+import os, re
 
 N = 1024
 WIDTH_RATIO = 0.92          # ロゴの幅（キャンバス比）。角丸で切られるので0.96以上は窮屈
+VERSION = 'v2'              # iOSはアイコンをURLで覚えるので、絵を変えたらここを上げる
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', '..', '..', 'ramuse-kid', 'RAMUSE_logo.png')
 OUT_ADULT = os.path.join(HERE, '..', 'public')
@@ -58,6 +59,10 @@ def build(kids=False):
 for kids, outdir in ((False, OUT_ADULT), (True, OUT_KID)):
     os.makedirs(outdir, exist_ok=True)
     img = build(kids)
-    for size, name in ((512, 'icon-512.png'), (192, 'icon-192.png'), (180, 'apple-touch-icon.png')):
+    for old in os.listdir(outdir):
+        if re.match(r'^(icon-\d+|apple-touch-icon)(-[\w]+)?\.png$', old):
+            os.remove(os.path.join(outdir, old))
+    for size, base in ((512, 'icon-512'), (192, 'icon-192'), (180, 'apple-touch-icon')):
+        name = '%s-%s.png' % (base, VERSION)
         img.resize((size, size), Image.LANCZOS).save(os.path.join(outdir, name), optimize=True)
-    print('wrote', outdir)
+    print('wrote', outdir, VERSION)
