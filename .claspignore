@@ -7,3 +7,5 @@ manifest.json
 .gitignore
 .claspignore
 README*
+# 設計書・モック・ツール（GASには不要）
+docs/**
