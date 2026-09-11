@@ -544,3 +544,226 @@ function getV2Bundle(mode) {
     balance: v2Verify_(ledger, fams), generatedAt: new Date().toISOString()
   };
 }
+
+// ============================================================
+// 書き込みAPI（PIN必須）。serveApi の action=v2rpc から呼ぶ。
+//   引数の先頭は常に pin。子供用ビルドはPINを持たないので書けない。
+// ============================================================
+function v2RequirePin_(pin) {
+  if (!v2CheckPin_(pin)) throw new Error('PINが違います');
+}
+function v2Sheet_(name, headers) {
+  var ss = getSpreadsheet();
+  var sh = ss.getSheetByName(name);
+  if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, headers.length).setValues([headers]); sh.setFrozenRows(1); }
+  var last = Math.max(sh.getLastColumn(), 1);
+  var cur = sh.getRange(1, 1, 1, last).getValues()[0].map(function(h) { return String(h).trim(); });
+  // 足りないヘッダーは右に追加（例：カレンダーID）
+  var added = false;
+  headers.forEach(function(h) { if (cur.indexOf(h) < 0) { cur.push(h); added = true; } });
+  if (added) sh.getRange(1, 1, 1, cur.length).setValues([cur.map(function(h) { return h; })]);
+  return { sh: sh, headers: cur.filter(function(h) { return h; }) };
+}
+function v2CellValue_(h, v) {
+  if (v === undefined || v === null) return '';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return v;
+}
+function v2UpsertRow_(name, headers, obj) {
+  var s = v2Sheet_(name, headers);
+  var sh = s.sh, hs = s.headers;
+  var id = String(obj['ID'] || '').trim();
+  if (!id) throw new Error('IDがありません');
+  var row = hs.map(function(h) { return v2CellValue_(h, obj[h]); });
+  var lastRow = sh.getLastRow();
+  var ids = lastRow >= 2 ? sh.getRange(2, 1, lastRow - 1, 1).getValues().map(function(r) { return String(r[0]).trim(); }) : [];
+  var idx = ids.indexOf(id);
+  var textCols = ['ID','大会ID','台帳ID','開催日','期限日','済日','日付','更新日時','作成日時','集合時間','開始時間','終了時間','資料JSON','明細JSON','負担JSON','車JSON','値','キー','カレンダーID'];
+  var r = idx >= 0 ? idx + 2 : lastRow + 1;
+  hs.forEach(function(h, i) { if (textCols.indexOf(h) >= 0) sh.getRange(r, i + 1).setNumberFormat('@'); });
+  sh.getRange(r, 1, 1, hs.length).setValues([row]);
+  return obj;
+}
+function v2DeleteRow_(name, id) {
+  var sh = getSpreadsheet().getSheetByName(name);
+  if (!sh) return false;
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return false;
+  var ids = sh.getRange(2, 1, lastRow - 1, 1).getValues().map(function(r) { return String(r[0]).trim(); });
+  var idx = ids.indexOf(String(id).trim());
+  if (idx < 0) return false;
+  sh.deleteRow(idx + 2);
+  return true;
+}
+function v2FindRow_(name, id) {
+  var rows = v2ReadSheet_(name);
+  for (var i = 0; i < rows.length; i++) if (String(rows[i]['ID']) === String(id)) return rows[i];
+  return null;
+}
+
+var V2_CONTEST_HEADERS_W = V2_HEADERS.CONTESTS.concat(['カレンダーID']);
+
+// ---- 大会 ----
+function saveContestV2(pin, c) {
+  v2RequirePin_(pin);
+  if (!c || !v2Str_(c['コンテスト名'])) throw new Error('大会名がありません');
+  var prev = c['ID'] ? v2FindRow_(V2_SHEETS.CONTESTS, c['ID']) : null;
+  c['ID'] = c['ID'] || v2Uid_('c');
+  c['開催日'] = v2DateStr_(c['開催日']);
+  ['集合時間', '開始時間', '終了時間'].forEach(function(k) { c[k] = v2TimeStr_(c[k]); });
+  c['ラウンド'] = v2Str_(c['ラウンド']) || '単発';
+  c['キャンセル'] = v2Bool_(c['キャンセル']);
+  c['更新日時'] = new Date().toISOString();
+  if (prev && prev['カレンダーID'] && !c['カレンダーID']) c['カレンダーID'] = prev['カレンダーID'];
+  if (prev && prev['旧行番号'] && !c['旧行番号']) c['旧行番号'] = prev['旧行番号'];
+  try { c['カレンダーID'] = v2SyncCalendar_(c, prev); } catch (e) { Logger.log('calendar sync failed: ' + e); }
+  v2UpsertRow_(V2_SHEETS.CONTESTS, V2_CONTEST_HEADERS_W, c);
+  return c;
+}
+function deleteContestV2(pin, id) {
+  v2RequirePin_(pin);
+  var prev = v2FindRow_(V2_SHEETS.CONTESTS, id);
+  if (prev && prev['カレンダーID']) {
+    try { var ev = CalendarApp.getDefaultCalendar().getEventById(prev['カレンダーID']); if (ev) ev.deleteEvent(); } catch (e) {}
+  }
+  // ぶら下がる「やること」も消す（台帳は履歴なので残す）
+  v2ReadSheet_(V2_SHEETS.TASKS).filter(function(t) { return String(t['大会ID']) === String(id); })
+    .forEach(function(t) { v2DeleteRow_(V2_SHEETS.TASKS, t['ID']); });
+  return v2DeleteRow_(V2_SHEETS.CONTESTS, id);
+}
+// Googleカレンダーへ同期（旧アプリと同じ命名・色：決勝は【決勝進出】／【決勝・進出未定】、色5=黄・8=灰）
+function v2SyncCalendar_(c, prev) {
+  var cal = CalendarApp.getDefaultCalendar();
+  var date = c['開催日'];
+  var existingId = v2Str_(c['カレンダーID']) || (prev ? v2Str_(prev['カレンダーID']) : '');
+  if (!date || c['キャンセル']) {
+    if (existingId) { try { var ev0 = cal.getEventById(existingId); if (ev0) ev0.deleteEvent(); } catch (e) {} }
+    return '';
+  }
+  var isFinal = c['ラウンド'] === '決勝';
+  var fs = v2Str_(c['決勝ステータス']);
+  var title = isFinal ? (fs === '進出決定' ? '【決勝進出】' : '【決勝・進出未定】') + c['コンテスト名'] : c['コンテスト名'];
+  var color = isFinal && fs !== '進出決定' ? '8' : '5';
+  var lines = [];
+  if (c['集合時間']) lines.push('集合: ' + c['集合時間']);
+  if (c['開始時間']) lines.push('開始: ' + c['開始時間'] + (c['終了時間'] ? ' - ' + c['終了時間'] : ''));
+  if (c['出演順']) lines.push('出演順: ' + c['出演順'] + '番目' + (c['総組数'] ? ' / ' + c['総組数'] + '組' : ''));
+  if (c['URL']) lines.push('詳細URL: ' + c['URL']);
+  var desc = lines.join('\n');
+  var loc = c['会場'] || '';
+  var dayStart = combineCalendarDateTime_(date, '00:00');
+  var dayEnd = new Date(dayStart.getTime() + 86400000 - 1);
+  var ev = null;
+  if (existingId) { try { ev = cal.getEventById(existingId); } catch (e) { ev = null; } }
+  if (!ev) {
+    // 旧アプリが作ったイベント（同日・同名／旧タイトル）を引き継ぐ
+    var cands = cal.getEvents(dayStart, dayEnd).filter(function(e) {
+      var t = e.getTitle();
+      return t === title || t === c['コンテスト名'] || t === '【決勝進出】' + c['コンテスト名'] || t === '【決勝・進出未定】' + c['コンテスト名'] || t === '【決勝予定】' + c['コンテスト名'];
+    });
+    if (cands.length) ev = cands[0];
+  }
+  if (ev) {
+    setCalendarEventSchedule_(ev, date, c['開始時間'], c['終了時間'], 120);
+    ev.setTitle(title); ev.setLocation(loc); ev.setDescription(desc);
+    try { ev.setColor(color); } catch (e) {}
+  } else {
+    ev = createCalendarEvent_(cal, title, date, c['開始時間'], c['終了時間'], 120, { location: loc, description: desc });
+    try { ev.setColor(color); } catch (e) {}
+  }
+  removeDuplicateContestEvents_(cal, title, dayStart, ev.getId());
+  return ev.getId();
+}
+
+// ---- やること ----
+function saveTasksV2(pin, tasks) {
+  v2RequirePin_(pin);
+  if (!Array.isArray(tasks)) tasks = [tasks];
+  return tasks.map(function(t) {
+    t['ID'] = t['ID'] || v2Uid_('t');
+    t['当日'] = v2Bool_(t['当日']);
+    t['済'] = v2Bool_(t['済']);
+    t['期限日'] = t['当日'] ? '' : v2DateStr_(t['期限日']);
+    if (t['済'] && !t['済日']) t['済日'] = v2DateStr_(new Date());
+    if (!t['済']) t['済日'] = '';
+    return v2UpsertRow_(V2_SHEETS.TASKS, V2_HEADERS.TASKS, t);
+  });
+}
+function deleteTaskV2(pin, id) { v2RequirePin_(pin); return v2DeleteRow_(V2_SHEETS.TASKS, id); }
+
+// ---- 台帳 ----
+function saveLedgerV2(pin, l) {
+  v2RequirePin_(pin);
+  var fams = getFamilyNames();
+  l['ID'] = l['ID'] || v2Uid_('l');
+  l['日付'] = v2DateStr_(l['日付']) || v2DateStr_(new Date());
+  var items = typeof l['明細JSON'] === 'string' ? JSON.parse(l['明細JSON'] || '[]') : (l['明細JSON'] || []);
+  items = items.filter(function(it) { return v2Num_(it.amount) > 0 && Array.isArray(it.targets) && it.targets.length; });
+  if (!items.length) throw new Error('明細がありません');
+  if (fams.indexOf(l['支払者']) < 0) throw new Error('支払者が不正です');
+  l['明細JSON'] = items;
+  l['合計'] = v2SumItems_(items);
+  l['負担JSON'] = v2Share_(items, fams, l['支払者']); // サーバー側で再計算（ゼロサム保証）
+  if (!l['作成日時']) l['作成日時'] = new Date().toISOString();
+  return v2UpsertRow_(V2_SHEETS.LEDGER, V2_HEADERS.LEDGER, l);
+}
+function deleteLedgerV2(pin, id) { v2RequirePin_(pin); return v2DeleteRow_(V2_SHEETS.LEDGER, id); }
+
+// ---- マスタ ----
+function saveDestinationV2(pin, d) {
+  v2RequirePin_(pin);
+  if (!v2Str_(d['名前'])) throw new Error('行き先の名前がありません');
+  d['ID'] = d['ID'] || v2Uid_('d');
+  return v2UpsertRow_(V2_SHEETS.DEST, V2_HEADERS.DEST, d);
+}
+function deleteDestinationV2(pin, id) { v2RequirePin_(pin); return v2DeleteRow_(V2_SHEETS.DEST, id); }
+function saveCarsV2(pin, cars) {
+  v2RequirePin_(pin);
+  var ss = getSpreadsheet();
+  v2WriteSheet_(ss, V2_SHEETS.CARS, V2_HEADERS.CARS, cars, '#30B0C7');
+  return cars;
+}
+function saveSettingV2(pin, key, value) {
+  v2RequirePin_(pin);
+  var s = v2Sheet_(V2_SHEETS.SETTINGS, V2_HEADERS.SETTINGS);
+  var sh = s.sh;
+  var last = sh.getLastRow();
+  var keys = last >= 2 ? sh.getRange(2, 1, last - 1, 1).getValues().map(function(r) { return String(r[0]); }) : [];
+  var idx = keys.indexOf(key);
+  var r = idx >= 0 ? idx + 2 : last + 1;
+  sh.getRange(r, 1, 1, 2).setNumberFormat('@').setValues([[key, String(value)]]);
+  return { key: key, value: String(value) };
+}
+
+// ---- ディスパッチ ----
+function serveV2Rpc(e) {
+  var method = String(e.parameter.method || '');
+  var pin = String(e.parameter.pin || '');
+  var args = [];
+  try {
+    var argsJson = '[]';
+    if (e.parameter.args64) argsJson = Utilities.newBlob(Utilities.base64DecodeWebSafe(e.parameter.args64)).getDataAsString('UTF-8');
+    else if (e.parameter.args) argsJson = e.parameter.args;
+    args = JSON.parse(argsJson);
+    if (!Array.isArray(args)) throw new Error('Invalid arguments');
+  } catch (err) {
+    return { ok: false, error: 'Invalid arguments: ' + err.message };
+  }
+  var methods = {
+    saveContestV2: saveContestV2, deleteContestV2: deleteContestV2,
+    saveTasksV2: saveTasksV2, deleteTaskV2: deleteTaskV2,
+    saveLedgerV2: saveLedgerV2, deleteLedgerV2: deleteLedgerV2,
+    saveDestinationV2: saveDestinationV2, deleteDestinationV2: deleteDestinationV2,
+    saveCarsV2: saveCarsV2, saveSettingV2: saveSettingV2,
+    checkPinV2: function(p) { return v2CheckPin_(p); }
+  };
+  if (!methods[method]) return { ok: false, error: 'Unknown method: ' + method };
+  try {
+    var lock = LockService.getScriptLock();
+    lock.waitLock(20000);
+    try { return { ok: true, value: methods[method].apply(null, [pin].concat(args)) }; }
+    finally { lock.releaseLock(); }
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
+}
