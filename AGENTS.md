@@ -1,6 +1,6 @@
 # RAMUSE（大人用アプリ・GAS）— 案件ノート
 
-ステータス：作業中（UI刷新フェーズ1＝V2.gs実装済み・ドライラン検証OK）。**ブロック：clasp login（RAMUSE用Google）待ち**。ログイン→clasp push→GASエディタでmigrateV2Dry→migrateV2Run→clasp deploy。並行でフェーズ2（フロント骨格）を進めてよい
+ステータス：先方作業待ち（GASエディタで migrateV2Dry→migrateV2Run を実行してもらう）。本番デプロイ@45済み（action=v2稼働・新シート待ち）。実行後→exec?action=v2 で残高検証→フェーズ2（フロント骨格）へ。待機中はフェーズ2を進めてよい
 
 ## この案件は何か
 
