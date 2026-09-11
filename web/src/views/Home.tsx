@@ -11,7 +11,13 @@ export function Home() {
   return (
     <>
       <div class="hd">
-        <span class="logo"><i><Icon name="emoji_events" fill /></i>RAMUSE{IS_KID && <span class="tag">KIDS</span>}</span>
+        <span class="logo">
+          <picture>
+            <source srcset="./logo-w.png" media="(prefers-color-scheme: dark)" />
+            <img src="./logo.png" alt="RAMUSE" class="wordmark" />
+          </picture>
+          {IS_KID && <span class="tag">KIDS</span>}
+        </span>
         <span class="date">{fmtLong(today.value)}</span>
       </div>
       {ups.length ? <Tickets list={ups} /> : <Empty>予定している大会はありません</Empty>}

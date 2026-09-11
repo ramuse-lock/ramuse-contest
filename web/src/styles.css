@@ -45,6 +45,7 @@ a{color:inherit;text-decoration:none}
 .logo{font-family:var(--num);font-weight:700;letter-spacing:.14em;font-size:13px;display:flex;align-items:center;gap:8px}
 .logo i{width:22px;height:22px;border-radius:7px;background:var(--sfc);border:var(--card-bd);display:inline-flex;align-items:center;justify-content:center;color:var(--acc-ink)}
 .logo i .ms{font-size:15px}
+.logo .wordmark{height:36px;width:auto;display:block;margin:-4px 0}
 .logo .tag{font-family:var(--jp);font-size:10px;font-weight:700;letter-spacing:.04em;background:var(--violet-bg);color:var(--violet);padding:2px 7px;border-radius:999px}
 .date{font-size:12px;color:var(--mu)}
 .icnbtn{width:36px;height:36px;border-radius:999px;border:var(--card-bd);background:var(--sfc);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);display:flex;align-items:center;justify-content:center;color:var(--ink)}
