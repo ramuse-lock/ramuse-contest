@@ -1,0 +1,525 @@
+<title>RAMUSE 画面方向性 3案</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F5F4EF;--sfc:#FFFFFF;--ink:#16161A;--mu:#77746B;--mu2:#B5B2A8;--hair:rgba(22,22,26,.10);--hair2:rgba(22,22,26,.05);
+  --acc:#C8A200;--acc-ink:#866D00;--acc-bg:rgba(200,162,0,.12);
+  --ok:#1E7B3C;--ok-bg:rgba(30,123,60,.10);--ng:#B42318;--ng-bg:rgba(180,35,24,.09);--wn:#9A5B00;--wn-bg:rgba(154,91,0,.10);
+  --band:#1C1B17;--band-ink:#F5F4EF;--band-mu:#A8A497;--band-hair:rgba(245,244,239,.12);
+  --jp:'Zen Kaku Gothic New','Hiragino Sans','Noto Sans JP',sans-serif;--num:'IBM Plex Sans','Helvetica Neue',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E0E10;--sfc:#1A1A1D;--ink:#F2F1EC;--mu:#8E8B82;--mu2:#55534C;--hair:rgba(242,241,236,.11);--hair2:rgba(242,241,236,.05);
+  --acc:#E3BA00;--acc-ink:#E3BA00;--acc-bg:rgba(227,186,0,.14);
+  --ok:#3FBF63;--ok-bg:rgba(63,191,99,.12);--ng:#FF6B5E;--ng-bg:rgba(255,107,94,.12);--wn:#FFB020;--wn-bg:rgba(255,176,32,.12);
+  --band:#000000;--band-ink:#F2F1EC;--band-mu:#8E8B82;--band-hair:rgba(242,241,236,.12);
+}}
+:root[data-theme="dark"]{
+  --bg:#0E0E10;--sfc:#1A1A1D;--ink:#F2F1EC;--mu:#8E8B82;--mu2:#55534C;--hair:rgba(242,241,236,.11);--hair2:rgba(242,241,236,.05);
+  --acc:#E3BA00;--acc-ink:#E3BA00;--acc-bg:rgba(227,186,0,.14);
+  --ok:#3FBF63;--ok-bg:rgba(63,191,99,.12);--ng:#FF6B5E;--ng-bg:rgba(255,107,94,.12);--wn:#FFB020;--wn-bg:rgba(255,176,32,.12);
+  --band:#000000;--band-ink:#F2F1EC;--band-mu:#8E8B82;--band-hair:rgba(242,241,236,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--jp);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.num,.n{font-family:var(--num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+h1{font-size:26px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;text-wrap:balance}
+.lead{color:var(--mu);max-width:64ch;margin:0}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mu)}
+.meta b{color:var(--ink);font-weight:500}
+.switch{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;margin-bottom:8px;border-bottom:1px solid var(--hair);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sw{border:1px solid var(--hair);background:var(--sfc);color:var(--ink);padding:8px 14px;border-radius:999px;font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.sw:focus-visible,.tg:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.sw b{font-family:var(--num);margin-right:6px;color:var(--acc-ink)}
+.tg{margin-left:auto;border:1px solid var(--hair);background:transparent;color:var(--mu);padding:8px 12px;border-radius:999px;font:inherit;font-size:12px;cursor:pointer}
+section.dir{padding:34px 0 10px;border-bottom:1px solid var(--hair)}
+.dir-hd{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;margin-bottom:18px}
+.dir-letter{font-family:var(--num);font-size:44px;font-weight:700;line-height:1;color:var(--acc-ink);padding-top:2px}
+.dir-hd h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+.dir-hd p{margin:4px 0 0;color:var(--mu);max-width:70ch}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;border:1px solid var(--hair);border-radius:14px;overflow:hidden;background:var(--sfc);margin-bottom:22px}
+.note{padding:14px 16px;border-right:1px solid var(--hair);font-size:13px}
+.note:last-child{border-right:0}
+.note .kicker{margin-bottom:4px;display:block}
+.phones{display:flex;gap:22px;overflow-x:auto;padding:4px 2px 26px;scroll-snap-type:x mandatory}
+.shot{scroll-snap-align:start;flex:0 0 auto}
+.shot .cap{font-size:12px;color:var(--mu);margin:10px 4px 0;display:flex;gap:8px}
+.shot .cap b{color:var(--ink);font-weight:500}
+/* ===== phone ===== */
+.ph{width:360px;height:760px;background:var(--bg);border:1px solid var(--hair);border-radius:38px;overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 20px 50px -30px rgba(0,0,0,.35)}
+.st{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-family:var(--num);font-size:13px;font-weight:600;flex-shrink:0}
+.ph.band-top .st{color:var(--band-ink);background:var(--band)}
+.scr{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.body{flex:1;overflow:hidden;padding:0 16px}
+.tabbar{height:78px;flex-shrink:0;border-top:1px solid var(--hair);background:var(--sfc);display:flex;justify-content:space-around;align-items:flex-start;padding:10px 12px 0}
+.tb{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:500;color:var(--mu);width:64px}
+.tb.on{color:var(--ink)}
+.tb i{display:block;width:22px;height:22px;border-radius:7px;border:1.6px solid currentColor;opacity:.85}
+.tb.on i{background:var(--acc);border-color:var(--acc)}
+/* generic pieces */
+.hd{display:flex;align-items:center;justify-content:space-between;padding:8px 0 6px;min-height:44px}
+.logo{font-family:var(--num);font-weight:700;letter-spacing:.14em;font-size:13px}
+.logo::before{content:"";display:inline-block;width:8px;height:8px;background:var(--acc);border-radius:2px;margin-right:8px;vertical-align:1px}
+.date{font-size:12px;color:var(--mu)}
+.icnbtn{width:34px;height:34px;border-radius:999px;border:1px solid var(--hair);background:var(--sfc);display:flex;align-items:center;justify-content:center;font-family:var(--num);font-weight:600;color:var(--ink)}
+.card{background:var(--sfc);border:1px solid var(--hair);border-radius:16px;padding:14px 16px}
+.sec{margin-top:16px}
+.sec-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.sec-hd .more{font-size:12px;color:var(--acc-ink);font-weight:500}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair2);font-size:13.5px}
+.row:first-of-type{border-top:0}
+.row .d{font-family:var(--num);font-size:12px;color:var(--mu);width:44px;flex-shrink:0;line-height:1.2}
+.row .d b{display:block;font-size:15px;color:var(--ink);font-weight:600}
+.row .t{flex:1;min-width:0}
+.row .t small{display:block;color:var(--mu);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .v{font-family:var(--num);font-weight:600;font-size:14px;text-align:right;white-space:nowrap}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;line-height:1.5;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}.p-ng{background:var(--ng-bg);color:var(--ng)}.p-wn{background:var(--wn-bg);color:var(--wn)}.p-acc{background:var(--acc-bg);color:var(--acc-ink)}.p-mu{background:var(--hair2);color:var(--mu)}
+.type{font-family:var(--num);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:4px;border:1px solid var(--hair);color:var(--mu)}
+.type.fin{border-color:var(--acc);color:var(--acc-ink)}
+.chk{width:20px;height:20px;border-radius:999px;border:1.6px solid var(--mu2);flex-shrink:0}
+.chk.on{background:var(--ok);border-color:var(--ok);position:relative}
+.chk.on::after{content:"";position:absolute;left:6px;top:3px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.done{color:var(--mu);text-decoration:line-through;text-decoration-color:var(--mu2)}
+.big{font-family:var(--num);font-weight:700;letter-spacing:-.03em;line-height:1}
+.hair{border-top:1px solid var(--hair)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kv{display:flex;flex-direction:column;gap:2px}
+.kv .kicker{font-size:10px}
+.kv .n{font-size:17px;font-weight:600}
+.kv small{font-size:11px;color:var(--mu)}
+.btn{border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;border:1px solid var(--hair);background:var(--sfc);color:var(--ink);white-space:nowrap}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.acc{background:var(--acc);color:#1C1B17;border-color:var(--acc)}
+.fab{position:absolute;right:18px;bottom:96px;width:52px;height:52px;border-radius:999px;background:var(--acc);color:#1C1B17;display:flex;align-items:center;justify-content:center;font-family:var(--num);font-size:26px;font-weight:600;box-shadow:0 10px 24px -10px rgba(0,0,0,.4)}
+.fab.low{bottom:22px}
+/* A hero */
+.heroA{padding:6px 0 14px}
+.heroA .name{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:2px 0 4px}
+.cd{display:flex;align-items:baseline;gap:6px;margin:8px 0 2px}
+.cd .big{font-size:64px}
+.cd .u{font-size:14px;font-weight:700;color:var(--mu)}
+.cd .lbl{font-size:13px;color:var(--mu);margin-right:2px}
+.info{display:flex;gap:14px;font-size:12.5px;color:var(--mu);flex-wrap:wrap}
+.info b{color:var(--ink);font-weight:600;font-family:var(--num)}
+.stat2{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--hair);border-radius:14px;background:var(--sfc);overflow:hidden}
+.stat2>div{padding:12px 14px}
+.stat2>div+div{border-left:1px solid var(--hair)}
+.stat2 .n{font-size:22px;font-weight:700;line-height:1.1}
+.stat2 .n span{font-size:12px;color:var(--mu);font-weight:500;margin-left:4px;font-family:var(--jp)}
+/* detail */
+.back{display:flex;align-items:center;gap:10px;padding:8px 0 4px;min-height:44px;font-size:13px;color:var(--mu)}
+.back .ar{font-family:var(--num);font-size:20px;line-height:1;color:var(--ink)}
+.dt-hd .name{font-size:21px;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:6px 0 4px}
+.dt-hd .sub{font-size:12.5px;color:var(--mu)}
+.dt-date{display:flex;align-items:baseline;gap:8px;margin-top:10px}
+.dt-date .big{font-size:40px}
+.dt-date .w{font-size:14px;color:var(--mu);font-weight:600}
+.dt-date .cdn{margin-left:auto;font-family:var(--num);font-size:12px;color:var(--acc-ink);font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--hair);border-radius:14px;overflow:hidden;background:var(--sfc);margin-top:14px}
+.tiles>div{padding:10px 8px 9px;text-align:center}
+.tiles>div+div{border-left:1px solid var(--hair)}
+.tiles .kicker{font-size:9.5px}
+.tiles .n{font-size:16px;font-weight:700;display:block;margin-top:2px}
+.tiles .n small{font-size:10px;color:var(--mu);font-weight:500}
+.venue{font-size:12.5px;color:var(--mu);margin-top:8px}
+.venue b{color:var(--ink);font-weight:500}
+.doc{display:flex;gap:8px;flex-wrap:wrap}
+.doc span{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--hair);background:var(--sfc)}
+/* money */
+.bal{display:flex;justify-content:space-between;align-items:flex-end;padding:6px 0 12px}
+.bal .big{font-size:36px}
+.bal .big small{font-size:16px;font-weight:600;color:var(--mu);margin-right:3px}
+.person{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--hair2)}
+.person .av{width:34px;height:34px;border-radius:999px;background:var(--acc-bg);color:var(--acc-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.person .who{flex:1;font-weight:600}
+.person .who small{display:block;font-weight:400;color:var(--mu);font-size:11.5px}
+.person .amt{font-family:var(--num);font-weight:700;font-size:18px}
+/* B band */
+.bandwrap{background:var(--band);color:var(--band-ink);padding:0 16px 18px;border-radius:0 0 26px 26px}
+.bandwrap .hd{color:var(--band-ink)}
+.bandwrap .logo::before{background:var(--acc)}
+.seg{display:flex;background:var(--band-hair);border-radius:999px;padding:3px;margin:4px 0 14px}
+.seg span{flex:1;text-align:center;font-size:12.5px;font-weight:600;padding:7px 0;border-radius:999px;color:var(--band-mu)}
+.seg span.on{background:var(--band-ink);color:var(--band)}
+.bandwrap .kicker{color:var(--band-mu)}
+.bandwrap .cd .u,.bandwrap .cd .lbl{color:var(--band-mu)}
+.bandwrap .info{color:var(--band-mu)}
+.bandwrap .info b{color:var(--band-ink)}
+.bandwrap .name{color:var(--band-ink)}
+.bandwrap .hair{border-color:var(--band-hair)}
+.mods{padding:0 16px}
+.mod{background:var(--sfc);border:1px solid var(--hair);border-radius:16px;padding:12px 14px;margin-top:12px}
+.mod .sec-hd{margin-bottom:2px}
+.dtabs{display:flex;gap:18px;border-bottom:1px solid var(--hair);margin-top:12px}
+.dtabs span{padding:8px 0;font-size:13px;font-weight:600;color:var(--mu)}
+.dtabs span.on{color:var(--ink);border-bottom:2px solid var(--acc)}
+.pcard{background:var(--sfc);border:1px solid var(--hair);border-radius:16px;padding:14px 16px;margin-top:10px;display:flex;align-items:center;gap:12px}
+.pcard .who{flex:1}
+.pcard .who b{display:block;font-size:15px}
+.pcard .who small{color:var(--mu);font-size:11.5px}
+.pcard .amt{font-family:var(--num);font-weight:700;font-size:22px}
+/* C timeline */
+.chips{display:flex;gap:6px;padding:4px 0 10px;overflow:hidden}
+.chip{font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--hair);background:var(--sfc);color:var(--mu);white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tl{position:relative;padding-left:54px}
+.tl::before{content:"";position:absolute;left:44px;top:6px;bottom:0;border-left:1px solid var(--hair)}
+.ti{position:relative;padding:8px 0 10px}
+.ti .dt{position:absolute;left:-54px;top:9px;width:38px;text-align:right;font-family:var(--num);font-size:11px;color:var(--mu);line-height:1.2}
+.ti .dt b{display:block;font-size:15px;color:var(--ink);font-weight:600}
+.ti::before{content:"";position:absolute;left:-14px;top:15px;width:7px;height:7px;border-radius:999px;background:var(--mu2)}
+.ti.now::before{background:var(--acc);box-shadow:0 0 0 4px var(--acc-bg)}
+.ti.today .dt b{color:var(--acc-ink)}
+.ti .line{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.ti .line small{color:var(--mu);font-size:11.5px;margin-left:auto;white-space:nowrap;font-family:var(--num)}
+.ti .amt{font-family:var(--num);font-weight:600;margin-left:auto}
+.tcard{background:var(--sfc);border:1px solid var(--hair);border-radius:14px;padding:12px 14px;margin-top:4px}
+.tcard .name{font-size:15px;font-weight:700;line-height:1.3;margin:2px 0 4px}
+.tcard .info{font-size:12px}
+.tcard .cdn{font-family:var(--num);font-weight:700;color:var(--acc-ink);font-size:12px}
+.sticky-bal{position:absolute;left:12px;right:12px;bottom:14px;background:var(--ink);color:var(--bg);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px}
+.sticky-bal .n{margin-left:auto;font-size:17px;font-weight:700}
+.sticky-bal .ar{font-family:var(--num);font-size:18px;opacity:.6}
+.foot{margin-top:40px;color:var(--mu);font-size:12.5px;max-width:70ch}
+.foot p{margin:6px 0}
+@media (max-width:640px){.wrap{padding:20px 14px 60px}.ph{width:340px;height:720px}.notes{grid-template-columns:1fr}.note{border-right:0;border-bottom:1px solid var(--hair)}.note:last-child{border-bottom:0}}
+@media (prefers-reduced-motion:no-preference){.sw,.tg{transition:background .15s}}
+</style>
+
+<div class="wrap">
+<div class="top">
+  <div>
+    <div class="kicker">RAMUSE UI刷新 · 画面モック</div>
+    <h1>画面方向性 3案</h1>
+    <p class="lead">同じ情報モデル（大会／やること／台帳）を、3つの違うナビゲーションと画面構成で組みました。数字はすべて今のスプレッドシートの実データです。台帳の残高だけは9/1に全額精算済みのため、直近の立替を想定した「例」を置いています。</p>
+  </div>
+  <div class="meta"><span>基準日 <b class="n">2026-09-11 金</b></span><span>大会 <b class="n">21件</b></span><span>アクセント <b>ブランドの黄を継続</b></span></div>
+</div>
+
+<div class="switch">
+  <a class="sw" href="#a"><b>A</b>通帳</a>
+  <a class="sw" href="#b"><b>B</b>ボード</a>
+  <a class="sw" href="#c"><b>C</b>タイムライン</a>
+  <button class="tg" type="button" id="tg">ダーク／ライト切替</button>
+</div>
+
+<!-- ================= A ================= -->
+<section class="dir" id="a">
+  <div class="dir-hd">
+    <div class="dir-letter">A</div>
+    <div><h2>通帳</h2><p>銀行アプリの基本形。下タブ3つ（ホーム・大会・お金）で迷わせず、白地に細い罫線、数字を大きく。今のアプリから一番自然に移れる案。</p></div>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="kicker">ナビ</span>下タブ3つ。カレンダーは「大会」の中で一覧⇄月表示を切替</div>
+    <div class="note"><span class="kicker">ホームの主役</span>次の大会のカウントダウン。その下に「今週」「持ち物」「貸し借り」</div>
+    <div class="note"><span class="kicker">向く場面</span>閲覧が主の2家庭にも説明なしで伝わる。片手で下タブに届く</div>
+    <div class="note"><span class="kicker">リスク</span>安全な分、印象は「よくある銀行アプリ」。差はタイポと数字の扱いで出す</div>
+  </div>
+  <div class="phones">
+
+    <div class="shot"><div class="ph">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr"><div class="body">
+        <div class="hd"><span class="logo">RAMUSE</span><span class="date">9月11日 金</span></div>
+        <div class="heroA">
+          <div class="kicker">次の大会 · 単発</div>
+          <div class="name">ダンカニ2026</div>
+          <div class="cd"><span class="lbl">あと</span><span class="big">9</span><span class="u">日</span><span class="date" style="margin-left:auto">9/20 日</span></div>
+          <div class="info"><span>集合 <b>09:00</b></span><span>開始 <b>09:30</b></span><span>ぎふワールド・ローズガーデン</span></div>
+        </div>
+        <div class="stat2">
+          <div><div class="kicker">今週の締切</div><div class="n">2<span>件</span></div></div>
+          <div><div class="kicker">受け取る</div><div class="n">¥6,000<span>2人</span></div></div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd"><span class="kicker">今週</span><span class="more">すべて</span></div>
+          <div class="card" style="padding:4px 16px">
+            <div class="row"><div class="d">9/17<b>水</b></div><div class="t">観覧費 事前振込<small>ROOKIES FINAL · 大人 ¥3,500 × 3</small></div><div class="v">¥10,500</div></div>
+            <div class="row"><div class="d">9/20<b>日</b></div><div class="t">エントリー費 振込<small>THE EVOLVER vol.2 · ¥3,000 × 3</small></div><div class="v">¥9,000</div></div>
+            <div class="row"><div class="d">9/20<b>日</b></div><div class="t">ダンカニ2026 当日<small>集合 09:00 · ぎふワールド・ローズガーデン</small></div><span class="pill p-acc">大会</span></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd"><span class="kicker">当日の持ち物 · ダンカニ</span></div>
+          <div class="card" style="padding:4px 16px">
+            <div class="row"><span class="chk"></span><div class="t">音源CD</div><span class="pill p-mu">当日</span></div>
+            <div class="row"><span class="chk"></span><div class="t">観覧費 <small>大人 ¥800 · 当日払い</small></div><span class="v">¥800<span style="color:var(--mu);font-size:11px">/人</span></span></div>
+          </div>
+        </div>
+      </div>
+      <nav class="tabbar"><span class="tb on"><i></i>ホーム</span><span class="tb"><i></i>大会</span><span class="tb"><i></i>お金</span></nav>
+      </div>
+    </div><div class="cap"><b>ホーム</b>次の大会 → 今週 → 持ち物</div></div>
+
+    <div class="shot"><div class="ph">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr"><div class="body">
+        <div class="back"><span class="ar">‹</span>大会<span style="margin-left:auto" class="icnbtn">✎</span></div>
+        <div class="dt-hd">
+          <div style="display:flex;gap:6px;align-items:center"><span class="type fin">決勝</span><span class="pill p-ok">進出決定</span></div>
+          <div class="name">THE ROOKIES 2026 1stシリーズ FINAL</div>
+          <div class="sub">小学生部門 · シリーズ 1stシリーズ（予選2回戦 5位通過）</div>
+          <div class="dt-date"><span class="big">9/26</span><span class="w">土</span><span class="cdn">あと15日</span></div>
+        </div>
+        <div class="tiles">
+          <div><div class="kicker">集合</div><span class="n">10:15</span></div>
+          <div><div class="kicker">開始</div><span class="n">11:35</span></div>
+          <div><div class="kicker">終了</div><span class="n">15:00</span></div>
+          <div><div class="kicker">出演</div><span class="n">1<small>/32</small></span></div>
+        </div>
+        <div class="venue"><b>愛知県 青少年文化センター</b></div>
+        <div class="sec">
+          <div class="sec-hd"><span class="kicker">やること</span><span class="more">＋ 追加</span></div>
+          <div class="card" style="padding:4px 16px">
+            <div class="row"><span class="chk on"></span><div class="t done">エントリー</div><span class="pill p-ok">済</span></div>
+            <div class="row"><span class="chk on"></span><div class="t done">音源 事前提出</div><span class="pill p-ok">済</span></div>
+            <div class="row"><span class="chk"></span><div class="t">観覧費 事前振込<small>大人 ¥3,500 × 3 · 9/17 水まで</small></div><span class="pill p-wn">あと6日</span></div>
+            <div class="row"><span class="chk"></span><div class="t">予備CD 持参</div><span class="pill p-mu">当日</span></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd"><span class="kicker">資料 · 5</span></div>
+          <div class="doc"><span>ファイナリスト様へ</span><span>当日の流れ</span><span>音源提出</span><span>スケジュール</span><span>出演順</span></div>
+        </div>
+      </div>
+      <nav class="tabbar"><span class="tb"><i></i>ホーム</span><span class="tb on"><i></i>大会</span><span class="tb"><i></i>お金</span></nav>
+      </div>
+    </div><div class="cap"><b>大会詳細</b>済は期限を消す。当日ものは「当日」ラベル</div></div>
+
+    <div class="shot"><div class="ph">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr"><div class="body">
+        <div class="hd"><span style="font-size:20px;font-weight:700">お金</span><span class="icnbtn">＋</span></div>
+        <div class="bal"><div><div class="kicker">受け取る（リンカ）</div><div class="big"><small>¥</small>6,000</div></div><div class="kicker" style="text-align:right">例：9/1に<br>全額精算済み</div></div>
+        <div class="card" style="padding:2px 16px">
+          <div class="person"><span class="av">A</span><div class="who">アイリ<small>ダンカニ エントリー費 立替分</small></div><span class="amt n">¥3,000</span><span class="btn">受け取った</span></div>
+          <div class="person"><span class="av">M</span><div class="who">ミハ<small>ダンカニ エントリー費 立替分</small></div><span class="amt n">¥3,000</span><span class="btn">受け取った</span></div>
+        </div>
+        <div class="sec">
+          <div class="sec-hd"><span class="kicker">台帳</span><span class="more">絞り込み</span></div>
+          <div class="card" style="padding:4px 16px">
+            <div class="row"><div class="d">9/05<b>土</b></div><div class="t">ダンカニ エントリー費<small>リンカ払 · アイリ・ミハ・リンカ</small></div><div class="v">¥9,000</div></div>
+            <div class="row"><div class="d">9/01<b>火</b></div><div class="t">精算 受け取り<small>ミハ → リンカ</small></div><div class="v" style="color:var(--ok)">済</div></div>
+            <div class="row"><div class="d">8/28<b>金</b></div><div class="t">衣装 ハット ×2・インナー ×2<small>リンカ払 · アイリ・ミハ</small></div><div class="v">¥3,106</div></div>
+            <div class="row"><div class="d">8/27<b>木</b></div><div class="t">ROOKIES 昼ごはん<small>ミハ払 · オムライス→アイリ ほか5点</small></div><div class="v">¥4,250</div></div>
+            <div class="row"><div class="d">7/26<b>日</b></div><div class="t">DYNAMITE 決勝 チケット<small>リンカ払 · アイリ・ミハ</small></div><div class="v">¥7,000</div></div>
+          </div>
+        </div>
+      </div>
+      <nav class="tabbar"><span class="tb"><i></i>ホーム</span><span class="tb"><i></i>大会</span><span class="tb on"><i></i>お金</span></nav>
+      </div>
+    </div><div class="cap"><b>お金</b>残高 → 人ごとに消し込み → 台帳</div></div>
+
+  </div>
+</section>
+
+<!-- ================= B ================= -->
+<section class="dir" id="b">
+  <div class="dir-hd">
+    <div class="dir-letter">B</div>
+    <div><h2>ボード</h2><p>dスマートバンク寄り。上部を墨色の帯にして次の大会を「口座残高」のように据え、下タブの代わりに帯の中のセグメント切替で移動する。画面の下半分を全部コンテンツに使える。</p></div>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="kicker">ナビ</span>上部セグメント（いま・大会・お金）。下タブなし。追加は右下の＋</div>
+    <div class="note"><span class="kicker">ホームの主役</span>墨の帯に白い数字でカウントダウン。下はモジュール（今週・持ち物・貸し借り）を並べる</div>
+    <div class="note"><span class="kicker">向く場面</span>会場で一瞬見る時に強い。黄アクセントが墨の上で映える</div>
+    <div class="note"><span class="kicker">リスク</span>上部の切替は片手で届きにくい。詳細画面の中にもタブがあり、階層が2つ重なる</div>
+  </div>
+  <div class="phones">
+
+    <div class="shot"><div class="ph band-top">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr" style="background:var(--bg)">
+        <div class="bandwrap">
+          <div class="hd"><span class="logo">RAMUSE</span><span class="date" style="color:var(--band-mu)">9月11日 金</span></div>
+          <div class="seg"><span class="on">いま</span><span>大会</span><span>お金</span></div>
+          <div class="kicker">次の大会 · 単発 · 9/20 日</div>
+          <div class="name" style="font-size:19px;font-weight:700;margin:2px 0 0">ダンカニ2026</div>
+          <div class="cd"><span class="lbl">あと</span><span class="big" style="font-size:72px">9</span><span class="u">日</span></div>
+          <div class="hair" style="margin:10px 0"></div>
+          <div class="info"><span>集合 <b>09:00</b></span><span>開始 <b>09:30</b></span><span>ぎふワールド・ローズガーデン</span></div>
+        </div>
+        <div class="mods">
+          <div class="mod">
+            <div class="sec-hd"><span class="kicker">今週の締切</span><span class="more">2件</span></div>
+            <div class="row"><div class="d">9/17<b>水</b></div><div class="t">観覧費 事前振込<small>ROOKIES FINAL</small></div><div class="v">¥10,500</div></div>
+            <div class="row"><div class="d">9/20<b>日</b></div><div class="t">エントリー費 振込<small>THE EVOLVER vol.2</small></div><div class="v">¥9,000</div></div>
+          </div>
+          <div class="mod">
+            <div class="sec-hd"><span class="kicker">持ち物 · ダンカニ</span></div>
+            <div class="row"><span class="chk"></span><div class="t">音源CD</div><span class="pill p-mu">当日</span></div>
+            <div class="row"><span class="chk"></span><div class="t">観覧費 現金 <small>大人 ¥800/人</small></div><span class="pill p-mu">当日</span></div>
+          </div>
+          <div class="mod" style="display:flex;align-items:center;gap:12px">
+            <div style="flex:1"><div class="kicker">受け取る</div><div class="n" style="font-size:22px;font-weight:700">¥6,000</div></div>
+            <span class="pill p-ng">アイリ</span><span class="pill p-ng">ミハ</span>
+          </div>
+        </div>
+        <div class="fab low">＋</div>
+      </div>
+    </div><div class="cap"><b>いま</b>帯＝次の大会。下はモジュール</div></div>
+
+    <div class="shot"><div class="ph band-top">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr">
+        <div class="bandwrap" style="padding-bottom:16px">
+          <div class="back" style="color:var(--band-mu)"><span class="ar" style="color:var(--band-ink)">‹</span>大会<span class="icnbtn" style="margin-left:auto;background:transparent;border-color:var(--band-hair);color:var(--band-ink)">✎</span></div>
+          <div style="display:flex;gap:6px;align-items:center"><span class="type fin">決勝</span><span class="pill p-ok">進出決定</span></div>
+          <div class="name" style="font-size:20px;font-weight:700;margin:6px 0 2px;line-height:1.3">THE ROOKIES 2026 1stシリーズ FINAL</div>
+          <div class="kicker" style="text-transform:none;letter-spacing:0;font-weight:500">小学生部門 · 愛知県 青少年文化センター</div>
+          <div class="dt-date"><span class="big" style="font-size:40px">9/26</span><span class="w" style="color:var(--band-mu)">土</span><span class="cdn">あと15日</span></div>
+        </div>
+        <div class="mods">
+          <div class="dtabs"><span>概要</span><span class="on">やること</span><span>お金</span><span>資料 5</span></div>
+          <div class="mod" style="padding:2px 14px">
+            <div class="row"><span class="chk on"></span><div class="t done">エントリー</div><span class="pill p-ok">済</span></div>
+            <div class="row"><span class="chk on"></span><div class="t done">音源 事前提出</div><span class="pill p-ok">済</span></div>
+            <div class="row"><span class="chk"></span><div class="t">観覧費 事前振込<small>¥3,500 × 3 · 9/17 水まで</small></div><span class="pill p-wn">あと6日</span></div>
+            <div class="row"><span class="chk"></span><div class="t">予備CD 持参</div><span class="pill p-mu">当日</span></div>
+          </div>
+          <div class="mod">
+            <div class="sec-hd"><span class="kicker">当日</span></div>
+            <div class="grid2" style="margin-top:6px">
+              <div class="kv"><span class="kicker">集合</span><span class="n">10:15</span></div>
+              <div class="kv"><span class="kicker">開始 – 終了</span><span class="n">11:35 – 15:00</span></div>
+              <div class="kv"><span class="kicker">出演順</span><span class="n">1 <small>/ 32組</small></span></div>
+              <div class="kv"><span class="kicker">結果</span><span class="n" style="color:var(--mu)">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><div class="cap"><b>大会詳細</b>帯＋詳細内タブ</div></div>
+
+    <div class="shot"><div class="ph band-top">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr">
+        <div class="bandwrap">
+          <div class="hd"><span class="logo">RAMUSE</span><span class="date" style="color:var(--band-mu)">9月11日 金</span></div>
+          <div class="seg"><span>いま</span><span>大会</span><span class="on">お金</span></div>
+          <div class="kicker">受け取る合計 · リンカ</div>
+          <div class="cd" style="margin-top:2px"><span class="big" style="font-size:52px"><span style="font-size:22px;color:var(--band-mu);margin-right:4px">¥</span>6,000</span></div>
+          <div class="info"><span>未回収 <b>2人</b></span><span>今年の立替 <b>¥52,410</b></span></div>
+        </div>
+        <div class="mods">
+          <div class="pcard"><span class="av" style="width:36px;height:36px;border-radius:999px;background:var(--acc-bg);color:var(--acc-ink);display:flex;align-items:center;justify-content:center;font-weight:700">A</span><div class="who"><b>アイリ</b><small>ダンカニ エントリー費 · 9/05</small></div><span class="amt">¥3,000</span><span class="btn acc">消し込む</span></div>
+          <div class="pcard"><span class="av" style="width:36px;height:36px;border-radius:999px;background:var(--acc-bg);color:var(--acc-ink);display:flex;align-items:center;justify-content:center;font-weight:700">M</span><div class="who"><b>ミハ</b><small>ダンカニ エントリー費 · 9/05</small></div><span class="amt">¥3,000</span><span class="btn acc">消し込む</span></div>
+          <div class="mod" style="padding:4px 14px">
+            <div class="sec-hd" style="padding-top:8px"><span class="kicker">台帳</span><span class="more">すべて</span></div>
+            <div class="row"><div class="d">9/05<b>土</b></div><div class="t">ダンカニ エントリー費<small>リンカ払 · 3人</small></div><div class="v">¥9,000</div></div>
+            <div class="row"><div class="d">9/01<b>火</b></div><div class="t">精算 受け取り<small>ミハ → リンカ</small></div><div class="v" style="color:var(--ok)">済</div></div>
+            <div class="row"><div class="d">8/28<b>金</b></div><div class="t">衣装<small>リンカ払 · アイリ・ミハ</small></div><div class="v">¥3,106</div></div>
+          </div>
+        </div>
+        <div class="fab low">＋</div>
+      </div>
+    </div><div class="cap"><b>お金</b>合計を帯に、人ごとにカード</div></div>
+
+  </div>
+</section>
+
+<!-- ================= C ================= -->
+<section class="dir" id="c">
+  <div class="dir-hd">
+    <div class="dir-letter">C</div>
+    <div><h2>タイムライン</h2><p>大会・やること・立替を1本の時間軸に流す。ページを切り替える発想をやめ、上の絞り込みチップで見るものを変える。「ダンスの予定を全部このアプリで把握している」という使われ方に一番素直。</p></div>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="kicker">ナビ</span>下タブなし。チップ（すべて・大会・やること・お金）＋下に固定の貸し借りバー</div>
+    <div class="note"><span class="kicker">ホームの主役</span>「今日」の位置に黄の点。次の大会は時間軸上のカードとして大きく出る</div>
+    <div class="note"><span class="kicker">向く場面</span>「次に何がある？」を一目で。入力も時間軸上の＋で日付が先に決まる</div>
+    <div class="note"><span class="kicker">リスク</span>一番新しい形なので学習が要る。過去の結果一覧やお金の集計は別画面が必要</div>
+  </div>
+  <div class="phones">
+
+    <div class="shot"><div class="ph">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr"><div class="body">
+        <div class="hd"><span class="logo">RAMUSE</span><span class="icnbtn" style="font-size:13px">月</span></div>
+        <div class="chips"><span class="chip on">すべて</span><span class="chip">大会</span><span class="chip">やること</span><span class="chip">お金</span></div>
+        <div class="tl">
+          <div class="ti today now"><div class="dt">9/11<b>今日</b></div><div class="line" style="color:var(--mu);font-size:12.5px">締切なし。次は6日後</div></div>
+          <div class="ti"><div class="dt">9/17<b>水</b></div><div class="line"><span class="chk"></span>観覧費 事前振込<small>¥10,500</small></div><div style="font-size:11.5px;color:var(--mu);padding-left:28px">ROOKIES FINAL · 大人 ¥3,500 × 3</div></div>
+          <div class="ti"><div class="dt">9/20<b>日</b></div><div class="line"><span class="chk"></span>エントリー費 振込<small>¥9,000</small></div><div style="font-size:11.5px;color:var(--mu);padding-left:28px">THE EVOLVER vol.2</div>
+            <div class="tcard"><div style="display:flex;justify-content:space-between;align-items:center"><span class="type">単発</span><span class="cdn">あと9日</span></div><div class="name">ダンカニ2026</div><div class="info"><span>集合 <b>09:00</b></span><span>開始 <b>09:30</b></span></div><div class="info" style="margin-top:2px">ぎふワールド・ローズガーデン</div><div class="hair" style="margin:10px 0 8px"></div><div style="display:flex;gap:6px;font-size:12px;color:var(--mu)"><span class="pill p-mu">当日</span>音源CD · 観覧費 現金 ¥800/人</div></div>
+          </div>
+          <div class="ti"><div class="dt">9/26<b>土</b></div>
+            <div class="tcard"><div style="display:flex;justify-content:space-between;align-items:center"><span style="display:flex;gap:6px;align-items:center"><span class="type fin">決勝</span><span class="pill p-ok">進出決定</span></span><span class="cdn">あと15日</span></div><div class="name">THE ROOKIES 2026 1stシリーズ FINAL</div><div class="info"><span>集合 <b>10:15</b></span><span>出演 <b>1/32</b></span></div><div class="info" style="margin-top:2px">愛知県 青少年文化センター</div></div>
+          </div>
+          <div class="ti"><div class="dt">10/20<b>火</b></div><div class="line"><span class="chk"></span>音源 提出<small>EVOLVER</small></div></div>
+          <div class="ti"><div class="dt">10/25<b>日</b></div><div class="line"><span class="type">予選</span>ALL JAPAN SUPER KIDS 中部予選2回戦<small>¥6,200 当日</small></div></div>
+        </div>
+      </div></div>
+      <div class="sticky-bal"><span class="kicker" style="color:inherit;opacity:.7">貸し借り</span><span>受け取る 2人</span><span class="n">¥6,000</span><span class="ar">›</span></div>
+    </div><div class="cap"><b>ホーム</b>1本の時間軸。今日に黄の点</div></div>
+
+    <div class="shot"><div class="ph">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr"><div class="body">
+        <div class="back"><span class="ar">‹</span>タイムライン<span style="margin-left:auto" class="icnbtn">✎</span></div>
+        <div class="dt-hd">
+          <div style="display:flex;gap:6px;align-items:center"><span class="type fin">決勝</span><span class="pill p-ok">進出決定</span></div>
+          <div class="name">THE ROOKIES 2026 1stシリーズ FINAL</div>
+          <div class="sub">9/26 土 · 愛知県 青少年文化センター</div>
+        </div>
+        <div class="tiles">
+          <div><div class="kicker">集合</div><span class="n">10:15</span></div>
+          <div><div class="kicker">開始</div><span class="n">11:35</span></div>
+          <div><div class="kicker">終了</div><span class="n">15:00</span></div>
+          <div><div class="kicker">出演</div><span class="n">1<small>/32</small></span></div>
+        </div>
+        <div class="sec"><div class="sec-hd"><span class="kicker">この大会の流れ</span></div></div>
+        <div class="tl" style="margin-top:4px">
+          <div class="ti"><div class="dt">8/23<b>日</b></div><div class="line"><span class="type">予選</span>予選2回戦 <span class="pill p-ok">5位通過</span></div></div>
+          <div class="ti"><div class="dt">9/15<b>火</b></div><div class="line"><span class="chk on"></span><span class="done">音源 事前提出</span></div></div>
+          <div class="ti now"><div class="dt">9/17<b>水</b></div><div class="line"><span class="chk"></span>観覧費 事前振込<small>あと6日</small></div><div style="font-size:11.5px;color:var(--mu);padding-left:28px">¥3,500 × 3 → 振込後に台帳へ</div></div>
+          <div class="ti"><div class="dt">9/26<b>土</b></div><div class="line"><span class="chk"></span>予備CD 持参 <span class="pill p-mu">当日</span></div></div>
+          <div class="ti"><div class="dt">9/26<b>土</b></div><div class="line" style="color:var(--mu)">結果 —</div></div>
+        </div>
+        <div class="sec"><div class="sec-hd"><span class="kicker">資料 · 5</span></div><div class="doc"><span>ファイナリスト様へ</span><span>当日の流れ</span><span>音源提出</span><span>スケジュール</span><span>出演順</span></div></div>
+      </div></div>
+    </div><div class="cap"><b>大会詳細</b>予選→提出→当日→結果を1本で</div></div>
+
+    <div class="shot"><div class="ph">
+      <div class="st"><span>9:41</span><span>●●●</span></div>
+      <div class="scr"><div class="body">
+        <div class="hd"><span class="logo">RAMUSE</span><span class="icnbtn">＋</span></div>
+        <div class="chips"><span class="chip">すべて</span><span class="chip">大会</span><span class="chip">やること</span><span class="chip on">お金</span></div>
+        <div class="card" style="padding:12px 16px 4px">
+          <div class="bal" style="padding:0 0 8px"><div><div class="kicker">受け取る（リンカ）</div><div class="big" style="font-size:32px"><small>¥</small>6,000</div></div></div>
+          <div class="person"><span class="av">A</span><div class="who">アイリ</div><span class="amt n">¥3,000</span><span class="btn">受け取った</span></div>
+          <div class="person"><span class="av">M</span><div class="who">ミハ</div><span class="amt n">¥3,000</span><span class="btn">受け取った</span></div>
+        </div>
+        <div class="tl" style="margin-top:14px">
+          <div class="ti"><div class="dt">9/05<b>土</b></div><div class="line">ダンカニ エントリー費<span class="amt">¥9,000</span></div><div style="font-size:11.5px;color:var(--mu)">リンカ払 · アイリ・ミハ・リンカ</div></div>
+          <div class="ti"><div class="dt">9/01<b>火</b></div><div class="line">精算 受け取り<span class="amt" style="color:var(--ok)">済</span></div><div style="font-size:11.5px;color:var(--mu)">ミハ → リンカ · アイリ → リンカ</div></div>
+          <div class="ti"><div class="dt">8/28<b>金</b></div><div class="line">衣装<span class="amt">¥3,106</span></div><div style="font-size:11.5px;color:var(--mu)">リンカ払 · ハット ×2・インナー ×2 → アイリ・ミハ</div></div>
+          <div class="ti"><div class="dt">8/27<b>木</b></div><div class="line">ROOKIES 昼ごはん<span class="amt">¥4,250</span></div><div style="font-size:11.5px;color:var(--mu)">ミハ払 · オムライス→アイリ · ピラフ→リンカ ほか</div></div>
+          <div class="ti"><div class="dt">7/26<b>日</b></div><div class="line">DYNAMITE 決勝 チケット<span class="amt">¥7,000</span></div><div style="font-size:11.5px;color:var(--mu)">リンカ払 · アイリ・ミハ</div></div>
+        </div>
+      </div></div>
+    </div><div class="cap"><b>お金</b>チップで絞るだけ。同じ時間軸</div></div>
+
+  </div>
+</section>
+
+<div class="foot">
+  <p><b>3案で共通のこと</b>：やることは「要否・いつまで・済・メモ」の4項目。済にしたものは期限を出さない。「当日」は期限ではなく持ち物として集める。お金は1本の台帳と「今の貸し借り」だけで、プロジェクトの箱はない。子供用は同じ部品で金額を返さない別アプリ。</p>
+  <p><b>数字の出典</b>：大会・当日情報・資料名は2026-09-11時点のスプレッドシート。台帳の残高と9/05の行は、9/1の全額精算後を想定した例。</p>
+</div>
+</div>
+
+<script>
+(function(){
+  var b=document.getElementById('tg');var r=document.documentElement;
+  b.addEventListener('click',function(){
+    var cur=r.getAttribute('data-theme');
+    var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+    r.setAttribute('data-theme',dark?'light':'dark');
+  });
+})();
+</script>
