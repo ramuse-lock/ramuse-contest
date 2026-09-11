@@ -399,7 +399,11 @@ function v2Verify_(ledger, fams) {
   ledger.forEach(function(l) {
     var payer = l['支払者'];
     if (paid[payer] !== undefined) paid[payer] += v2Num_(l['合計']);
-    var o = {}; try { o = JSON.parse(l['負担JSON'] || '{}'); } catch (e) { o = {}; }
+    // 負担JSON は文字列（変換直後）でも、v2ReadSheet_ 済みのオブジェクトでも受ける
+    var raw = l['負担JSON'];
+    var o = {};
+    if (raw && typeof raw === 'object') o = raw;
+    else { try { o = JSON.parse(raw || '{}'); } catch (e) { o = {}; } }
     fams.forEach(function(f) { owed[f] += v2Num_(o[f]); });
   });
   var net = {}; fams.forEach(function(f) { net[f] = paid[f] - owed[f]; });
@@ -528,7 +532,8 @@ function getV2Bundle(mode) {
   var settings = getV2Settings_();
   var pub = { '家族名': settings['家族名'] || fams.join(','), '出発地': settings['出発地'] || '' };
   if (kid) {
-    tasks = tasks.filter(function(t) { return t['当日'] === true && ['entry_fee', 'view_fee'].indexOf(t['種別']) < 0 && !t['単価']; });
+    tasks = tasks.filter(function(t) { return t['当日'] === true && ['entry_fee', 'view_fee'].indexOf(t['種別']) < 0 && !t['単価']; })
+      .map(function(t) { var k = {}; ['ID','大会ID','種別','名前','当日','済','メモ','表示順'].forEach(function(h) { k[h] = t[h]; }); return k; });
     return { mode: 'kid', families: fams, contests: contests, tasks: tasks, settings: pub, generatedAt: new Date().toISOString() };
   }
   var ledger = v2ReadSheet_(V2_SHEETS.LEDGER);
