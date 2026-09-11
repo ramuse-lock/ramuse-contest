@@ -532,7 +532,13 @@ function getV2Bundle(mode) {
   var settings = getV2Settings_();
   var pub = { '家族名': settings['家族名'] || fams.join(','), '出発地': settings['出発地'] || '' };
   if (kid) {
-    tasks = tasks.filter(function(t) { return t['当日'] === true && ['entry_fee', 'view_fee'].indexOf(t['種別']) < 0 && !t['単価']; })
+    tasks = tasks.filter(function(t) {
+      if (['entry_fee', 'view_fee'].indexOf(t['種別']) >= 0) return false; // お金のやることは返さない
+      if (t['単価']) return false;                                        // 金額を持つものも返さない
+      // 当日の持ち物に加えて、エントリーだけは返す。
+      // 「出場が決まっているか（グレーアウトするか）」の判定に使うため。金額は下で落とす
+      return t['当日'] === true || t['種別'] === 'entry';
+    })
       .map(function(t) { var k = {}; ['ID','大会ID','種別','名前','当日','済','メモ','表示順'].forEach(function(h) { k[h] = t[h]; }); return k; });
     return { mode: 'kid', families: fams, contests: contests, tasks: tasks, settings: pub, generatedAt: new Date().toISOString() };
   }
