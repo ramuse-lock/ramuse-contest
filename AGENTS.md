@@ -1,57 +1,71 @@
-# RAMUSE（大人用アプリ・GAS）— 案件ノート
+# RAMUSE（大人用アプリ）— 案件ノート
 
-ステータス：作業中（UI刷新フェーズ3の不具合対応済み＝iOSフリーズ・表示崩れ・精算の並び。編集からやること／大会詳細のお金／未エントリーの可視化を追加）。次＝藤本さんが台帳の保存を再確認→誤削除1件を復元→フェーズ5切替。GAS本番@48
+ステータス：作業中（新アプリへ切替済み・2026-09-12）。**運用は新シート（大会v2／やること／台帳／行き先／車／設定）だけで行う。旧アプリ・旧シートは見ない。** 次＝しばらく使って出た要望に対応
 
 ## この案件は何か
 
-RAMUSEのコンテスト管理アプリ（大人用）。GAS Webアプリとして配信し、子供用アプリ`../ramuse-kid`と共有スプレッドシートで連携する。
+RAMUSEのコンテスト管理アプリ。3家庭（アイリ・ミハ・リンカ）で大会の予定、提出物、立替と精算を管理する。
+2026-09にUI刷新（デザインA2「エア」）を行い、GAS配信の旧アプリからGitHub Pages配信の新アプリへ切り替えた。
 
-## 正本とアカウント
+## 正本（ここだけ見る）
 
-- 大人用正本：このリポジトリの`main`
-- 子供用正本：`/Users/chisato/personal/ramuse/ramuse-kid`
-- GitHubはRAMUSE専用の`ramuse-lock`アカウントを使用
-- GASもRAMUSE用Googleアカウントを使用。`clasp`の認証先に注意する
-- 管理シート類：`../shared/`
-- 詳細な構成、ステータス仕様、従来のデプロイガイド：`docs/DEPLOYMENT_AND_HISTORY.md`
+| もの | 場所 |
+|---|---|
+| アプリのソース | `web/`（Vite＋Preact＋TypeScript。1ソースから大人用と子供用の2出力） |
+| 配信物（大人用） | このリポジトリ直下の `index.html` ＋ `assets/`（`web/` のビルド結果。コミットする） |
+| 配信物（子供用） | `../ramuse-kid/` 直下（同じくビルド結果） |
+| サーバー | `Code.gs`（カレンダー・旧API）＋ `V2.gs`（v2のデータ層・読み書きAPI・移行） |
+| データ | スプレッドシートの **大会v2／やること／台帳／行き先／車／設定** |
+| 設計と経緯 | `docs/2026-09-11_UI刷新ヒアリング.md`、`docs/2026-09-11_データ移行設計.md`、モックは `docs/mockups/` |
 
-## デプロイの原則
+## 公開URL
 
-1. 変更と動作を確認する
-2. Gitへコミットし、GitHubへpushする
-3. `clasp push`でGASへ反映する
-4. バージョン付きの`clasp deploy`を実行する
-5. 本番表示を確認する
+- 大人用 https://ramuse-lock.github.io/ramuse-contest/ （3家庭のホーム画面のアイコンはここ）
+- 子供用 https://ramuse-lock.github.io/ramuse-kid/
+- `/app/` は旧い共有URL。直下へ転送するだけ
+- 旧アプリ（読むだけ。入力しない）＝GASのexec URL。画面上部に赤い「旧版です」バナーが出る
 
-GitHubに存在しない状態を先に本番へ出さない。`clasp push`だけでは本番更新にならない。
+## 触ってはいけないもの（残すが使わない）
 
-## 共通仕様を変更するとき
+- 旧アプリ `gas-app.html`・`shell.html`、旧シート **コンテスト管理／おでかけプロジェクト／おでかけ記録／高速ルート／車設定**
+- 理由：新シートと別物。ここに入力すると新アプリに反映されず、どちらが本物か分からなくなる
+- 旧シートは移行の検証用に残してあるだけ。消さない
 
-- ステータスロジック、結果バッジ、表示仕様などは大人用と子供用を同時に確認する
-- 子供用は閲覧専用で、金額関連UIを非表示にしている
-- 子供用だけを変更した場合、GASには触らず子供用リポジトリをコミット・pushする
+## 変更するときの手順
 
-## 既知の課題
+**アプリ（画面）を直した**
+1. `cd web && npm run dev`（大人用 4780／子供用は `npm run dev:kid` 4781）で確認
+2. `npm run typecheck`
+3. `npm run build`（大人用は直下、子供用は `../ramuse-kid/` 直下に出る）
+4. 両方のリポジトリで commit → push（GitHub Pagesが自動で配信。1〜2分）
 
-- GASのクロスオリジンiframe制約によるバナー／Safari UI問題
-- 根本解決はAPI化だが未着手
+**サーバー（Code.gs / V2.gs）を直した**
+1. commit → push
+2. `clasp push`
+3. `clasp deploy --deploymentId AKfycbyvrQn4MX-Njz2HITaWAsddhHRdQA7zmw57F0PQe9WbvtlZFP1SA3FPYSqw5REfyuu-`
+4. `curl "<exec>?action=v2&mode=adult"` で件数と残高を確認
 
-## 次にやること
+GitHubに無い状態を先に本番へ出さない。`clasp push` だけでは本番更新にならない。
 
-- 次回変更時に大人用・子供用の影響範囲を先に判定する
-- デプロイ前後でGitHubと本番の状態が一致することを確認する
+## 決めごと
 
+- **金は面で塗らない**。光・ラベル・アイコンの小面積だけ。主役は墨と種別色
+- **台帳の丸め**：明細ごとに等分して10円丸め、端数は支払者が持つ（ゼロサム）。残高＝支払合計−負担合計。負担はサーバー側で再計算する
+- **やること**は「要否／いつまで（日付か当日）／済／メモ」。済にしたものは期限を出さない。当日のものは持ち物に出す
+- **グレーアウト**＝参加が確定していない大会。未エントリー（エントリーのやることが未済）と進出待ち（決勝で進出未定）。旧アプリの `.entry-planned` と同じグレーの面にする
+- **書き込みはPIN必須**（設定シートの「大人用PIN」）。子供用ビルドは書き込みAPIを呼ばない
+- 大会を保存・削除するとGoogleカレンダーも同期する。移行した大会はカレンダーIDを持たないので、削除時は開催日＋大会名でも探す
 
-## UI刷新プロジェクト（2026-09-11開始）
+## 落とし穴
 
-- 目的：機能の解釈は維持しつつ、提出物の形式統一・軽量化・タブ/ソートの整理・証券アプリ級のUI品質へ
-- 現状棚卸しとヒアリング質問：`docs/2026-09-11_UI刷新ヒアリング.md`（回答をここに転記したものが正式要件）
-- 進め方：ヒアリング回答 → 情報設計の確定 → 画面モック案（複数）→ 合意後に実装。**合意前に実装しない**
-- 子供用（../ramuse-kid）＝別アプリのまま、ソースは大人用1本からビルド（合意済み）
-- デザイン確定＝A2「エア」（ガラス・Apple調・Material Symbols）。モック＝`docs/mockups/a-brushup.html`（A2）・`a2-home-kids.html`・`a2-forms.html`
-- データ移行設計・実装計画＝`docs/2026-09-11_データ移行設計.md`
-- 金の使い方の原則：面で塗らない。光・ラベル・アイコンの小面積だけ
-- v2データ層＝`V2.gs`（新シート：大会v2／やること／台帳／行き先／車／設定）。`serveApi` の `action=v2&mode=adult|kid`。変換ロジックは純関数で `node docs/tools/v2-dryrun.mjs <contests.json> <trips.json> [today]` により実データで検証可（JSONは `exec?action=init` と `exec?action=rpc&method=getAllTripData` の返り）
-- 台帳の丸め原則：明細ごとに等分10円丸め、端数は支払者が持つ（ゼロサム）。残高＝支払合計−負担合計
-- 新フロント＝`web/`（Vite＋Preact＋TS・1ソース2出力）。`cd web && npm run build` で `app/`（大人用）と `../ramuse-kid/app/`（子供用）を生成し、**成果物もコミットしてpush**（Pagesはビルドなしで配信）。dev＝`npm run dev`（4780）／`npm run dev:kid`（4781）
-- 並行運用URL：大人用 https://ramuse-lock.github.io/ramuse-contest/app/ ／ 子供用 https://ramuse-lock.github.io/ramuse-kid/app/。切替（ルートの差し替え）はフェーズ5
+- GASのクロスオリジンiframe制約（旧アプリの警告バナー・Safari UI問題）。新アプリはGASのページを開かないので発生しない
+- iOSでは `backdrop-filter` を重ねると固まる。シート表示中は背景のにじみ・タブバー・FABを隠し、シート内はぼかしを使わない
+- `clasp push` は直下のファイルを拾うので、`.claspignore` に配信物（`assets/**` など）を入れてある
+- このリポジトリは**公開**。exec URLを知れば台帳も読めるので、扱いは要検討（未対応）
+
+## メンテ用のGAS関数（エディタから実行）
+
+- `migrateV2Dry` / `migrateV2Run`：旧シートからv2への移行（実施済み。再実行しない）
+- `listOrphanContestEvents` / `deleteOrphanContestEvents`：アプリから消したのにカレンダーに残った大会の予定を一覧・削除
+- `restoreMissingContestsFromLegacy`：旧シートにだけある大会を**一覧するだけ**。実際に戻すのは `restoreMissingContestsApply`（意図的に消した大会も戻るので注意）
+
