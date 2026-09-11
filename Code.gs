@@ -34,6 +34,9 @@ function serveApi(e) {
   try {
     if (action === 'rpc') {
       result = serveRpc(e);
+    } else if (action === 'v2') {
+      // UI刷新版の読み取りAPI（V2.gs）。mode=kid は台帳・金額を返さない
+      result = getV2Bundle(e.parameter.mode === 'kid' ? 'kid' : 'adult');
     } else if (action === 'init') {
       result = { families: getFamilyNames(), contests: getContests() };
     } else if (action === 'calendar') {

@@ -1,6 +1,6 @@
 # RAMUSE（大人用アプリ・GAS）— 案件ノート
 
-ステータス：先方回答待ち（データ移行設計 docs/2026-09-11_データ移行設計.md の確認：Q1履歴移行・Q2 PIN・Q3着手可否）。OK→フェーズ1（新シート＋移行スクリプト＋v2読みAPI）から実装開始
+ステータス：作業中（UI刷新フェーズ1＝V2.gs実装済み・ドライラン検証OK）。**ブロック：clasp login（RAMUSE用Google）待ち**。ログイン→clasp push→GASエディタでmigrateV2Dry→migrateV2Run→clasp deploy。並行でフェーズ2（フロント骨格）を進めてよい
 
 ## この案件は何か
 
@@ -51,3 +51,5 @@ GitHubに存在しない状態を先に本番へ出さない。`clasp push`だ�
 - デザイン確定＝A2「エア」（ガラス・Apple調・Material Symbols）。モック＝`docs/mockups/a-brushup.html`（A2）・`a2-home-kids.html`・`a2-forms.html`
 - データ移行設計・実装計画＝`docs/2026-09-11_データ移行設計.md`
 - 金の使い方の原則：面で塗らない。光・ラベル・アイコンの小面積だけ
+- v2データ層＝`V2.gs`（新シート：大会v2／やること／台帳／行き先／車／設定）。`serveApi` の `action=v2&mode=adult|kid`。変換ロジックは純関数で `node docs/tools/v2-dryrun.mjs <contests.json> <trips.json> [today]` により実データで検証可（JSONは `exec?action=init` と `exec?action=rpc&method=getAllTripData` の返り）
+- 台帳の丸め原則：明細ごとに等分10円丸め、端数は支払者が持つ（ゼロサム）。残高＝支払合計−負担合計
