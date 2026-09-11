@@ -630,6 +630,11 @@ button{cursor:pointer;border:none;background:none}
 </head>
 <body>
 <div id="opening-screen" aria-label="読み込み中"><div class="opening-mark"><picture class="opening-logo-picture"><source srcset="https://ramuse-lock.github.io/ramuse-contest/logo-transparent-dark.png" media="(prefers-color-scheme: dark)"><img class="opening-logo-img" src="https://ramuse-lock.github.io/ramuse-contest/logo-transparent.png" alt="RAMUSE"></picture><div class="opening-gem"></div><div class="opening-text">LOADING</div></div></div>
+<div id="legacy-banner" style="position:fixed;left:0;right:0;top:0;z-index:99999;background:#B00020;color:#fff;font-size:12px;line-height:1.45;padding:8px 12px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif">
+これは<b>旧版</b>です。入力は新しいアプリでお願いします。<br>
+<a href="https://ramuse-lock.github.io/ramuse-contest/" style="color:#fff;text-decoration:underline;font-weight:700">新しいRAMUSEを開く</a>
+</div>
+<script>document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('legacy-banner');if(b)document.body.style.paddingTop=(b.offsetHeight)+'px';});</script>
 <div id="app">
 
 <header id="hdr">

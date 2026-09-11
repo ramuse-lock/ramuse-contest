@@ -87,7 +87,7 @@ function Week() {
     const evs = eventsOn(d).filter((e) => !IS_KID || !isNotice(e));
     const cs = contests.value.filter((c) => c.開催日 === d && !c.キャンセル);
     // 大会はGoogleカレンダーにも同期されているので、カレンダー側の大会イベントは落とす
-    const evsNoContest = evs.filter((e) => !(String(e.isContest) === 'true') && !cs.some((c) => e.title.includes(c.コンテスト名)));
+    const evsNoContest = evs.filter((e) => !(String(e.isContest) === 'true') && !contests.value.some((c) => c.開催日 === d && c.コンテスト名 && e.title.includes(c.コンテスト名)));
     const dl: Task[] = IS_KID ? [] : tasks.value.filter((t) => !t.済 && !t.当日 && t.期限日 === d);
     return { d, evs: evsNoContest, cs, dl };
   }).filter((r) => r.evs.length || r.cs.length || r.dl.length);

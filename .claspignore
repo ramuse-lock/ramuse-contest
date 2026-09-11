@@ -11,3 +11,8 @@ README*
 docs/**
 web/**
 app/**
+assets/**
+manifest.webmanifest
+app/**
+web/**
+scripts/**

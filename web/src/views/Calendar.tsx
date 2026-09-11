@@ -35,6 +35,10 @@ export function Calendar() {
   }
   const byDate = new Map<string, CalEvent[]>();
   events.forEach((e) => { const a = byDate.get(e.start) || []; a.push(e); byDate.set(e.start, a); });
+  // 大会はアプリ側のデータから描くので、カレンダー側の同じ予定は二重に出さない。
+  // isContest が付かない場合（新しく足した大会など）に備えて、名前でも照合する
+  const isContestEvent = (e: CalEvent) =>
+    bool(e.isContest) || contests.value.some((c) => c.開催日 === e.start && c.コンテスト名 && e.title.includes(c.コンテスト名));
   const selEvents = (byDate.get(sel.value) || []).slice().sort((a, b) => (evTime(a) === '終日' ? '' : evTime(a)).localeCompare(evTime(b) === '終日' ? '' : evTime(b)));
   const selContests = contests.value.filter((c) => c.開催日 === sel.value && !c.キャンセル);
 
@@ -51,7 +55,7 @@ export function Calendar() {
           {cells.map((c) => {
             const evs = byDate.get(c.date) || [];
             const hasContest = contests.value.some((x) => x.開催日 === c.date && !x.キャンセル);
-            const colors = Array.from(new Set([...(hasContest ? ['acc'] : []), ...evs.filter((e) => !bool(e.isContest)).map(evColor)])).slice(0, 4);
+            const colors = Array.from(new Set([...(hasContest ? ['acc'] : []), ...evs.filter((e) => !isContestEvent(e)).map(evColor)])).slice(0, 4);
             return (
               <button class={`cell${c.other ? ' o' : ''}${c.date === today.value ? ' today' : ''}${c.date === sel.value ? ' sel' : ''}`} onClick={() => { sel.value = c.date; if (c.other) { const d = new Date(c.date); ym.value = { y: d.getFullYear(), m: d.getMonth() + 1 }; } }}>
                 <span>{c.day}</span>
@@ -62,7 +66,7 @@ export function Calendar() {
         </div>
       </Glass>
       <Glass className="daysheet">
-        <div class="kicker"><span>{fmtLong(sel.value)}</span><span>{selContests.length + selEvents.filter((e) => !bool(e.isContest)).length}件</span></div>
+        <div class="kicker"><span>{fmtLong(sel.value)}</span><span>{selContests.length + selEvents.filter((e) => !isContestEvent(e)).length}件</span></div>
         {selContests.map((c) => (
           <button class="evi" style="margin-top:6px" onClick={() => go(`/contest/${encodeURIComponent(c.ID)}`)}>
             <i class="c-acc" /><span class="tm">{c.集合時間 || c.開始時間 || '大会'}</span>
@@ -70,7 +74,7 @@ export function Calendar() {
             <Icon name="chevron_right" style="color:var(--mu)" />
           </button>
         ))}
-        {selEvents.filter((e) => !bool(e.isContest)).map((e) => (
+        {selEvents.filter((e) => !isContestEvent(e)).map((e) => (
           <div class="evi">
             <i class={`c-${evColor(e)}`} /><span class="tm">{evTime(e)}</span>
             <span class="tt">{evTitle(e)}{e.location && <small>{e.location.split(',')[0]}</small>}</span>

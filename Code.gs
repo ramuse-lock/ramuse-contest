@@ -710,21 +710,21 @@ function getCalendarEvents(year, month) {
     var start = new Date(year, month - 1, 1);
     var end   = new Date(year, month, 1);
 
+    // 大会のイベントかどうかは「大会v2」のカレンダーIDで判定する（旧シートは移行期の保険）
     var contestIds = {};
-    var sheet = getSheet('コンテスト管理');
-    if (sheet && sheet.getLastRow() > 1) {
+    [V2_SHEETS.CONTESTS, 'コンテスト管理'].forEach(function(sheetName) {
+      var sheet = getSheet(sheetName);
+      if (!sheet || sheet.getLastRow() <= 1) return;
       var hdrs = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
         .map(function(h){ return String(h).trim(); });
       var cCol = hdrs.indexOf('カレンダーID');
-      if (cCol >= 0) {
-        var rows = sheet.getLastRow() - 1;
-        var vals = sheet.getRange(2, cCol + 1, rows, 1).getValues();
-        vals.forEach(function(r, i){
-          var cid = String(r[0] || '').trim();
-          if (cid) contestIds[cid] = i + 2;
-        });
-      }
-    }
+      if (cCol < 0) return;
+      var rows = sheet.getLastRow() - 1;
+      sheet.getRange(2, cCol + 1, rows, 1).getValues().forEach(function(r, i){
+        var cid = String(r[0] || '').trim();
+        if (cid && !contestIds[cid]) contestIds[cid] = i + 2;
+      });
+    });
 
     return cal.getEvents(start, end).map(function(e) {
       var st  = e.getStartTime();

@@ -141,13 +141,13 @@ export function evColor(e: CalEvent): EvColor {
     case '5': return 'acc';
     case '6': return 'orange';
     case '7': return 'teal';
-    case '10': return 'green';
+    case '10': case '2': return 'green';
     case '3': return 'violet';
     case '9': case '1': return 'blue';
     default: return 'mu';
   }
 }
-export const isNotice = (e: CalEvent) => String(e.color) === '10' && !bool(e.isContest);
+export const isNotice = (e: CalEvent) => ['10', '2'].indexOf(String(e.color)) >= 0 && !bool(e.isContest);
 export function evTime(e: CalEvent): string { return bool(e.isAllDay) ? '終日' : (e.startTime || ''); }
 // 「13-15:30 HOUSE：Maje.」のようにタイトル先頭の時間表記は、時刻列と重複するので落とす
 export function evTitle(e: CalEvent): string {
