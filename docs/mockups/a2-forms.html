@@ -1,0 +1,513 @@
+<title>RAMUSE エア 入力画面</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,0&display=swap">
+<style>
+:root{
+  --bg:#EEF1F7;--sfc:rgba(255,255,255,.62);--sfc2:#FFFFFF;--ink:#1D1D1F;--mu:#6E6E73;--mu2:#C7C7CC;--hair:rgba(29,29,31,.08);--hair2:rgba(29,29,31,.05);
+  --acc:#D1A800;--acc-ink:#8A6F00;--acc-bg:rgba(209,168,0,.16);
+  --blue:#0A7AFF;--blue-bg:rgba(10,122,255,.12);--green:#28A745;--green-bg:rgba(40,167,69,.12);--red:#FF3B30;--red-bg:rgba(255,59,48,.11);--violet:#5E5CE6;--violet-bg:rgba(94,92,230,.12);--orange:#FF9500;--orange-bg:rgba(255,149,0,.14);--teal:#30B0C7;--teal-bg:rgba(48,176,199,.14);
+  --fa:#FF6B6B;--fa-bg:rgba(255,107,107,.18);--fm:#32ADE6;--fm-bg:rgba(50,173,230,.18);--fr:#D1A800;--fr-bg:rgba(209,168,0,.2);
+  --jp:-apple-system,BlinkMacSystemFont,'SF Pro Text','Hiragino Sans','Zen Kaku Gothic New',sans-serif;--num:-apple-system,BlinkMacSystemFont,'SF Pro Display','IBM Plex Sans','Helvetica Neue',sans-serif;
+  --r:24px;--card-bd:1px solid rgba(255,255,255,.7);--card-sh:0 8px 30px -18px rgba(30,40,80,.35);--tab-bg:rgba(255,255,255,.55);--blur:blur(22px) saturate(1.6);
+  --blob1:#BFD4FF;--blob2:#FFE7A8;--blob3:#E4D5FF;--fld:rgba(255,255,255,.75);
+  --pg-bg:#F4F3EE;--pg-sfc:#FFFFFF;--pg-ink:#16161A;--pg-mu:#77746B;--pg-hair:rgba(22,22,26,.10);--pg-acc:#866D00;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B0D14;--sfc:rgba(38,40,52,.55);--sfc2:#1E2030;--ink:#F5F5F7;--mu:#98989F;--mu2:#48484E;--hair:rgba(245,245,247,.10);--hair2:rgba(245,245,247,.06);
+  --acc:#F0C400;--acc-ink:#F0C400;--acc-bg:rgba(240,196,0,.18);
+  --blue:#5AA3FF;--blue-bg:rgba(90,163,255,.18);--green:#3DD16E;--green-bg:rgba(61,209,110,.16);--red:#FF6961;--red-bg:rgba(255,105,97,.16);--violet:#8E8CFF;--violet-bg:rgba(142,140,255,.18);--orange:#FFA939;--orange-bg:rgba(255,169,57,.18);--teal:#4FD0E6;--teal-bg:rgba(79,208,230,.18);
+  --fa:#FF8080;--fa-bg:rgba(255,128,128,.2);--fm:#4FC3F7;--fm-bg:rgba(79,195,247,.2);--fr:#F0C400;--fr-bg:rgba(240,196,0,.22);
+  --card-bd:1px solid rgba(255,255,255,.10);--card-sh:0 12px 40px -20px rgba(0,0,0,.8);--tab-bg:rgba(30,32,44,.6);
+  --blob1:#1E3A8A;--blob2:#7A5A00;--blob3:#3B2A7A;--fld:rgba(255,255,255,.06);
+  --pg-bg:#0E0E10;--pg-sfc:#1A1A1D;--pg-ink:#F2F1EC;--pg-mu:#8E8B82;--pg-hair:rgba(242,241,236,.11);--pg-acc:#E3BA00;
+}}
+:root[data-theme="dark"]{
+  --bg:#0B0D14;--sfc:rgba(38,40,52,.55);--sfc2:#1E2030;--ink:#F5F5F7;--mu:#98989F;--mu2:#48484E;--hair:rgba(245,245,247,.10);--hair2:rgba(245,245,247,.06);
+  --acc:#F0C400;--acc-ink:#F0C400;--acc-bg:rgba(240,196,0,.18);
+  --blue:#5AA3FF;--blue-bg:rgba(90,163,255,.18);--green:#3DD16E;--green-bg:rgba(61,209,110,.16);--red:#FF6961;--red-bg:rgba(255,105,97,.16);--violet:#8E8CFF;--violet-bg:rgba(142,140,255,.18);--orange:#FFA939;--orange-bg:rgba(255,169,57,.18);--teal:#4FD0E6;--teal-bg:rgba(79,208,230,.18);
+  --fa:#FF8080;--fa-bg:rgba(255,128,128,.2);--fm:#4FC3F7;--fm-bg:rgba(79,195,247,.2);--fr:#F0C400;--fr-bg:rgba(240,196,0,.22);
+  --card-bd:1px solid rgba(255,255,255,.10);--card-sh:0 12px 40px -20px rgba(0,0,0,.8);--tab-bg:rgba(30,32,44,.6);
+  --blob1:#1E3A8A;--blob2:#7A5A00;--blob3:#3B2A7A;--fld:rgba(255,255,255,.06);
+  --pg-bg:#0E0E10;--pg-sfc:#1A1A1D;--pg-ink:#F2F1EC;--pg-mu:#8E8B82;--pg-hair:rgba(242,241,236,.11);--pg-acc:#E3BA00;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg-bg);color:var(--pg-ink);font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1560px;margin:0 auto;padding:28px 20px 80px}
+h1{font-size:26px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em;text-wrap:balance}
+.lead{color:var(--pg-mu);max-width:66ch;margin:0}
+.kk{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-mu)}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.switch{position:sticky;top:0;z-index:5;background:var(--pg-bg);padding:10px 0;margin-bottom:8px;border-bottom:1px solid var(--pg-hair);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sw{border:1px solid var(--pg-hair);background:var(--pg-sfc);color:var(--pg-ink);padding:8px 14px;border-radius:999px;font:inherit;font-size:13px;font-weight:500;text-decoration:none}
+.tg{margin-left:auto;border:1px solid var(--pg-hair);background:transparent;color:var(--pg-mu);padding:8px 12px;border-radius:999px;font:inherit;font-size:12px;cursor:pointer}
+.sw:focus-visible,.tg:focus-visible{outline:2px solid var(--pg-acc);outline-offset:2px}
+section.dir{padding:30px 0 10px;border-bottom:1px solid var(--pg-hair)}
+.dir-hd{margin-bottom:16px}
+.dir-hd h2{margin:0;font-size:22px;font-weight:700}
+.dir-hd p{margin:4px 0 0;color:var(--pg-mu);max-width:76ch}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));border:1px solid var(--pg-hair);border-radius:14px;overflow:hidden;background:var(--pg-sfc);margin-bottom:22px}
+.note{padding:14px 16px;border-right:1px solid var(--pg-hair);font-size:13px}
+.note:last-child{border-right:0}
+.note .kk{display:block;margin-bottom:4px}
+.phones{display:flex;gap:22px;overflow-x:auto;padding:4px 2px 26px;scroll-snap-type:x mandatory}
+.shot{scroll-snap-align:start;flex:0 0 auto}
+.shot .cap{font-size:12px;color:var(--pg-mu);margin:10px 4px 0}
+.shot .cap b{color:var(--pg-ink);font-weight:500;margin-right:8px}
+.logic{border:1px solid var(--pg-hair);border-radius:14px;background:var(--pg-sfc);padding:16px 18px;margin-bottom:22px;font-size:13px}
+.logic h3{margin:0 0 8px;font-size:14px}
+.logic table{border-collapse:collapse;width:100%;font-size:12.5px}
+.logic th,.logic td{text-align:left;padding:6px 8px;border-top:1px solid var(--pg-hair);vertical-align:top}
+.logic th{color:var(--pg-mu);font-weight:600;white-space:nowrap}
+.logic .n{font-family:'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums}
+.foot{margin-top:36px;color:var(--pg-mu);font-size:12.5px;max-width:72ch}
+
+/* phone */
+.ph{width:360px;height:760px;background:var(--bg);color:var(--ink);font-family:var(--jp);border:1px solid var(--hair);border-radius:40px;overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 24px 60px -34px rgba(0,0,0,.45)}
+.ph::before,.ph::after,.ph .blob3{content:"";position:absolute;border-radius:999px;filter:blur(42px);opacity:.75;pointer-events:none}
+.ph::before{width:260px;height:260px;left:-80px;top:-60px;background:var(--blob1)}
+.ph::after{width:240px;height:240px;right:-90px;top:220px;background:var(--blob2)}
+.ph .blob3{width:220px;height:220px;left:40px;bottom:-60px;background:var(--blob3)}
+.st{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-family:var(--num);font-size:13px;font-weight:600;flex-shrink:0;position:relative;z-index:1}
+.scr{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative;z-index:1}
+.body{flex:1;overflow:hidden;padding:0 16px}
+.n{font-family:var(--num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;white-space:nowrap;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+.ms.f{font-variation-settings:'FILL' 1,'wght' 300,'GRAD' 0,'opsz' 24}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:8px 0 6px;min-height:46px;gap:10px}
+.icnbtn{width:36px;height:36px;border-radius:999px;border:var(--card-bd);background:var(--sfc);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.icnbtn .ms{font-size:19px}
+.glass{background:var(--sfc);border:var(--card-bd);border-radius:var(--r);box-shadow:var(--card-sh);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.list{padding:2px 16px}
+.sec{margin-top:12px}
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding:0 2px}
+.sec-hd .more{font-size:12px;color:var(--acc-ink);font-weight:600;display:flex;align-items:center}
+.sec-hd .more .ms{font-size:16px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair2);font-size:13.5px}
+.row:first-child{border-top:0}
+.tile{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tile .ms{font-size:20px}
+.t-acc{background:var(--acc-bg);color:var(--acc-ink)}.t-blue{background:var(--blue-bg);color:var(--blue)}.t-green{background:var(--green-bg);color:var(--green)}.t-red{background:var(--red-bg);color:var(--red)}.t-violet{background:var(--violet-bg);color:var(--violet)}.t-orange{background:var(--orange-bg);color:var(--orange)}.t-teal{background:var(--teal-bg);color:var(--teal)}.t-mu{background:var(--hair2);color:var(--mu)}
+.row .t{flex:1;min-width:0;line-height:1.35}
+.row .t small{display:block;color:var(--mu);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.row .v{font-family:var(--num);font-weight:600;font-size:14px;text-align:right;white-space:nowrap;line-height:1.3}
+.row .v small{display:block;font-size:11px;color:var(--mu);font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;line-height:1.5;white-space:nowrap}
+.pill .ms{font-size:12px}
+.p-ok{background:var(--green-bg);color:var(--green)}.p-wn{background:var(--orange-bg);color:var(--orange)}.p-acc{background:var(--acc-bg);color:var(--acc-ink)}.p-mu{background:var(--hair2);color:var(--mu)}.p-violet{background:var(--violet-bg);color:var(--violet)}.p-blue{background:var(--blue-bg);color:var(--blue)}
+.type{font-family:var(--num);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;color:#fff}
+.ty-single{background:var(--blue)}.ty-qual{background:var(--violet)}.ty-final{background:var(--acc);color:#1C1B17}
+.big{font-family:var(--num);font-weight:700;letter-spacing:-.03em;line-height:1}
+.tabbar{position:absolute;left:14px;right:14px;bottom:14px;height:64px;border:var(--card-bd);border-radius:32px;background:var(--tab-bg);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:var(--card-sh);display:flex;justify-content:space-around;align-items:flex-start;padding:8px 6px 0;z-index:2}
+.tb{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:600;color:var(--mu);flex:1}
+.tb .ms{font-size:24px}
+.tb.on{color:var(--ink)}
+.fab{position:absolute;right:20px;bottom:94px;width:54px;height:54px;border-radius:999px;background:var(--sfc);border:var(--card-bd);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);color:var(--ink);display:flex;align-items:center;justify-content:center;box-shadow:var(--card-sh);z-index:2}
+.fab .ms{font-size:26px;font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24}
+/* sheet (modal) */
+.sheet{position:absolute;left:0;right:0;bottom:0;top:64px;background:var(--bg);border-radius:32px 32px 0 0;z-index:3;display:flex;flex-direction:column;box-shadow:0 -10px 40px -20px rgba(0,0,0,.4);border-top:var(--card-bd)}
+.sheet .grab{width:38px;height:5px;border-radius:3px;background:var(--mu2);margin:8px auto 0}
+.sheet .shd{display:flex;align-items:center;justify-content:space-between;padding:8px 16px 6px;min-height:46px}
+.sheet .shd .ttl{font-size:16px;font-weight:700}
+.sheet .shd .cancel{font-size:13px;color:var(--mu)}
+.sheet .sbody{flex:1;overflow:hidden;padding:0 16px}
+.sheet .sfoot{padding:10px 16px 16px;display:flex;gap:10px}
+.dim{position:absolute;inset:0;background:rgba(20,22,40,.25);z-index:2}
+.save{flex:1;height:50px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px}
+.save .ms{font-size:20px}
+.save.sub{flex:0 0 auto;background:var(--sfc);color:var(--ink);border:var(--card-bd);padding:0 18px}
+/* form pieces */
+.fgrp{padding:4px 16px}
+.fld{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--hair2);font-size:13.5px;min-height:46px}
+.fld:first-child{border-top:0}
+.fld .lb{color:var(--mu);width:74px;flex-shrink:0;font-size:12.5px}
+.fld .in{flex:1;min-width:0;font-weight:500}
+.fld .in.ph{color:var(--mu2);font-weight:400}
+.fld .n{font-weight:600}
+.fld .ms.tail{color:var(--mu2);font-size:18px}
+.seg{display:flex;background:rgba(120,120,128,.14);border-radius:999px;padding:3px}
+.seg span{flex:1;text-align:center;font-size:12px;font-weight:600;padding:6px 8px;border-radius:999px;color:var(--mu);white-space:nowrap}
+.seg span.on{background:var(--sfc2);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.tgl{width:46px;height:28px;border-radius:999px;background:var(--mu2);position:relative;flex-shrink:0}
+.tgl::after{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tgl.on{background:var(--green)}
+.tgl.on::after{left:20px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;border:var(--card-bd);background:var(--sfc);color:var(--mu);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.chip.on{background:var(--ink);color:var(--bg);border-color:transparent}
+.chip .ms{font-size:14px}
+.who{display:flex;gap:6px}
+.av{width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;font-family:var(--num);border:2px solid transparent;opacity:.45}
+.av.on{opacity:1;border-color:var(--ink)}
+.av-a{background:var(--fa-bg);color:var(--fa)}.av-m{background:var(--fm-bg);color:var(--fm)}.av-r{background:var(--fr-bg);color:var(--acc-ink)}
+.av.sm{width:26px;height:26px;font-size:10.5px;border-width:1.5px}
+.tpl{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--hair2)}
+.tpl:first-child{border-top:0}
+.tpl .tt{flex:1;min-width:0;font-size:13.5px;font-weight:600}
+.tpl .tt small{display:block;font-weight:400;color:var(--mu);font-size:11.5px}
+.tpl .seg{flex:0 0 auto;width:150px}
+.tpl .seg span{padding:5px 6px;font-size:11px}
+.amt-in{font-family:var(--num);font-weight:600;padding:5px 10px;border-radius:9px;background:var(--fld);border:1px solid var(--hair);min-width:74px;text-align:right;font-size:13px}
+.amt-in.ph{color:var(--mu2);font-weight:400}
+/* receipt */
+.rline{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--hair2)}
+.rline:first-child{border-top:0}
+.rline .amt{font-family:var(--num);font-weight:700;font-size:16px;width:76px;flex-shrink:0}
+.rline .nm{flex:1;min-width:0;font-size:13px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rline .who .av{width:26px;height:26px;font-size:10.5px;border-width:1.5px}
+.rtotal{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 2px;border-top:1px solid var(--hair)}
+.rtotal .big{font-size:26px}
+.split{display:flex;gap:8px;margin-top:8px}
+.split>div{flex:1;background:var(--fld);border:1px solid var(--hair);border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:8px}
+.split .n{font-weight:700;font-size:14px}
+.split small{font-size:10.5px;color:var(--mu);display:block;line-height:1.1}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.keypad span{height:44px;border-radius:12px;background:var(--sfc);border:var(--card-bd);display:flex;align-items:center;justify-content:center;font-family:var(--num);font-size:18px;font-weight:600}
+/* calc */
+.calc{padding:12px 16px}
+.crow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
+.crow .lb{color:var(--mu);display:flex;align-items:center;gap:6px}
+.crow .lb small{color:var(--mu2);font-size:11px}
+.crow .v{font-family:var(--num);font-weight:600}
+.crow.tot{border-top:1px solid var(--hair);margin-top:4px;padding-top:10px}
+.crow.tot .v{font-size:20px;font-weight:700}
+.step{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mu);margin:2px 0 8px}
+.step b{width:18px;height:18px;border-radius:999px;background:var(--ink);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-family:var(--num);font-size:10px}
+/* list screens */
+.month{font-family:var(--num);font-size:12px;font-weight:700;color:var(--mu);margin:12px 2px 6px;display:flex;align-items:center;gap:8px}
+.month::after{content:"";flex:1;border-top:1px solid var(--hair)}
+.ccard{padding:12px 14px;display:flex;gap:12px;margin-bottom:8px}
+.dtile{width:48px;flex-shrink:0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--num);line-height:1;padding:8px 0}
+.dtile b{font-size:20px;font-weight:700}
+.dtile small{font-size:10px;font-weight:700;opacity:.8;margin-top:2px}
+.ccard .cb{flex:1;min-width:0}
+.ccard .cn{font-size:14px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ccard .cm{font-size:11.5px;color:var(--mu);display:flex;gap:8px;margin-top:3px;align-items:center;white-space:nowrap;overflow:hidden}
+.ccard .cm .ms{font-size:13px}
+.prog{display:flex;align-items:center;gap:6px;margin-top:8px}
+.dots{display:flex;gap:3px}
+.dots i{width:14px;height:5px;border-radius:3px;background:var(--hair)}
+.dots i.on{background:var(--green)}
+.prog small{font-family:var(--num);font-size:11px;color:var(--mu);font-weight:600}
+.prog .pill{margin-left:auto}
+@media (max-width:640px){.wrap{padding:20px 14px 60px}.ph{width:340px;height:720px}.notes{grid-template-columns:1fr}.note{border-right:0;border-bottom:1px solid var(--pg-hair)}.note:last-child{border-bottom:0}}
+</style>
+
+<div class="wrap">
+<div class="top">
+  <div>
+    <div class="kk">RAMUSE UI刷新 · A2 エア</div>
+    <h1>入力画面</h1>
+    <p class="lead">大会の新規登録、やることの編集、台帳の入力（レシートと車）、そして大人用の大会一覧。入力はすべて下から出るシートで、下タブは隠れず、閉じれば元の画面に戻ります。車の記録は「運転者を選べば車と燃費が決まる」「行き先を選べば距離と高速代が決まる」形に組み替えました。</p>
+  </div>
+</div>
+<div class="switch">
+  <a class="sw" href="#contest">大会登録・やること</a>
+  <a class="sw" href="#ledger">台帳（レシート・車）</a>
+  <a class="sw" href="#list">大会一覧</a>
+  <button class="tg" type="button" id="tg">ダーク／ライト切替</button>
+</div>
+
+<!-- ================= CONTEST FORM ================= -->
+<section class="dir" id="contest">
+  <div class="dir-hd"><h2>大会の登録と、やること</h2><p>年20回弱の登録。1枚目で基本と当日の情報、2枚目で「やること」をテンプレートから選んで作ります。音源は「事前提出」「当日CD」「不要」の3択に「予備CDも持参」の1トグル。お金のやることは金額を持ち、済にした瞬間に台帳へ流せます。</p></div>
+  <div class="notes">
+    <div class="note"><span class="kk">1枚目</span>名前・日付・会場・部門・ラウンド（単発／予選／決勝＋シリーズ）・集合／開始／終了・出演順／組数・URL・資料</div>
+    <div class="note"><span class="kk">2枚目</span>やることテンプレ。エントリー／音源／エントリー費／観覧費は常に表示、動画・写真は「その他を追加」から</div>
+    <div class="note"><span class="kk">やること編集</span>4項目＝要否・いつまで（日付か「当日」）・済・メモ。お金のものは金額も</div>
+    <div class="note"><span class="kk">済→台帳</span>金額のあるやることを済にすると「誰が払った？誰の分？」を1回だけ聞き、台帳に1行足す。初期値は「リンカ払・3人」</div>
+  </div>
+  <div class="phones">
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr">
+        <div class="body" style="opacity:.5"><div class="hd"><span style="font-size:22px;font-weight:700">大会</span></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="shd"><span class="cancel">キャンセル</span><span class="ttl">大会を追加</span><span class="cancel" style="opacity:0">キャンセル</span></div>
+          <div class="sbody">
+            <div class="step"><b>1</b>基本と当日 <span style="opacity:.5">→</span> <b style="background:var(--mu2)">2</b>やること</div>
+            <div class="glass fgrp">
+              <div class="fld"><span class="lb">大会名</span><span class="in">THE EVOLVERダンスコンテストvol.2</span></div>
+              <div class="fld"><span class="lb">日付</span><span class="in n">2026/10/31 <span style="color:var(--mu);font-weight:500">土</span></span><span class="ms tail">calendar_month</span></div>
+              <div class="fld"><span class="lb">会場</span><span class="in">Lives NAGOYA</span><span class="ms tail">location_on</span></div>
+              <div class="fld"><span class="lb">部門</span><span class="in">小学生部門</span></div>
+              <div class="fld"><span class="lb">種別</span><span class="in"><span class="seg"><span class="on">単発</span><span>予選</span><span>決勝</span></span></span></div>
+            </div>
+            <div class="sec"><div class="sec-hd"><span class="kicker">当日</span><span class="more">あとで入れる</span></div>
+            <div class="glass fgrp">
+              <div class="fld"><span class="lb">集合</span><span class="in n ph">--:--</span><span class="lb" style="width:auto">開始</span><span class="in n ph">--:--</span><span class="lb" style="width:auto">終了</span><span class="in n ph">--:--</span></div>
+              <div class="fld"><span class="lb">出演順</span><span class="in n ph">— / — 組</span></div>
+              <div class="fld"><span class="lb">URL</span><span class="in ph">大会サイト</span><span class="ms tail">link</span></div>
+            </div></div>
+            <div class="sec"><div class="sec-hd"><span class="kicker">資料</span><span class="more"><span class="ms">add</span>追加</span></div>
+            <div class="glass fgrp"><div class="fld"><span class="tile t-blue" style="width:30px;height:30px;border-radius:9px"><span class="ms" style="font-size:16px">description</span></span><span class="in">要項</span><span class="in ph" style="flex:1.4">https://…</span></div></div></div>
+          </div>
+          <div class="sfoot"><span class="save">次へ：やること<span class="ms">arrow_forward</span></span></div>
+        </div>
+      </div>
+    </div><div class="cap"><b>大会を追加 1/2</b>基本と当日。当日は「あとで」でも保存できる</div></div>
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr">
+        <div class="body" style="opacity:.5"><div class="hd"><span style="font-size:22px;font-weight:700">大会</span></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="shd"><span class="cancel"><span class="ms" style="font-size:18px;vertical-align:-4px">arrow_back_ios_new</span>戻る</span><span class="ttl">やること</span><span class="cancel" style="opacity:0">戻る</span></div>
+          <div class="sbody">
+            <div class="step"><b style="background:var(--mu2)">1</b>基本と当日 <span style="opacity:.5">→</span> <b>2</b>やること</div>
+            <div class="glass fgrp">
+              <div class="tpl"><span class="tile t-blue"><span class="ms">upload</span></span><div class="tt">エントリー<small>期限 <span class="n">10/10</span></small></div><span class="tgl on"></span></div>
+              <div class="tpl"><span class="tile t-blue"><span class="ms">music_note</span></span><div class="tt">音源<small>期限 <span class="n">10/20</span></small></div><span class="seg"><span class="on">事前提出</span><span>当日CD</span><span>不要</span></span></div>
+              <div class="tpl" style="padding-left:46px"><div class="tt" style="font-weight:500">予備CDも当日持参<small>「当日」のやことになる</small></div><span class="tgl on"></span></div>
+              <div class="tpl"><span class="tile t-green"><span class="ms">payments</span></span><div class="tt">エントリー費<small>1人あたり</small></div><span class="amt-in">¥3,000</span><span class="seg" style="width:110px"><span class="on">事前</span><span>当日</span></span></div>
+              <div class="tpl" style="padding-left:46px"><div class="tt" style="font-weight:500">振込期限<small>事前のときだけ</small></div><span class="in n" style="font-weight:600">9/20</span><span class="ms" style="color:var(--mu2);font-size:18px">calendar_month</span></div>
+              <div class="tpl"><span class="tile t-green"><span class="ms">confirmation_number</span></span><div class="tt">観覧費<small>大人 1人あたり</small></div><span class="amt-in">¥2,500</span><span class="seg" style="width:150px"><span>事前</span><span class="on">当日</span><span>不要</span></span></div>
+            </div>
+            <div class="sec"><div class="glass fgrp"><div class="tpl"><span class="tile t-mu"><span class="ms">add</span></span><div class="tt" style="color:var(--mu);font-weight:500">その他を追加<small>動画・写真・衣装など自由に</small></div><span class="ms" style="color:var(--mu2)">chevron_right</span></div></div></div>
+            <div class="sec"><div class="kicker" style="padding:0 2px 6px">できるやること · 5</div>
+              <div class="glass list">
+                <div class="row"><span class="tile t-blue"><span class="ms">upload</span></span><div class="t">エントリー</div><span class="pill p-mu">10/10</span></div>
+                <div class="row"><span class="tile t-green"><span class="ms">payments</span></span><div class="t">エントリー費 振込 <small>¥3,000 × 3</small></div><span class="pill p-mu">9/20</span></div>
+                <div class="row"><span class="tile t-blue"><span class="ms">music_note</span></span><div class="t">音源 事前提出</div><span class="pill p-mu">10/20</span></div>
+                <div class="row"><span class="tile t-violet"><span class="ms">album</span></span><div class="t">予備CD 持参</div><span class="pill p-violet">当日</span></div>
+                <div class="row"><span class="tile t-violet"><span class="ms">currency_yen</span></span><div class="t">観覧費 現金 <small>¥2,500/人</small></div><span class="pill p-violet">当日</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="sfoot"><span class="save"><span class="ms">check</span>保存する</span></div>
+        </div>
+      </div>
+    </div><div class="cap"><b>大会を追加 2/2</b>テンプレから「やること」が下に生成される</div></div>
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr">
+        <div class="body" style="opacity:.5"><div class="hd"><span class="kicker">大会</span></div><div style="font-size:20px;font-weight:700">THE ROOKIES 2026 1stシリーズ FINAL</div></div>
+        <div class="dim"></div>
+        <div class="sheet" style="top:250px">
+          <div class="grab"></div>
+          <div class="shd"><span class="cancel">キャンセル</span><span class="ttl">やることを編集</span><span class="cancel" style="color:var(--red)">削除</span></div>
+          <div class="sbody">
+            <div class="glass fgrp">
+              <div class="fld"><span class="tile t-green" style="width:30px;height:30px;border-radius:9px"><span class="ms" style="font-size:16px">payments</span></span><span class="in" style="font-weight:600">観覧費 事前振込</span></div>
+              <div class="fld"><span class="lb">金額</span><span class="in n">¥3,500 <span style="color:var(--mu);font-weight:500">× 大人 3 ＝</span> ¥10,500</span></div>
+              <div class="fld"><span class="lb">いつまで</span><span class="in"><span class="seg"><span class="on">9/17 水</span><span>当日</span></span></span></div>
+              <div class="fld"><span class="lb">メモ</span><span class="in ph">振込先など</span></div>
+            </div>
+            <div class="glass fgrp" style="margin-top:10px">
+              <div class="fld"><span class="lb" style="width:auto;flex:1;color:var(--ink);font-weight:600">済にする</span><span class="tgl on"></span></div>
+            </div>
+            <div class="glass" style="margin-top:10px;padding:12px 16px;background:radial-gradient(120% 120% at 0% 0%,rgba(40,167,69,.18),transparent 60%),var(--sfc)">
+              <div class="kicker" style="margin-bottom:8px">台帳に載せる</div>
+              <div class="fld" style="border-top:0;padding-top:4px"><span class="lb">誰が払った</span><span class="who"><span class="av av-a">A</span><span class="av av-m">M</span><span class="av av-r on">R</span></span></div>
+              <div class="fld"><span class="lb">誰の分</span><span class="who"><span class="av av-a on">A</span><span class="av av-m on">M</span><span class="av av-r on">R</span></span><span class="n" style="margin-left:auto;color:var(--mu);font-size:12px">¥3,500 ずつ</span></div>
+              <div class="fld"><span class="lb" style="width:auto;flex:1">載せない（各自で振込済）</span><span class="tgl"></span></div>
+            </div>
+          </div>
+          <div class="sfoot"><span class="save"><span class="ms">check</span>保存して台帳に1行</span></div>
+        </div>
+      </div>
+    </div><div class="cap"><b>やることを編集</b>済にすると台帳の質問が出る。1回だけ</div></div>
+
+  </div>
+</section>
+
+<!-- ================= LEDGER ================= -->
+<section class="dir" id="ledger">
+  <div class="dir-hd"><h2>台帳の入力</h2><p>台帳の＋を押すと「レシート」「車」「その他」の3つから選びます。レシートは「金額を打って、誰の分か1回タップ」を繰り返すだけ。車は運転者と行き先を選べば金額が出ます。どちらも保存されるのは台帳の1行で、内訳はその行のメモに残ります。</p></div>
+
+  <div class="logic">
+    <h3>車の計算ロジック（改）</h3>
+    <table>
+      <tr><th>今</th><th>変える</th><th>理由</th></tr>
+      <tr><td>車の設定が6行（3台が重複）。燃費は記録ごとに手入力で 4〜9 とばらつく</td><td><b>車は家族に1台ずつ固定</b>（Airiの車 8 / Mihaの車 8 / Rinkaの車 9 km/L）。<b>運転者を選ぶと車と燃費が決まる</b>。燃費を変えるのは設定画面だけ</td><td>記録のたびに燃費を打つ必要がなくなり、ぶれもなくなる</td></tr>
+      <tr><td>高速はIC名（桑名→白川、白川→桑名東…）を毎回入力。保存ルートは1件</td><td><b>行き先（会場）ごとに「片道距離・行きの高速代・帰りの高速代」を保存</b>。会場を選べば全部入る。初めての会場だけ入力し、次から自動</td><td>会場は繰り返す（名東文化小劇場・EBISU WORKSなど）。ICは覚えなくてよい</td></tr>
+      <tr><td>「往復（同ルート）／別ルート」の切替と、復路のIC・料金・距離を別入力</td><td><b>「往復／片道」の1トグル</b>。帰りの高速代は会場マスタの値を使う。帰りだけ下道なら帰りの高速代を0にする</td><td>入力が1タップに減る</td></tr>
+      <tr><td>ETC割引トグル（×0.7）</td><td><b>廃止</b>。高速代は払った実額を会場マスタに持つ</td><td>全16記録で一度も使われていない</td></tr>
+      <tr><td>ガソリン単価を毎回入力（158〜167）</td><td><b>前回の単価が初期値</b>。変わったときだけ直す</td><td>月1回直せば足りる</td></tr>
+      <tr><td>おでかけ「プロジェクト」を先に作る</td><td>廃止。<b>大会を選ぶと日付と会場が入る</b>。大会と無関係な回は行き先だけ選ぶ</td><td>合意済み（残高方式）</td></tr>
+    </table>
+    <p style="margin:10px 0 0;color:var(--pg-mu)">計算：ガソリン代 ＝ 距離合計 ÷ 燃費 × 単価（10円丸め）。合計 ＝ ガソリン代 ＋ 高速代 ＋ 駐車場。乗車メンバーで等分（10円丸め）。支払者の初期値は運転者。例（7/26 NUMBER・サンマンション高畑・リンカ運転・3人）：距離 <span class="n">37+35=72km</span> ÷ 9 × 162 ＝ <span class="n">¥1,290</span>、高速 <span class="n">¥1,080+¥1,080</span>、駐車 <span class="n">¥1,400</span> → 合計 <span class="n">¥4,850</span>、1人 <span class="n">¥1,620</span>。</p>
+  </div>
+
+  <div class="phones">
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr">
+        <div class="body" style="opacity:.5"><div class="hd"><span style="font-size:22px;font-weight:700">お金</span></div></div>
+        <div class="dim"></div>
+        <div class="sheet" style="top:400px">
+          <div class="grab"></div>
+          <div class="shd"><span class="cancel" style="opacity:0">x</span><span class="ttl">なにを記録する？</span><span class="cancel">閉じる</span></div>
+          <div class="sbody">
+            <div class="glass list">
+              <div class="row" style="padding:14px 0"><span class="tile t-red"><span class="ms">receipt_long</span></span><div class="t">レシート<small>ご飯・チケット・衣装など。1行ずつ誰の分か決める</small></div><span class="ms" style="color:var(--mu2)">chevron_right</span></div>
+              <div class="row" style="padding:14px 0"><span class="tile t-teal"><span class="ms">directions_car</span></span><div class="t">車<small>運転者と行き先を選ぶだけ。高速・ガソリン・駐車場を計算</small></div><span class="ms" style="color:var(--mu2)">chevron_right</span></div>
+              <div class="row" style="padding:14px 0"><span class="tile t-green"><span class="ms">swap_horiz</span></span><div class="t">受け取り・支払い<small>現金やPayPayで精算したとき</small></div><span class="ms" style="color:var(--mu2)">chevron_right</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><div class="cap"><b>台帳 ＋</b>3択。おでかけプロジェクトは作らない</div></div>
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr">
+        <div class="body" style="opacity:.5"><div class="hd"><span style="font-size:22px;font-weight:700">お金</span></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="shd"><span class="cancel">キャンセル</span><span class="ttl">レシート</span><span class="cancel" style="opacity:0">x</span></div>
+          <div class="sbody">
+            <div class="glass fgrp">
+              <div class="fld"><span class="lb">日付</span><span class="in n">8/27 木</span><span class="lb" style="width:auto">払った人</span><span class="who"><span class="av sm av-a">A</span><span class="av sm av-m on">M</span><span class="av sm av-r">R</span></span></div>
+              <div class="fld"><span class="lb">内容</span><span class="in">ROOKIES 昼ごはん</span><span class="chip" style="padding:3px 9px;font-size:11px"><span class="ms">emoji_events</span>大会に紐づけ</span></div>
+            </div>
+            <div class="sec"><div class="sec-hd"><span class="kicker">明細 · 5行</span><span class="more">レシートを撮る</span></div>
+            <div class="glass fgrp">
+              <div class="rline"><span class="amt">¥1,190</span><span class="nm">オムライス</span><span class="who"><span class="av av-a on">A</span><span class="av av-m">M</span><span class="av av-r">R</span></span></div>
+              <div class="rline"><span class="amt">¥190</span><span class="nm">ドリンクバー</span><span class="who"><span class="av av-a on">A</span><span class="av av-m">M</span><span class="av av-r">R</span></span></div>
+              <div class="rline"><span class="amt">¥1,190</span><span class="nm">ピラフ</span><span class="who"><span class="av av-a">A</span><span class="av av-m">M</span><span class="av av-r on">R</span></span></div>
+              <div class="rline"><span class="amt">¥190</span><span class="nm">ドリンクバー</span><span class="who"><span class="av av-a">A</span><span class="av av-m">M</span><span class="av av-r on">R</span></span></div>
+              <div class="rline"><span class="amt">¥1,490</span><span class="nm">パスタ</span><span class="who"><span class="av av-a">A</span><span class="av av-m">M</span><span class="av av-r on">R</span></span></div>
+              <div class="rline" style="border-top:1px dashed var(--hair)"><span class="amt" style="color:var(--mu2);font-weight:500">¥</span><span class="nm" style="color:var(--mu2)">金額を打って、誰の分かをタップ</span><span class="who"><span class="av av-a">A</span><span class="av av-m">M</span><span class="av av-r">R</span></span></div>
+              <div class="rtotal"><span class="kicker">合計</span><span class="big">¥4,250</span></div>
+              <div class="split">
+                <div><span class="av sm av-a on" style="opacity:1">A</span><div><span class="n">¥1,380</span><small>アイリ</small></div></div>
+                <div><span class="av sm av-m on" style="opacity:1">M</span><div><span class="n">¥0</span><small>ミハ（払った）</small></div></div>
+                <div><span class="av sm av-r on" style="opacity:1">R</span><div><span class="n">¥2,870</span><small>リンカ</small></div></div>
+              </div>
+            </div></div>
+            <div class="keypad"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>00</span><span>0</span><span class="ms" style="font-size:20px">backspace</span></div>
+          </div>
+          <div class="sfoot"><span class="save"><span class="ms">check</span>保存する</span></div>
+        </div>
+      </div>
+    </div><div class="cap"><b>レシート</b>金額 → 誰の分 → 次の行。全員なら3人タップ</div></div>
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr">
+        <div class="body" style="opacity:.5"><div class="hd"><span style="font-size:22px;font-weight:700">お金</span></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="shd"><span class="cancel">キャンセル</span><span class="ttl">車</span><span class="cancel" style="opacity:0">x</span></div>
+          <div class="sbody">
+            <div class="glass fgrp">
+              <div class="fld"><span class="lb">大会</span><span class="in"><span class="chip on"><span class="ms">emoji_events</span>NUMBER 2026 · 7/26</span></span></div>
+              <div class="fld"><span class="lb">行き先</span><span class="in" style="font-weight:600">サンマンション高畑</span><span class="pill p-teal">前回と同じ</span></div>
+              <div class="fld"><span class="lb">運転者</span><span class="who"><span class="av av-a">A</span><span class="av av-m">M</span><span class="av av-r on">R</span></span><span class="n" style="margin-left:auto;font-size:12px;color:var(--mu)">Rinkaの車 · 9 km/L</span></div>
+              <div class="fld"><span class="lb">乗った人</span><span class="who"><span class="av av-a on">A</span><span class="av av-m on">M</span><span class="av av-r on">R</span></span><span style="margin-left:auto;font-size:12px;color:var(--mu)">3人で割る</span></div>
+              <div class="fld"><span class="lb">往復</span><span class="in"><span class="seg" style="width:140px"><span class="on">往復</span><span>片道</span></span></span><span class="lb" style="width:auto">駐車場</span><span class="amt-in">¥1,400</span></div>
+            </div>
+            <div class="glass calc" style="margin-top:10px">
+              <div class="kicker" style="margin-bottom:4px">計算 · 会場マスタから</div>
+              <div class="crow"><span class="lb"><span class="ms" style="font-size:16px">route</span>距離 <small>37 + 35 km</small></span><span class="v">72 km</span></div>
+              <div class="crow"><span class="lb"><span class="ms" style="font-size:16px">local_gas_station</span>ガソリン <small>72 ÷ 9 × ¥162</small></span><span class="v">¥1,290</span></div>
+              <div class="crow"><span class="lb"><span class="ms" style="font-size:16px">add_road</span>高速 <small>行き ¥1,080 · 帰り ¥1,080</small></span><span class="v">¥2,160</span></div>
+              <div class="crow"><span class="lb"><span class="ms" style="font-size:16px">local_parking</span>駐車場</span><span class="v">¥1,400</span></div>
+              <div class="crow tot"><span class="lb" style="color:var(--ink);font-weight:600">合計 <small>1人 ¥1,620</small></span><span class="v">¥4,850</span></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px"><span class="chip"><span class="ms">edit</span>ガソリン単価 ¥162</span><span class="chip"><span class="ms">edit</span>会場の距離・高速代</span></div>
+          </div>
+          <div class="sfoot"><span class="save"><span class="ms">check</span>台帳に1行 ¥4,850</span></div>
+        </div>
+      </div>
+    </div><div class="cap"><b>車</b>大会 → 行き先 → 運転者 → 乗った人 → 保存。数字は自動</div></div>
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr">
+        <div class="body">
+          <div class="hd"><span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mu)"><span class="ms" style="color:var(--ink)">arrow_back_ios_new</span>お金</span><span style="font-size:15px;font-weight:700">設定</span><span style="width:60px"></span></div>
+          <div class="sec"><div class="sec-hd"><span class="kicker">車 · 家族に1台</span></div>
+            <div class="glass list">
+              <div class="row"><span class="av av-a on" style="opacity:1">A</span><div class="t">Airiの車</div><span class="amt-in">8</span><span style="font-size:11px;color:var(--mu)">km/L</span></div>
+              <div class="row"><span class="av av-m on" style="opacity:1">M</span><div class="t">Mihaの車</div><span class="amt-in">8</span><span style="font-size:11px;color:var(--mu)">km/L</span></div>
+              <div class="row"><span class="av av-r on" style="opacity:1">R</span><div class="t">Rinkaの車</div><span class="amt-in">9</span><span style="font-size:11px;color:var(--mu)">km/L</span></div>
+            </div></div>
+          <div class="sec"><div class="sec-hd"><span class="kicker">ガソリン単価</span></div>
+            <div class="glass list"><div class="row"><span class="tile t-orange"><span class="ms">local_gas_station</span></span><div class="t">1Lあたり<small>前回 8/02 に更新</small></div><span class="amt-in">¥162</span></div></div></div>
+          <div class="sec"><div class="sec-hd"><span class="kicker">行き先 · 桑名から</span><span class="more"><span class="ms">add</span>追加</span></div>
+            <div class="glass list">
+              <div class="row"><div class="t">EBISU WORKS nagoya<small>桑名→吹上東 ／ 白川→桑名</small></div><div class="v">39 km<small>行 ¥1,410 · 帰 ¥1,040</small></div></div>
+              <div class="row"><div class="t">サンマンション高畑<small>桑名→白川 ／ 烏森→桑名</small></div><div class="v">37 km<small>行 ¥1,080 · 帰 ¥1,080</small></div></div>
+              <div class="row"><div class="t">オアシス21<small>桑名→白川 往復</small></div><div class="v">36 km<small>行 ¥1,080 · 帰 ¥1,080</small></div></div>
+              <div class="row"><div class="t">中村公園<small>桑名→名古屋西 往復</small></div><div class="v">40 km<small>行 ¥1,040 · 帰 ¥1,040</small></div></div>
+              <div class="row"><div class="t">名東文化小劇場<small>まだ登録なし</small></div><div class="v" style="color:var(--mu2)">—</div></div>
+            </div></div>
+        </div>
+      </div>
+    </div><div class="cap"><b>設定</b>車3台・単価・行き先マスタ。ここだけ直せば記録は自動</div></div>
+
+  </div>
+</section>
+
+<!-- ================= LIST ================= -->
+<section class="dir" id="list">
+  <div class="dir-hd"><h2>大会一覧（大人用）</h2><p>下タブ4つ版。月で区切り、日付タイルは種別の色。カードの下に「やること」の進捗を線で出し、締切が近いものだけ橙のラベルを付けます。進捗サブタブと絞り込みプルダウンは廃止。過去側では結果が主役になります。</p></div>
+  <div class="phones">
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr"><div class="body">
+        <div class="hd"><span style="font-size:22px;font-weight:700;letter-spacing:-.02em">大会</span></div>
+        <div class="seg" style="margin:2px 0 12px"><span class="on">開催予定 <span class="n">14</span></span><span>過去 <span class="n">7</span></span></div>
+        <div class="month">9月</div>
+        <div class="glass ccard"><div class="dtile t-blue"><b>20</b><small>日</small></div><div class="cb"><div class="cn">ダンカニ2026</div><div class="cm"><span class="type ty-single">単発</span><span class="ms">location_on</span>ぎふワールド・ローズガーデン</div><div class="prog"><span class="dots"><i class="on"></i><i></i></span><small>1/2</small><span class="pill p-violet"><span class="ms">album</span>当日CD</span></div></div></div>
+        <div class="glass ccard"><div class="dtile t-acc"><b>26</b><small>土</small></div><div class="cb"><div class="cn">THE ROOKIES 2026 1st FINAL</div><div class="cm"><span class="type ty-final">決勝</span><span class="ms">location_on</span>愛知県 青少年文化センター</div><div class="prog"><span class="dots"><i class="on"></i><i class="on"></i><i></i><i></i></span><small>2/4</small><span class="pill p-wn"><span class="ms">alarm</span>9/17 観覧費</span></div></div></div>
+        <div class="month">10月</div>
+        <div class="glass ccard"><div class="dtile t-violet"><b>25</b><small>日</small></div><div class="cb"><div class="cn">ALL JAPAN SUPER KIDS 中部予選2回戦</div><div class="cm"><span class="type ty-qual">予選</span><span class="ms">location_on</span>東文化小劇場</div><div class="prog"><span class="dots"><i class="on"></i><i></i></span><small>1/2</small><span class="pill p-mu">¥6,200 当日</span></div></div></div>
+        <div class="glass ccard"><div class="dtile t-blue"><b>31</b><small>土</small></div><div class="cb"><div class="cn">THE EVOLVER ダンスコンテスト vol.2</div><div class="cm"><span class="type ty-single">単発</span><span class="ms">location_on</span>Lives NAGOYA</div><div class="prog"><span class="dots"><i class="on"></i><i></i><i></i><i></i><i></i></span><small>1/5</small><span class="pill p-wn"><span class="ms">alarm</span>9/20 エントリー費</span></div></div></div>
+        <div class="month">11月</div>
+        <div class="glass ccard"><div class="dtile t-blue"><b>7</b><small>土</small></div><div class="cb"><div class="cn">ダンスモンスター vol.11</div><div class="cm"><span class="type ty-single">単発</span><span class="ms">schedule</span>12:00 – 15:30</div></div></div>
+      </div>
+      <div class="fab"><span class="ms">add</span></div>
+      <nav class="tabbar"><span class="tb"><span class="ms">home</span>ホーム</span><span class="tb on"><span class="ms f">emoji_events</span>大会</span><span class="tb"><span class="ms">calendar_month</span>カレンダー</span><span class="tb"><span class="ms">account_balance_wallet</span>お金</span></nav>
+      </div>
+    </div><div class="cap"><b>大会一覧</b>＋はガラスの丸。タブ4つ</div></div>
+
+    <div class="shot"><div class="ph"><span class="blob3"></span>
+      <div class="st"><span>9:41</span><span class="ms" style="font-size:15px">signal_cellular_alt</span></div>
+      <div class="scr"><div class="body">
+        <div class="hd"><span style="font-size:22px;font-weight:700;letter-spacing:-.02em">大会</span></div>
+        <div class="seg" style="margin:2px 0 12px"><span>開催予定 <span class="n">14</span></span><span class="on">過去 <span class="n">7</span></span></div>
+        <div class="glass" style="padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;background:radial-gradient(120% 120% at 100% 0%,rgba(242,210,76,.35),transparent 60%),var(--sfc)">
+          <div style="flex:1"><div class="kicker">2026年</div><div style="display:flex;gap:14px;margin-top:4px"><div><span class="big" style="font-size:26px">2</span><small style="color:var(--mu);font-size:11px;margin-left:3px">入賞</small></div><div><span class="big" style="font-size:26px">3</span><small style="color:var(--mu);font-size:11px;margin-left:3px">予選通過</small></div><div><span class="big" style="font-size:26px">7</span><small style="color:var(--mu);font-size:11px;margin-left:3px">出場</small></div></div></div>
+          <span class="ms" style="font-size:44px;color:var(--acc);opacity:.6;font-variation-settings:'FILL' 1,'wght' 300,'GRAD' 0,'opsz' 48">emoji_events</span>
+        </div>
+        <div class="month">8月</div>
+        <div class="glass ccard"><div class="dtile t-violet"><b>23</b><small>日</small></div><div class="cb"><div class="cn">THE ROOKIES 1st 予選2回戦</div><div class="cm"><span class="type ty-qual">予選</span>名東文化小劇場 · 33/35組</div><div class="prog"><span class="pill p-ok" style="margin-left:0">予選通過 · 5位</span><span class="pill p-acc"><span class="ms">arrow_forward</span>9/26 FINAL</span></div></div></div>
+        <div class="glass ccard"><div class="dtile t-blue"><b>22</b><small>土</small></div><div class="cb"><div class="cn">START UP KIDS 中部大会</div><div class="cm"><span class="type ty-single">単発</span>名東文化小劇場 · 6/22組</div><div class="prog"><span class="pill p-acc" style="margin-left:0"><span class="ms f">emoji_events</span>入賞 · 2位</span></div></div></div>
+        <div class="month">7月</div>
+        <div class="glass ccard"><div class="dtile t-violet"><b>12</b><small>日</small></div><div class="cb"><div class="cn">NEW REVOLUTION FIRST STAGE</div><div class="cm"><span class="type ty-qual">予選</span>名古屋レジェンドホール · 13/13組</div><div class="prog"><span class="pill p-ok" style="margin-left:0">予選通過 · 3位</span><span class="pill p-acc"><span class="ms">arrow_forward</span>2/28 GRAND</span></div></div></div>
+        <div class="glass ccard"><div class="dtile t-violet"><b>11</b><small>土</small></div><div class="cb"><div class="cn">ALL JAPAN CHALLENGE CUP 予選</div><div class="cm"><span class="type ty-qual">予選</span></div><div class="prog"><span class="pill p-acc" style="margin-left:0"><span class="ms f">emoji_events</span>入賞</span></div></div></div>
+      </div>
+      <div class="fab"><span class="ms">add</span></div>
+      <nav class="tabbar"><span class="tb"><span class="ms">home</span>ホーム</span><span class="tb on"><span class="ms f">emoji_events</span>大会</span><span class="tb"><span class="ms">calendar_month</span>カレンダー</span><span class="tb"><span class="ms">account_balance_wallet</span>お金</span></nav>
+      </div>
+    </div><div class="cap"><b>過去</b>結果サブタブを統合。予選通過は決勝へのリンク付き</div></div>
+
+  </div>
+</section>
+
+<div class="foot">
+  <p>数字は2026-09-11時点の実データ（大会・当日情報・結果、おでかけ記録の7/26 NUMBER・8/27 ROOKIES昼ごはん、車設定、高速区間と料金）。EVOLVERの「やること」テンプレの内容は実データの入力値（エントリー費 ¥3,000 事前・期限9/20、音源 事前・期限10/20、観覧費 大人 ¥2,500）。</p>
+</div>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('tg');var r=document.documentElement;
+  b.addEventListener('click',function(){
+    var cur=r.getAttribute('data-theme');
+    var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+    r.setAttribute('data-theme',dark?'light':'dark');
+  });
+})();
+</script>
