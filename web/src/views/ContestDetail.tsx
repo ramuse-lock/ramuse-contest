@@ -4,6 +4,7 @@ import { tasksOf, daysUntil, fmtMD, fmtDow, docsOf, taskIcon, taskAmount, yen, M
 import type { Task } from '../types';
 import { Icon, Pill, TypeBadge, Glass, Check, SectionHead } from '../ui';
 import { go } from '../router';
+import { resultTone } from './Contests';
 
 export function ContestDetail({ id }: { id: string }) {
   const c = contests.value.find((x) => x.ID === id);
@@ -69,7 +70,10 @@ export function ContestDetail({ id }: { id: string }) {
         <Glass className="result">
           <span class="tile t-acc"><Icon name="emoji_events" fill={!!c.結果} /></span>
           {c.結果
-            ? <div><b style="font-size:16px">{c.結果}</b>{c.結果詳細 && <span style="color:var(--mu);margin-left:8px">{c.結果詳細}</span>}</div>
+            ? <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                {(c.結果詳細 || c.総組数) && <b class="n" style="font-size:18px">{c.総組数 && c.結果詳細 ? `${c.総組数}組中${c.結果詳細}` : (c.結果詳細 || `${c.総組数}組`)}</b>}
+                <Pill tone={resultTone(c.結果)} icon={/入賞|優勝/.test(c.結果) ? 'emoji_events' : /通過|進出/.test(c.結果) ? 'check' : undefined}>{c.結果}</Pill>
+              </div>
             : <span style="color:var(--mu);font-size:13px">{d >= 0 ? '大会が終わったらここに出ます' : '未入力'}</span>}
         </Glass>
       </div>

@@ -46,6 +46,7 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
   const near = nearestDeadline(ts, today.value);
   const dayItem = ts.find((t) => t.当日 && !t.済 && t.種別 === 'backup_cd');
   const fee = ts.find((t) => t.種別 === 'entry_fee' && t.当日 && !t.済);
+  const advanced = /通過|進出/.test(c.結果 || '');
   const finalLink = c.ラウンド === '予選' && c.シリーズ名 ? findFinal(c) : null;
   return (
     <button class="ccard glass" onClick={() => go(`/contest/${encodeURIComponent(c.ID)}`)}>
@@ -55,8 +56,12 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
         <div class="cm"><TypeBadge round={c.ラウンド} />{c.会場 && <><Icon name="location_on" />{c.会場}</>}{!c.会場 && c.開始時間 && <><Icon name="schedule" />{c.開始時間}{c.終了時間 && ` – ${c.終了時間}`}</>}</div>
         {pastMode ? (
           <div class="prog">
-            {c.結果 ? <Pill tone={/入賞|優勝/.test(c.結果) ? 'p-acc' : /通過|進出/.test(c.結果) ? 'p-ok' : 'p-mu'} icon={/入賞|優勝/.test(c.結果) ? 'emoji_events' : undefined}>{resultText(c)}</Pill> : <Pill tone="p-mu">結果 未入力{c.総組数 ? ` · ${c.総組数}組` : ''}</Pill>}
-            {finalLink && <span class="pill p-acc" style="margin-left:auto"><Icon name="arrow_forward" />{fmtDay(finalLink.開催日) ? `${parseDate(finalLink.開催日)!.getMonth() + 1}/${fmtDay(finalLink.開催日)} 決勝` : '決勝'}</span>}
+            {/* ①順位＝数字の事実（色なし） ②結果の種類＝色 ③決勝進出＝予選通過のときだけ */}
+            {placementText(c) && <small class="n" style="color:var(--ink);font-size:12.5px">{placementText(c)}</small>}
+            {c.結果
+              ? <Pill tone={resultTone(c.結果)} icon={/入賞|優勝/.test(c.結果) ? 'emoji_events' : /通過|進出/.test(c.結果) ? 'check' : undefined}>{c.結果}</Pill>
+              : <Pill tone="p-mu">結果 未入力</Pill>}
+            {advanced && finalLink && <span class="pill p-blue" style="margin-left:auto"><Icon name="arrow_forward" />{`${parseDate(finalLink.開催日)!.getMonth() + 1}/${fmtDay(finalLink.開催日)} 決勝`}</span>}
           </div>
         ) : (
           <div class="prog">
@@ -83,13 +88,16 @@ function orderText(c: Contest): string {
   if (n) return `${n}組`;
   return '';
 }
-function resultText(c: Contest): string {
+function placementText(c: Contest): string {
   const n = Number(c.総組数) || 0;
   const detail = String(c.結果詳細 || '').trim();
-  if (detail && n) return `${n}組中${detail}（${c.結果}）`;
-  if (detail) return `${detail}（${c.結果}）`;
-  if (n) return `${c.結果} · ${n}組`;
-  return c.結果;
+  if (detail && n) return `${n}組中${detail}`;
+  if (detail) return detail;
+  if (n) return `${n}組`;
+  return '';
+}
+export function resultTone(result: string): string {
+  return /入賞|優勝/.test(result) ? 'p-acc' : /通過|進出/.test(result) ? 'p-ok' : 'p-mu';
 }
 
 function findFinal(c: Contest) {
