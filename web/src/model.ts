@@ -179,3 +179,15 @@ export function shareItems(items: LedgerItem[], fams: string[], payer: string): 
   return owed;
 }
 export const KIND_LABEL: Record<string, string> = { entry: 'エントリー', music: '音源', backup_cd: '持ち物', entry_fee: 'エントリー費', view_fee: '観覧費', other: 'その他' };
+
+// ---- 参加の確からしさ ----
+// confirmed = 出ることが決まっている ／ unentered = まだエントリーしていない（予定として入れてあるだけ）
+// tentative = 決勝だが進出が未定（枠を空けてあるだけ）
+export type Participation = 'confirmed' | 'unentered' | 'tentative';
+export function participation(c: Contest, ts: Task[]): Participation {
+  if (c.ラウンド === '決勝' && String(c.決勝ステータス || '') !== '進出決定') return 'tentative';
+  const entry = ts.find((t) => t.種別 === 'entry');
+  if (entry && !entry.済) return 'unentered';
+  return 'confirmed';
+}
+export const PARTICIPATION_LABEL: Record<Participation, string> = { confirmed: '', unentered: '未エントリー', tentative: '進出待ち' };

@@ -4,8 +4,10 @@ import { useState } from 'preact/hooks';
 import { route, go } from './router';
 import { IS_KID, registerPinPrompter } from './api';
 import { syncing, error, bundle, toast } from './store';
-import { modal, pinReq } from './modal';
+import { useEffect } from 'preact/hooks';
+import { modals, pinReq } from './modal';
 import { Icon, Sheet } from './ui';
+import type { ModalState } from './modal';
 import { Home } from './views/Home';
 import { Contests } from './views/Contests';
 import { ContestDetail } from './views/ContestDetail';
@@ -28,6 +30,10 @@ registerPinPrompter((message) => new Promise<string | null>((resolve) => { pinRe
 
 export function App() {
   const r = route.value;
+  // シートが開いている間は背景の装飾を止める（iOSでの描画負荷対策）
+  useEffect(() => {
+    document.body.classList.toggle('sheet-open', modals.value.length > 0 || !!pinReq.value);
+  }, [modals.value.length, !!pinReq.value]);
   let view;
   const m = r.match(/^\/contest\/([^/]+)/);
   if (m) view = <ContestDetail id={decodeURIComponent(m[1])} />;
@@ -49,7 +55,7 @@ export function App() {
         <TabButton id="calendar" icon="calendar_month" label="カレンダー" path="/calendar" />
         {!IS_KID && <TabButton id="money" icon="account_balance_wallet" label="お金" path="/money" />}
       </nav>
-      <Modals />
+      {modals.value.map((s, i) => <ModalView state={s} depth={i} />)}
       {pinReq.value && <PinSheet message={pinReq.value.message} resolve={pinReq.value.resolve} />}
       {toast.value && <div class="toast" role="status">{toast.value}</div>}
     </>
@@ -65,18 +71,21 @@ function TabButton({ id, icon, label, path }: { id: string; icon: string; label:
   );
 }
 
-function Modals() {
-  const s = modal.value;
-  if (!s) return null;
-  switch (s.type) {
-    case 'contest': return <ContestForm contest={s.contest} />;
-    case 'task': return <TaskSheet contestId={s.contestId} task={s.task} markDone={s.markDone} />;
-    case 'ledger-choose': return <LedgerChooser />;
-    case 'receipt': return <ReceiptForm />;
-    case 'car': return <CarForm />;
-    case 'settle': return <SettleForm from={s.from} to={s.to} amount={s.amount} />;
-    case 'ledger-detail': return <LedgerDetail ledger={s.ledger} />;
-  }
+function ModalView({ state: s, depth }: { state: ModalState; depth: number }) {
+  // 重ねたぶんだけ前に出す。下のシートは消さないので入力が残る
+  const style = depth > 0 ? `--dim-z:${40 + depth * 4};--sheet-z:${41 + depth * 4}` : undefined;
+  const body = (() => {
+    switch (s.type) {
+      case 'contest': return <ContestForm contest={s.contest} />;
+      case 'task': return <TaskSheet contestId={s.contestId} task={s.task} markDone={s.markDone} preset={s.preset} />;
+      case 'ledger-choose': return <LedgerChooser contestId={s.contestId} />;
+      case 'receipt': return <ReceiptForm contestId={s.contestId} />;
+      case 'car': return <CarForm contestId={s.contestId} />;
+      case 'settle': return <SettleForm from={s.from} to={s.to} amount={s.amount} />;
+      case 'ledger-detail': return <LedgerDetail ledger={s.ledger} />;
+    }
+  })();
+  return <div class="modal-layer" style={style}>{body}</div>;
 }
 
 function PinSheet({ message, resolve }: { message: string; resolve: (pin: string | null) => void }) {

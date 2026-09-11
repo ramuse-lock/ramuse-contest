@@ -4,7 +4,7 @@ import { families, today, contests, destinations, cars, settings, saveLedger, de
 import { famJa, num, yen, uid, shareItems, sumItems, fmtMD, fmtDow, itemsOf, owedOf, daysUntil } from '../model';
 import type { Ledger, LedgerItem, Destination } from '../types';
 import { Sheet, Field, Seg, Icon, Glass, WhoPicker, OnePicker, Pill, Avatar } from '../ui';
-import { modal, closeModal, lastPayer, rememberPayer } from '../modal';
+import { openModal, replaceModal, closeModal, lastPayer, rememberPayer } from '../modal';
 
 function nearContests() {
   return contests.value
@@ -12,13 +12,13 @@ function nearContests() {
     .sort((a, b) => Math.abs(daysUntil(a.開催日, today.value)) - Math.abs(daysUntil(b.開催日, today.value)));
 }
 
-export function LedgerChooser() {
+export function LedgerChooser({ contestId }: { contestId?: string }) {
   return (
     <Sheet title="なにを記録する？" onClose={closeModal} left={<span class="cancel" />} right={<button class="cancel right" onClick={closeModal}>閉じる</button>}>
       <Glass className="list">
-        <button class="row" style="padding:14px 0" onClick={() => (modal.value = { type: 'receipt' })}><span class="tile t-red"><Icon name="receipt_long" /></span><div class="t">レシート<small>ご飯・チケット・衣装など。1行ずつ誰の分か決める</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
-        <button class="row" style="padding:14px 0" onClick={() => (modal.value = { type: 'car' })}><span class="tile t-teal"><Icon name="directions_car" /></span><div class="t">車<small>運転者と行き先を選ぶだけ。高速・ガソリン・駐車場を計算</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
-        <button class="row" style="padding:14px 0" onClick={() => (modal.value = { type: 'settle' })}><span class="tile t-green"><Icon name="swap_horiz" /></span><div class="t">受け取り・支払い<small>現金やPayPayで精算したとき</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
+        <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'receipt', contestId }))}><span class="tile t-red"><Icon name="receipt_long" /></span><div class="t">レシート<small>ご飯・チケット・衣装など。1行ずつ誰の分か決める</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
+        <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'car', contestId }))}><span class="tile t-teal"><Icon name="directions_car" /></span><div class="t">車<small>運転者と行き先を選ぶだけ。高速・ガソリン・駐車場を計算</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
+        <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'settle' }))}><span class="tile t-green"><Icon name="swap_horiz" /></span><div class="t">受け取り・支払い<small>現金やPayPayで精算したとき</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
       </Glass>
     </Sheet>
   );
@@ -26,12 +26,13 @@ export function LedgerChooser() {
 
 // ---- レシート ----
 type Line = { amount: string; label: string; targets: string[] };
-export function ReceiptForm() {
+export function ReceiptForm({ contestId: initContest }: { contestId?: string }) {
   const fams = families.value;
-  const [date, setDate] = useState(today.value);
-  const [title, setTitle] = useState('');
+  const initC = initContest ? contests.value.find((x) => x.ID === initContest) : null;
+  const [date, setDate] = useState(initC?.開催日 || today.value);
+  const [title, setTitle] = useState(initC?.コンテスト名 || '');
   const [payer, setPayer] = useState(lastPayer('Rinka'));
-  const [contestId, setContestId] = useState('');
+  const [contestId, setContestId] = useState(initContest || '');
   const [lines, setLines] = useState<Line[]>([{ amount: '', label: '', targets: [] }]);
   const [busy, setBusy] = useState(false);
   const items: LedgerItem[] = lines.filter((l) => num(l.amount) > 0 && l.targets.length).map((l) => ({ label: l.label || 'その他', amount: Math.round(num(l.amount)), targets: l.targets }));
@@ -86,12 +87,13 @@ function ContestSelect({ value, onChange }: { value: string; onChange: (id: stri
 }
 
 // ---- 車 ----
-export function CarForm() {
+export function CarForm({ contestId: initContest }: { contestId?: string }) {
   const fams = families.value;
   const dests = destinations.value;
-  const [contestId, setContestId] = useState('');
-  const [date, setDate] = useState(today.value);
-  const [destId, setDestId] = useState('');
+  const initC = initContest ? contests.value.find((x) => x.ID === initContest) : null;
+  const [contestId, setContestId] = useState(initContest || '');
+  const [date, setDate] = useState(initC?.開催日 || today.value);
+  const [destId, setDestId] = useState(() => (initC ? (destinations.value.find((d) => d.名前 === initC.会場)?.ID || '') : ''));
   const [newDest, setNewDest] = useState<Destination>({ ID: '', 名前: '', 片道距離: 0, 行き高速代: 0, 帰り高速代: 0, メモ: '' });
   const [driver, setDriver] = useState(lastPayer('Rinka'));
   const [riders, setRiders] = useState<string[]>(fams);

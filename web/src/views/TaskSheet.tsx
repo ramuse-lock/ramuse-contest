@@ -11,13 +11,13 @@ const KINDS: { v: TaskKind; label: string; icon: string }[] = [
   { v: 'entry_fee', label: 'エントリー費', icon: 'payments' }, { v: 'view_fee', label: '観覧費', icon: 'confirmation_number' }, { v: 'other', label: 'その他', icon: 'task_alt' },
 ];
 
-export function TaskSheet({ contestId, task, markDone }: { contestId: string; task?: Task; markDone?: boolean }) {
+export function TaskSheet({ contestId, task, markDone, preset }: { contestId: string; task?: Task; markDone?: boolean; preset?: Partial<Task> }) {
   const isNew = !task;
   const fams = families.value;
   const contest = contests.value.find((c) => c.ID === contestId);
   const [t, setT] = useState<Task>(task
     ? { ...task, 済: markDone ? true : task.済 }
-    : { ID: '', 大会ID: contestId, 種別: 'other', 名前: '', 期限日: '', 当日: false, 済: false, 済日: '', 単価: '', 数量: fams.length, 台帳ID: '', メモ: '', 表示順: 99 });
+    : { ID: '', 大会ID: contestId, 種別: 'other', 名前: '', 期限日: '', 当日: false, 済: false, 済日: '', 単価: '', 数量: fams.length, 台帳ID: '', メモ: '', 表示順: 99, ...preset });
   const isMoney = MONEY_KINDS.includes(t.種別);
   const willLog = isMoney && t.済 && !(task?.済) && !t.台帳ID && num(t.単価) > 0;
   const [logIt, setLogIt] = useState(true);

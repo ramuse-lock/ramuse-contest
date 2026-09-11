@@ -1,10 +1,10 @@
-// 大会の追加（2ステップ：基本と当日 → やることテンプレ）／編集（1ステップ）
+// 大会の追加（2ステップ：基本と当日 → やることテンプレ）／編集（やることもここから触れる）
 import { useState } from 'preact/hooks';
-import { families, today, saveContest, saveTasks, deleteContest } from '../store';
-import { docsOf, uid, yen } from '../model';
+import { families, today, tasks, saveContest, saveTasks, deleteContest } from '../store';
+import { docsOf, uid, yen, tasksOf, taskIcon, taskAmount, fmtMD, fmtDow } from '../model';
 import type { Contest, Task, TaskKind } from '../types';
-import { Sheet, Field, Seg, Toggle, Icon, Glass, Pill } from '../ui';
-import { closeModal } from '../modal';
+import { Sheet, Field, Seg, Toggle, Icon, Glass, Pill, SectionHead } from '../ui';
+import { closeModal, openModal } from '../modal';
 import { go } from '../router';
 
 type Tpl = {
@@ -19,6 +19,15 @@ const blank = (): Contest => ({
   集合時間: '', 開始時間: '', 終了時間: '', 出演順: '', 総組数: '', URL: '', 資料JSON: [], 結果: '', 結果詳細: '', キャンセル: false, メモ: '', 更新日時: '',
 });
 
+// あとから足すことが多い項目。編集画面のショートカット
+const QUICK: { kind: TaskKind; label: string; icon: string; money?: boolean; today?: boolean }[] = [
+  { kind: 'entry', label: 'エントリー', icon: 'upload' },
+  { kind: 'entry_fee', label: 'エントリー費', icon: 'payments', money: true },
+  { kind: 'view_fee', label: '観覧費', icon: 'confirmation_number', money: true },
+  { kind: 'music', label: '音源 事前提出', icon: 'music_note' },
+  { kind: 'backup_cd', label: '音源CD 持参', icon: 'album', today: true },
+];
+
 export function ContestForm({ contest }: { contest?: Contest }) {
   const isNew = !contest;
   const [c, setC] = useState<Contest>(contest ? { ...contest } : blank());
@@ -29,7 +38,7 @@ export function ContestForm({ contest }: { contest?: Contest }) {
   const set = (k: keyof Contest, v: unknown) => setC({ ...c, [k]: v } as Contest);
   const isPast = !!c.開催日 && c.開催日 < today.value;
   const canSave = c.コンテスト名.trim().length > 0 && !!c.開催日;
-
+  const myTasks = contest ? tasksOf(tasks.value, contest.ID) : [];
   const previewTasks = buildTasks('preview', tpl, families.value.length);
 
   async function save() {
@@ -42,12 +51,14 @@ export function ContestForm({ contest }: { contest?: Contest }) {
         if (ts.length) await saveTasks(ts);
       }
       closeModal();
-      go(`/contest/${encodeURIComponent(saved.ID)}`);
+      if (isNew) go(`/contest/${encodeURIComponent(saved.ID)}`);
     } catch { /* トースト済み */ } finally { setBusy(false); }
   }
   async function remove() {
     if (!contest) return;
-    if (!confirm(`「${contest.コンテスト名}」を削除しますか？やることも消えます（台帳は残ります）`)) return;
+    const name = contest.コンテスト名;
+    if (!confirm(`「${name}」を削除します。\nやること${myTasks.length}件も消えます（台帳の記録は残ります）。\n元に戻せません。よろしいですか？`)) return;
+    if (!confirm(`本当に削除しますか？\n${fmtMD(contest.開催日)} ${name}`)) return;
     setBusy(true);
     try { await deleteContest(contest.ID); closeModal(); go('/contests'); } catch { /* */ } finally { setBusy(false); }
   }
@@ -71,7 +82,7 @@ export function ContestForm({ contest }: { contest?: Contest }) {
             <Field label="部門"><input value={c.部門} onInput={(e) => set('部門', (e.target as HTMLInputElement).value)} /></Field>
             <Field label="種別"><Seg small options={[{ v: '単発', label: '単発' }, { v: '予選', label: '予選' }, { v: '決勝', label: '決勝' }]} value={c.ラウンド || '単発'} onChange={(v) => set('ラウンド', v)} /></Field>
             {c.ラウンド !== '単発' && <Field label="シリーズ"><input value={c.シリーズ名} onInput={(e) => set('シリーズ名', (e.target as HTMLInputElement).value)} placeholder="予選と決勝を同じ名前で紐づけ" /></Field>}
-            {c.ラウンド === '決勝' && <Field label="進出"><Seg small options={[{ v: '進出未定', label: '未定' }, { v: '進出決定', label: '進出決定' }]} value={(c.決勝ステータス || '進出未定') as '進出未定' | '進出決定'} onChange={(v) => set('決勝ステータス', v)} /></Field>}
+            {c.ラウンド === '決勝' && <Field label="出場"><Seg small options={[{ v: '進出未定', label: 'まだ未定' }, { v: '進出決定', label: '進出決定' }]} value={(c.決勝ステータス || '進出未定') as '進出未定' | '進出決定'} onChange={(v) => set('決勝ステータス', v)} /></Field>}
           </Glass>
           <div class="sec"><div class="kicker" style="padding:0 2px 6px">当日</div>
             <Glass className="fgrp">
@@ -81,6 +92,24 @@ export function ContestForm({ contest }: { contest?: Contest }) {
               <Field label="URL"><input type="url" value={c.URL} onInput={(e) => set('URL', (e.target as HTMLInputElement).value)} placeholder="https://" /></Field>
             </Glass>
           </div>
+
+          {!isNew && contest && (
+            <div class="sec">
+              <SectionHead title={`やること · ${myTasks.length}`} more="追加" onMore={() => openModal({ type: 'task', contestId: contest.ID })} />
+              <Glass className="list">
+                {myTasks.map((t) => <TaskLine t={t} contestId={contest.ID} />)}
+                {myTasks.length === 0 && <div class="empty">まだありません</div>}
+              </Glass>
+              <div class="chips" style="margin-top:8px">
+                {QUICK.filter((q) => !myTasks.some((t) => t.種別 === q.kind)).map((q) => (
+                  <button class="chip" onClick={() => openModal({ type: 'task', contestId: contest.ID, preset: { 種別: q.kind, 名前: q.label, 当日: !!q.today, 数量: q.money ? families.value.length : '' } })}>
+                    <Icon name="add" />{q.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {(isPast || c.結果) && (
             <div class="sec"><div class="kicker" style="padding:0 2px 6px">結果</div>
               <Glass className="fgrp">
@@ -107,29 +136,53 @@ export function ContestForm({ contest }: { contest?: Contest }) {
           </div>
           <div class="sec"><Glass className="fgrp">
             <Field label="メモ"><textarea value={c.メモ} onInput={(e) => set('メモ', (e.target as HTMLTextAreaElement).value)} /></Field>
-            {!isNew && <Field label="キャンセル"><Toggle on={!!c.キャンセル} onChange={(v) => set('キャンセル', v)} /><span class="unit">大会が中止・不参加になった</span></Field>}
+            {!isNew && <Field label="キャンセル"><Toggle on={!!c.キャンセル} onChange={(v) => set('キャンセル', v)} /><span class="unit">中止・不参加になった</span></Field>}
           </Glass></div>
         </>
       ) : (
         <>
           <Glass className="fgrp">
-            <div class="tpl"><span class="tile t-blue"><Icon name="upload" /></span><div class="tt">エントリー<small>期限を入れると締切に出ます</small></div><input type="date" class="amt-in" style="width:150px;text-align:left" value={tpl.entryDl} onInput={(e) => setTpl({ ...tpl, entryDl: (e.target as HTMLInputElement).value })} /><Toggle on={tpl.entry} onChange={(v) => setTpl({ ...tpl, entry: v })} /></div>
-            <div class="tpl"><span class="tile t-blue"><Icon name="music_note" /></span><div class="tt">音源</div><Seg small options={[{ v: '事前提出', label: '事前提出' }, { v: '当日CD', label: '当日CD' }, { v: '不要', label: '不要' }]} value={tpl.music} onChange={(v) => setTpl({ ...tpl, music: v })} /></div>
-            {tpl.music === '事前提出' && <div class="tpl" style="padding-left:46px"><div class="tt" style="font-weight:500">提出期限</div><input type="date" class="amt-in" style="width:150px;text-align:left" value={tpl.musicDl} onInput={(e) => setTpl({ ...tpl, musicDl: (e.target as HTMLInputElement).value })} /></div>}
-            {tpl.music !== '不要' && <div class="tpl" style="padding-left:46px"><div class="tt" style="font-weight:500">{tpl.music === '事前提出' ? '予備CDも当日持参' : '予備データも持参'}<small>「当日」のやることになる</small></div><Toggle on={tpl.backup} onChange={(v) => setTpl({ ...tpl, backup: v })} /></div>}
-            <div class="tpl"><span class="tile t-green"><Icon name="payments" /></span><div class="tt">エントリー費<small>1人あたり</small></div><input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={tpl.fee} onInput={(e) => setTpl({ ...tpl, fee: (e.target as HTMLInputElement).value })} /><Seg small options={[{ v: '事前', label: '事前' }, { v: '当日', label: '当日' }]} value={tpl.feeMode} onChange={(v) => setTpl({ ...tpl, feeMode: v })} /></div>
-            {tpl.fee && tpl.feeMode === '事前' && <div class="tpl" style="padding-left:46px"><div class="tt" style="font-weight:500">振込期限</div><input type="date" class="amt-in" style="width:150px;text-align:left" value={tpl.feeDl} onInput={(e) => setTpl({ ...tpl, feeDl: (e.target as HTMLInputElement).value })} /></div>}
-            <div class="tpl"><span class="tile t-green"><Icon name="confirmation_number" /></span><div class="tt">観覧費<small>大人 1人あたり</small></div><input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={tpl.view} onInput={(e) => setTpl({ ...tpl, view: (e.target as HTMLInputElement).value, viewMode: tpl.viewMode === '不要' ? '当日' : tpl.viewMode })} /><Seg small options={[{ v: '事前', label: '事前' }, { v: '当日', label: '当日' }, { v: '不要', label: '不要' }]} value={tpl.viewMode} onChange={(v) => setTpl({ ...tpl, viewMode: v })} /></div>
-            {tpl.view && tpl.viewMode === '事前' && <div class="tpl" style="padding-left:46px"><div class="tt" style="font-weight:500">振込期限</div><input type="date" class="amt-in" style="width:150px;text-align:left" value={tpl.viewDl} onInput={(e) => setTpl({ ...tpl, viewDl: (e.target as HTMLInputElement).value })} /></div>}
+            <div class="tpl">
+              <span class="tile t-blue"><Icon name="upload" /></span>
+              <div class="tt">エントリー<small>期限を入れると締切に出ます</small></div>
+              <div class="tpl-ctl"><input type="date" value={tpl.entryDl} onInput={(e) => setTpl({ ...tpl, entryDl: (e.target as HTMLInputElement).value })} /><Toggle on={tpl.entry} onChange={(v) => setTpl({ ...tpl, entry: v })} /></div>
+            </div>
+            <div class="tpl">
+              <span class="tile t-blue"><Icon name="music_note" /></span>
+              <div class="tt">音源</div>
+              <div class="tpl-ctl"><Seg small options={[{ v: '事前提出', label: '事前提出' }, { v: '当日CD', label: '当日CD' }, { v: '不要', label: '不要' }]} value={tpl.music} onChange={(v) => setTpl({ ...tpl, music: v })} /></div>
+            </div>
+            {tpl.music === '事前提出' && (
+              <div class="tpl sub"><div class="tt light">提出期限</div><div class="tpl-ctl"><input type="date" value={tpl.musicDl} onInput={(e) => setTpl({ ...tpl, musicDl: (e.target as HTMLInputElement).value })} /></div></div>
+            )}
+            {tpl.music !== '不要' && (
+              <div class="tpl sub"><div class="tt light">{tpl.music === '事前提出' ? '予備CDも当日持参' : '予備データも持参'}<small>「当日」のやることになる</small></div><div class="tpl-ctl"><Toggle on={tpl.backup} onChange={(v) => setTpl({ ...tpl, backup: v })} /></div></div>
+            )}
+            <div class="tpl">
+              <span class="tile t-green"><Icon name="payments" /></span>
+              <div class="tt">エントリー費<small>1人あたり</small></div>
+              <div class="tpl-ctl"><input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={tpl.fee} onInput={(e) => setTpl({ ...tpl, fee: (e.target as HTMLInputElement).value })} /><Seg small options={[{ v: '事前', label: '事前' }, { v: '当日', label: '当日' }]} value={tpl.feeMode} onChange={(v) => setTpl({ ...tpl, feeMode: v })} /></div>
+            </div>
+            {tpl.fee && tpl.feeMode === '事前' && (
+              <div class="tpl sub"><div class="tt light">振込期限</div><div class="tpl-ctl"><input type="date" value={tpl.feeDl} onInput={(e) => setTpl({ ...tpl, feeDl: (e.target as HTMLInputElement).value })} /></div></div>
+            )}
+            <div class="tpl">
+              <span class="tile t-green"><Icon name="confirmation_number" /></span>
+              <div class="tt">観覧費<small>大人 1人あたり</small></div>
+              <div class="tpl-ctl"><input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={tpl.view} onInput={(e) => setTpl({ ...tpl, view: (e.target as HTMLInputElement).value, viewMode: tpl.viewMode === '不要' ? '当日' : tpl.viewMode })} /><Seg small options={[{ v: '事前', label: '事前' }, { v: '当日', label: '当日' }, { v: '不要', label: '不要' }]} value={tpl.viewMode} onChange={(v) => setTpl({ ...tpl, viewMode: v })} /></div>
+            </div>
+            {tpl.view && tpl.viewMode === '事前' && (
+              <div class="tpl sub"><div class="tt light">振込期限</div><div class="tpl-ctl"><input type="date" value={tpl.viewDl} onInput={(e) => setTpl({ ...tpl, viewDl: (e.target as HTMLInputElement).value })} /></div></div>
+            )}
           </Glass>
           <div class="sec"><div class="kicker" style="padding:0 2px 6px">できるやること · {previewTasks.length}</div>
             <Glass className="list">
               {previewTasks.map((t) => (
-                <div class="row"><span class={`tile ${t.種別 === 'backup_cd' || t.当日 ? 't-violet' : t.種別 === 'entry_fee' || t.種別 === 'view_fee' ? 't-green' : 't-blue'}`}><Icon name={iconFor(t.種別, t.当日)} /></span>
+                <div class="row"><span class={`tile ${taskIcon(t).tile}`}><Icon name={taskIcon(t).icon} /></span>
                   <div class="t">{t.名前}{t.単価 ? <small>{yen(t.単価)} × {t.数量}</small> : null}</div>
-                  <Pill tone={t.当日 ? 'p-violet' : 'p-mu'}>{t.当日 ? '当日' : (t.期限日 || '期限なし')}</Pill></div>
+                  <Pill tone={t.当日 ? 'p-violet' : 'p-mu'}>{t.当日 ? '当日' : (t.期限日 ? `${fmtMD(t.期限日)} ${fmtDow(t.期限日)}` : '期限なし')}</Pill></div>
               ))}
-              {previewTasks.length === 0 && <div class="empty">やることなし。あとから詳細画面で追加できます</div>}
+              {previewTasks.length === 0 && <div class="empty">やることなし。あとから編集画面で追加できます</div>}
             </Glass>
           </div>
         </>
@@ -138,13 +191,17 @@ export function ContestForm({ contest }: { contest?: Contest }) {
   );
 }
 
-function iconFor(kind: TaskKind, today: boolean) {
-  if (kind === 'entry') return 'upload';
-  if (kind === 'music') return 'music_note';
-  if (kind === 'backup_cd') return 'album';
-  if (kind === 'entry_fee') return today ? 'currency_yen' : 'payments';
-  if (kind === 'view_fee') return today ? 'currency_yen' : 'confirmation_number';
-  return 'task_alt';
+function TaskLine({ t, contestId }: { t: Task; contestId: string }) {
+  const { icon, tile } = taskIcon(t);
+  const amt = taskAmount(t);
+  return (
+    <button class="row" onClick={() => openModal({ type: 'task', contestId, task: t })}>
+      <span class={`tile ${tile}`}><Icon name={icon} /></span>
+      <div class={`t${t.済 ? ' done' : ''}`}>{t.名前}{amt > 0 && <small>{yen(t.単価)} × {t.数量} = {yen(amt)}</small>}</div>
+      {t.済 ? <Pill tone="p-ok">済</Pill> : t.当日 ? <Pill tone="p-violet">当日</Pill> : <Pill tone="p-mu">{t.期限日 ? `${fmtMD(t.期限日)}` : '期限なし'}</Pill>}
+      <Icon name="chevron_right" style="color:var(--mu2)" />
+    </button>
+  );
 }
 
 export function buildTasks(contestId: string, t: Tpl, famCount: number): Task[] {

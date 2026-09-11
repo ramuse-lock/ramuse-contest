@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { IS_KID } from '../api';
 import { upcoming, tasks, today, eventsOn, contests } from '../store';
-import { tasksOf, daysUntil, fmtMD, fmtDow, fmtLong, progress, addDays, fmtDay, evColor, evTime, evTitle, isNotice, taskAmount, yen, MONEY_KINDS } from '../model';
+import { tasksOf, daysUntil, fmtMD, fmtDow, fmtLong, progress, addDays, fmtDay, evColor, evTime, evTitle, isNotice, taskAmount, yen, MONEY_KINDS, participation, PARTICIPATION_LABEL } from '../model';
 import type { Contest, Task } from '../types';
 import { Icon, Pill, TypeBadge, SectionHead, Empty } from '../ui';
 import { go } from '../router';
@@ -51,11 +51,13 @@ function Ticket({ c, first }: { c: Contest; first: boolean }) {
   const pg = progress(ts);
   const dayItems = ts.filter((t) => t.当日 && !t.済 && (!IS_KID || !MONEY_KINDS.includes(t.種別)));
   const tone = c.ラウンド === '決勝' ? '' : c.ラウンド === '予選' ? ' q' : ' s';
+  const part = participation(c, ts);
   return (
-    <button class={`ticket glass${first ? '' : tone}`} onClick={() => go(`/contest/${encodeURIComponent(c.ID)}`)}>
+    <button class={`ticket glass${first ? '' : tone}${part !== 'confirmed' ? ' tentative' : ''}`} onClick={() => go(`/contest/${encodeURIComponent(c.ID)}`)}>
       {first && <Icon name="emoji_events" className="bgmark" fill />}
       <div class="row1"><TypeBadge round={c.ラウンド} /><span class="kicker">{first ? '次の大会' : 'その次'}</span>
-        {c.決勝ステータス === '進出決定' && <Pill tone="p-ok" icon="check_circle">進出決定</Pill>}</div>
+        {c.決勝ステータス === '進出決定' && <Pill tone="p-ok" icon="check_circle">進出決定</Pill>}
+        {part !== 'confirmed' && <Pill tone="p-mu" icon={part === 'unentered' ? 'edit_note' : 'hourglass_empty'}>{PARTICIPATION_LABEL[part]}</Pill>}</div>
       <div class="name">{c.コンテスト名}</div>
       <div class="cd">
         {d === 0 ? <span class="big" style="font-size:40px">今日</span> : d === 1 ? <span class="big" style="font-size:40px">明日</span> : <><span class="lbl">あと</span><span class="big">{d}</span><span class="u">日</span></>}

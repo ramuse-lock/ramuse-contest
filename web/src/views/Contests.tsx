@@ -1,11 +1,11 @@
 import { signal } from '@preact/signals';
 import { IS_KID } from '../api';
 import { upcoming, past, tasks, today } from '../store';
-import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDate, MONEY_KINDS, yen, taskAmount, roundClass } from '../model';
+import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDate, MONEY_KINDS, yen, taskAmount, roundClass, participation, PARTICIPATION_LABEL } from '../model';
 import type { Contest } from '../types';
 import { Icon, Pill, TypeBadge, Glass } from '../ui';
 import { go } from '../router';
-import { modal } from '../modal';
+import { openModal } from '../modal';
 
 const seg = signal<'up' | 'past'>('up');
 
@@ -36,7 +36,7 @@ export function Contests() {
         </>
       ))}
       {list.length === 0 && <div class="empty">大会がありません</div>}
-      {!IS_KID && <button class="fab" aria-label="大会を追加" onClick={() => (modal.value = { type: 'contest' })}><Icon name="add" /></button>}
+      {!IS_KID && <button class="fab" aria-label="大会を追加" onClick={() => (openModal({ type: 'contest' }))}><Icon name="add" /></button>}
     </>
   );
 }
@@ -47,10 +47,11 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
   const near = nearestDeadline(ts, today.value);
   const dayItem = ts.find((t) => t.当日 && !t.済 && t.種別 === 'backup_cd');
   const fee = ts.find((t) => t.種別 === 'entry_fee' && t.当日 && !t.済);
+  const part = participation(c, ts);
   const advanced = /通過|進出/.test(c.結果 || '');
   const finalLink = c.ラウンド === '予選' && c.シリーズ名 ? findFinal(c) : null;
   return (
-    <button class="ccard glass" onClick={() => go(`/contest/${encodeURIComponent(c.ID)}`)}>
+    <button class={`ccard glass${!pastMode && part !== 'confirmed' ? ' tentative' : ''}`} onClick={() => go(`/contest/${encodeURIComponent(c.ID)}`)}>
       <div class={`dtile ${tileTone(c.ラウンド)}`}><b>{fmtDay(c.開催日)}</b><small>{fmtDow(c.開催日)}</small></div>
       <div class="cb">
         <div class="cn">{c.コンテスト名}</div>
@@ -66,10 +67,12 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
           </div>
         ) : (
           <div class="prog">
-            {!IS_KID && pg.total > 0 && <><span class="dots">{ts.map((t) => <i class={t.済 ? 'on' : ''} />)}</span><small>{pg.done}/{pg.total}</small></>}
+            {part !== 'confirmed' && <Pill tone="p-mu" icon={part === 'unentered' ? 'edit_note' : 'hourglass_empty'}>{PARTICIPATION_LABEL[part]}</Pill>}
+            {!IS_KID && part === 'confirmed' && pg.total > 0 && <><span class="dots">{ts.map((t) => <i class={t.済 ? 'on' : ''} />)}</span><small>{pg.done}/{pg.total}</small></>}
             {IS_KID && c.集合時間 && <small>集合 {c.集合時間}</small>}
             {orderText(c) && <Pill tone="p-blue" icon="format_list_numbered">{orderText(c)}</Pill>}
-            {!IS_KID && near && daysUntil(near.期限日, today.value) <= 14
+            {part !== 'confirmed' ? null
+              : !IS_KID && near && daysUntil(near.期限日, today.value) <= 14
               ? <Pill tone="p-wn" icon="alarm">{fmtMonthDay(near.期限日)} {shortName(near.名前)}</Pill>
               : dayItem ? <Pill tone="p-violet" icon="album">当日CD</Pill>
               : (!IS_KID && fee) ? <Pill tone="p-mu">{yen(taskAmount(fee) / (Number(fee.数量) || 1))} 当日</Pill>

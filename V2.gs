@@ -767,3 +767,35 @@ function serveV2Rpc(e) {
     return { ok: false, error: err && err.message ? err.message : String(err) };
   }
 }
+
+// 旧「コンテスト管理」シートにあって 大会v2 に無い大会を復元する（誤削除の戻し）。
+// GASエディタから直接実行する。既存の大会には触らない。
+function restoreMissingContestsFromLegacy() {
+  var fams = getFamilyNames();
+  var today = v2DateStr_(new Date());
+  var existing = {};
+  v2ReadSheet_(V2_SHEETS.CONTESTS).forEach(function(c) {
+    existing[v2Str_(c['コンテスト名']) + '|' + v2DateStr_(c['開催日'])] = true;
+  });
+  var missing = getContests().filter(function(c) {
+    var key = v2Str_(c['コンテスト名']) + '|' + v2DateStr_(c['開催日']);
+    return v2Str_(c['コンテスト名']) && !existing[key];
+  });
+  if (!missing.length) {
+    Logger.log('復元するものはありません');
+    return { restored: [] };
+  }
+  var res = v2Transform_({
+    contests: missing, projects: [], recordsByProject: {}, carSettings: [], savedRoutes: [],
+    families: fams, today: today
+  });
+  // 大会とやることだけ戻す（台帳は履歴なので触らない）
+  res.data.contests.forEach(function(c) {
+    try { c['カレンダーID'] = v2SyncCalendar_(c, null); } catch (e) { Logger.log('calendar: ' + e); }
+    v2UpsertRow_(V2_SHEETS.CONTESTS, V2_CONTEST_HEADERS_W, c);
+  });
+  res.data.tasks.forEach(function(t) { v2UpsertRow_(V2_SHEETS.TASKS, V2_HEADERS.TASKS, t); });
+  var names = res.data.contests.map(function(c) { return c['開催日'] + ' ' + c['コンテスト名']; });
+  Logger.log(JSON.stringify({ restored: names, tasks: res.data.tasks.length }, null, 2));
+  return { restored: names, tasks: res.data.tasks.length };
+}
