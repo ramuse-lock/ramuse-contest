@@ -32,7 +32,7 @@ function Tickets({ list }: { list: Contest[] }) {
     const el = e.currentTarget as HTMLElement;
     const first = el.firstElementChild as HTMLElement | null;
     if (!first) return;
-    const step = first.offsetWidth + 10;
+    const step = first.offsetWidth + 12;
     activeIdx.value = Math.min(list.length - 1, Math.max(0, Math.round(el.scrollLeft / step)));
   };
   return (
