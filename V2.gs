@@ -623,9 +623,7 @@ function saveContestV2(pin, c) {
 function deleteContestV2(pin, id) {
   v2RequirePin_(pin);
   var prev = v2FindRow_(V2_SHEETS.CONTESTS, id);
-  if (prev && prev['カレンダーID']) {
-    try { var ev = CalendarApp.getDefaultCalendar().getEventById(prev['カレンダーID']); if (ev) ev.deleteEvent(); } catch (e) {}
-  }
+  if (prev) { try { v2DeleteCalendarFor_(prev); } catch (e) { Logger.log('calendar delete failed: ' + e); } }
   // ぶら下がる「やること」も消す（台帳は履歴なので残す）
   v2ReadSheet_(V2_SHEETS.TASKS).filter(function(t) { return String(t['大会ID']) === String(id); })
     .forEach(function(t) { v2DeleteRow_(V2_SHEETS.TASKS, t['ID']); });
@@ -673,6 +671,75 @@ function v2SyncCalendar_(c, prev) {
   }
   removeDuplicateContestEvents_(cal, title, dayStart, ev.getId());
   return ev.getId();
+}
+
+// 大会に対応するGoogleカレンダーのイベントを消す。
+// 移行した大会にはカレンダーIDが無いので、その場合は開催日＋タイトルで探す
+// （旧アプリは決勝に【決勝進出】【決勝・進出未定】【決勝予定】を付けていた）。
+function v2DeleteCalendarFor_(c) {
+  var cal = CalendarApp.getDefaultCalendar();
+  var removed = 0;
+  var id = v2Str_(c['カレンダーID']);
+  if (id) {
+    try { var ev = cal.getEventById(id); if (ev) { ev.deleteEvent(); removed++; } } catch (e) {}
+  }
+  var date = v2DateStr_(c['開催日']);
+  var name = v2Str_(c['コンテスト名']);
+  if (!date || !name) return removed;
+  var titles = {};
+  titles[name] = true;
+  ['【決勝進出】', '【決勝・進出未定】', '【決勝予定】'].forEach(function(p) { titles[p + name] = true; });
+  var dayStart = combineCalendarDateTime_(date, '00:00');
+  var dayEnd = new Date(dayStart.getTime() + 86400000 - 1);
+  cal.getEvents(dayStart, dayEnd).forEach(function(ev) {
+    if (!titles[ev.getTitle()]) return;
+    try { ev.deleteEvent(); removed++; } catch (e) { Logger.log('delete failed: ' + e); }
+  });
+  return removed;
+}
+
+// 大会v2 に無いのにカレンダーだけ残っている大会イベントを探す。
+// 旧「コンテスト管理」に同じ名前・同じ日があるものだけを対象にするので、他の予定は巻き込まない。
+function v2FindOrphanContestEvents_() {
+  var cal = CalendarApp.getDefaultCalendar();
+  var live = {};
+  v2ReadSheet_(V2_SHEETS.CONTESTS).forEach(function(c) {
+    live[v2Str_(c['コンテスト名']) + '|' + v2DateStr_(c['開催日'])] = true;
+  });
+  var out = [];
+  getContests().forEach(function(oldRow) {
+    var name = v2Str_(oldRow['コンテスト名']);
+    var date = v2DateStr_(oldRow['開催日']);
+    if (!name || !date) return;
+    if (live[name + '|' + date]) return; // v2 に生きている
+    var titles = {};
+    titles[name] = true;
+    ['【決勝進出】', '【決勝・進出未定】', '【決勝予定】'].forEach(function(p) { titles[p + name] = true; });
+    var dayStart = combineCalendarDateTime_(date, '00:00');
+    var dayEnd = new Date(dayStart.getTime() + 86400000 - 1);
+    cal.getEvents(dayStart, dayEnd).forEach(function(ev) {
+      if (titles[ev.getTitle()]) out.push({ date: date, title: ev.getTitle(), event: ev });
+    });
+  });
+  return out;
+}
+
+/** アプリから消したのにカレンダーに残っている大会の予定を一覧する（消さない） */
+function listOrphanContestEvents() {
+  var found = v2FindOrphanContestEvents_().map(function(o) { return o.date + ' ' + o.title; });
+  Logger.log(found.length ? JSON.stringify(found, null, 2) : 'カレンダーの取り残しはありません');
+  return found;
+}
+
+/** 上で一覧したカレンダーの予定を実際に消す */
+function deleteOrphanContestEvents() {
+  var found = v2FindOrphanContestEvents_();
+  var names = [];
+  found.forEach(function(o) {
+    try { o.event.deleteEvent(); names.push(o.date + ' ' + o.title); } catch (e) { Logger.log('delete failed: ' + e); }
+  });
+  Logger.log(names.length ? JSON.stringify({ deleted: names }, null, 2) : '消すものはありません');
+  return names;
 }
 
 // ---- やること ----
@@ -768,9 +835,23 @@ function serveV2Rpc(e) {
   }
 }
 
-// 旧「コンテスト管理」シートにあって 大会v2 に無い大会を復元する（誤削除の戻し）。
-// GASエディタから直接実行する。既存の大会には触らない。
+/** 旧シートにあって 大会v2 に無い大会を一覧する（書き込まない）。意図的に消した大会もここに出る */
 function restoreMissingContestsFromLegacy() {
+  var existing = {};
+  v2ReadSheet_(V2_SHEETS.CONTESTS).forEach(function(c) {
+    existing[v2Str_(c['コンテスト名']) + '|' + v2DateStr_(c['開催日'])] = true;
+  });
+  var missing = getContests().filter(function(c) {
+    return v2Str_(c['コンテスト名']) && !existing[v2Str_(c['コンテスト名']) + '|' + v2DateStr_(c['開催日'])];
+  }).map(function(c) { return v2DateStr_(c['開催日']) + ' ' + v2Str_(c['コンテスト名']); });
+  Logger.log(missing.length
+    ? '旧シートにだけある大会（戻すなら restoreMissingContestsApply を実行）:\n' + JSON.stringify(missing, null, 2)
+    : '差はありません');
+  return missing;
+}
+
+/** 上で一覧した大会を実際に 大会v2 へ戻す。意図的に消した大会も戻るので注意 */
+function restoreMissingContestsApply() {
   var fams = getFamilyNames();
   var today = v2DateStr_(new Date());
   var existing = {};

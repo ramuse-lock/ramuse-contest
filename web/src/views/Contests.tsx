@@ -68,11 +68,10 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
         ) : (
           <div class="prog">
             {part !== 'confirmed' && <Pill tone="p-mu" icon={part === 'unentered' ? 'edit_note' : 'hourglass_empty'}>{PARTICIPATION_LABEL[part]}</Pill>}
-            {!IS_KID && part === 'confirmed' && pg.total > 0 && <><span class="dots">{ts.map((t) => <i class={t.済 ? 'on' : ''} />)}</span><small>{pg.done}/{pg.total}</small></>}
+            {!IS_KID && pg.total > 0 && <><span class="dots">{ts.map((t) => <i class={t.済 ? 'on' : ''} />)}</span><small>{pg.done}/{pg.total}</small></>}
             {IS_KID && c.集合時間 && <small>集合 {c.集合時間}</small>}
             {orderText(c) && <Pill tone="p-blue" icon="format_list_numbered">{orderText(c)}</Pill>}
-            {part !== 'confirmed' ? null
-              : !IS_KID && near && daysUntil(near.期限日, today.value) <= 14
+            {!IS_KID && near && daysUntil(near.期限日, today.value) <= 14
               ? <Pill tone="p-wn" icon="alarm">{fmtMonthDay(near.期限日)} {shortName(near.名前)}</Pill>
               : dayItem ? <Pill tone="p-violet" icon="album">当日CD</Pill>
               : (!IS_KID && fee) ? <Pill tone="p-mu">{yen(taskAmount(fee) / (Number(fee.数量) || 1))} 当日</Pill>

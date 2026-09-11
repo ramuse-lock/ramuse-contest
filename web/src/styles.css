@@ -296,10 +296,14 @@ a{color:inherit;text-decoration:none}
 
 /* シート表示中は背景の装飾を止める（iOSでの描画負荷が大きいため） */
 body.sheet-open .blobs,body.sheet-open .tabbar,body.sheet-open .fab{display:none}
-/* 参加が確定していない大会（未エントリー・決勝の進出待ち） */
-.ccard.tentative{opacity:.58}
-.ticket.tentative{opacity:.72}
+/* 参加が確定していない大会（未エントリー・決勝の進出待ち）
+   旧アプリの .entry-planned と同じ「グレーの面」。文字は薄くせず読めるままにする */
+.ccard.tentative,.ticket.tentative{background:#F0F1F3;border-color:#D9DCE1;box-shadow:none}
 .tentative .dtile{filter:grayscale(1)}
+.ticket.tentative .bgmark{display:none}
+@media (prefers-color-scheme: dark){
+  .ccard.tentative,.ticket.tentative{background:#202124;border-color:#3A3B3E}
+}
 /* 台帳：精算のまとまり */
 .settle-group{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair2);width:100%;text-align:left;color:var(--mu);font-size:13px}
 .settle-group .v{margin-left:auto;font-family:var(--num);font-weight:600}
