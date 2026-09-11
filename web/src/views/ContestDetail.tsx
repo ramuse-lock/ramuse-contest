@@ -5,6 +5,8 @@ import type { Task } from '../types';
 import { Icon, Pill, TypeBadge, Glass, Check, SectionHead } from '../ui';
 import { go } from '../router';
 import { resultTone } from './Contests';
+import { modal } from '../modal';
+import { saveTasks } from '../store';
 
 export function ContestDetail({ id }: { id: string }) {
   const c = contests.value.find((x) => x.ID === id);
@@ -19,7 +21,7 @@ export function ContestDetail({ id }: { id: string }) {
     <>
       <div class="back">
         <button style="display:flex;align-items:center;gap:4px" onClick={() => history.length > 1 ? history.back() : go('/contests')}><Icon name="arrow_back_ios_new" />大会</button>
-        {!IS_KID && <button class="icnbtn" style="margin-left:auto" aria-label="編集" onClick={() => alert('編集はフェーズ3で実装します')}><Icon name="edit" /></button>}
+        {!IS_KID && <button class="icnbtn" style="margin-left:auto" aria-label="編集" onClick={() => (modal.value = { type: 'contest', contest: c })}><Icon name="edit" /></button>}
       </div>
       <div class="dt-hd">
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -51,7 +53,7 @@ export function ContestDetail({ id }: { id: string }) {
       {c.URL && <div class="venue"><Icon name="link" /><a href={c.URL} target="_blank" rel="noopener" style="color:var(--blue)">大会サイト</a></div>}
 
       <div class="sec">
-        <SectionHead title={IS_KID ? 'もっていくもの' : 'やること'} />
+        <SectionHead title={IS_KID ? 'もっていくもの' : 'やること'} more={IS_KID ? undefined : '追加'} onMore={() => (modal.value = { type: 'task', contestId: c.ID })} />
         <Glass className="list">
           {shown.length === 0 && <div class="empty">{IS_KID ? '持ち物の登録はありません' : 'やることはありません'}</div>}
           {shown.map((t) => <TaskRow t={t} />)}
@@ -86,8 +88,15 @@ function TaskRow({ t }: { t: Task }) {
   const { icon, tile } = taskIcon(t);
   const amt = taskAmount(t);
   const dl = t.期限日 && !t.済 ? daysUntil(t.期限日, today.value) : NaN;
+  const open = () => { if (!IS_KID) modal.value = { type: 'task', contestId: t.大会ID, task: t }; };
+  // チェック：お金のやることを初めて済にするときだけ「台帳に載せる？」を聞く。それ以外は即トグル
+  const toggle = (e: Event) => {
+    e.stopPropagation();
+    if (!t.済 && MONEY_KINDS.includes(t.種別) && !t.台帳ID && amt > 0) { modal.value = { type: 'task', contestId: t.大会ID, task: t, markDone: true }; return; }
+    saveTasks([{ ...t, 済: !t.済 }]).catch(() => {});
+  };
   return (
-    <div class="row">
+    <div class="row" onClick={open} role={IS_KID ? undefined : 'button'}>
       <span class={`tile ${tile}`}><Icon name={icon} /></span>
       <div class={`t${t.済 ? ' done' : ''}`}>
         {t.名前}
@@ -100,7 +109,7 @@ function TaskRow({ t }: { t: Task }) {
         : t.当日 ? <Pill tone="p-violet">当日</Pill>
         : !isNaN(dl) ? <Pill tone={dl <= 7 ? 'p-wn' : 'p-mu'} icon={dl <= 7 ? 'alarm' : undefined}>{dl < 0 ? '期限切れ' : dl === 0 ? '今日' : `あと${dl}日`}</Pill>
         : null}
-      {!IS_KID && <Check on={t.済} />}
+      {!IS_KID && <Check on={t.済} onClick={toggle} />}
     </div>
   );
 }

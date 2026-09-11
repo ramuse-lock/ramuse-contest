@@ -5,6 +5,7 @@ import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDat
 import type { Contest } from '../types';
 import { Icon, Pill, TypeBadge, Glass } from '../ui';
 import { go } from '../router';
+import { modal } from '../modal';
 
 const seg = signal<'up' | 'past'>('up');
 
@@ -35,7 +36,7 @@ export function Contests() {
         </>
       ))}
       {list.length === 0 && <div class="empty">大会がありません</div>}
-      {!IS_KID && <button class="fab" aria-label="大会を追加" onClick={() => alert('大会の追加はフェーズ3で実装します')}><Icon name="add" /></button>}
+      {!IS_KID && <button class="fab" aria-label="大会を追加" onClick={() => (modal.value = { type: 'contest' })}><Icon name="add" /></button>}
     </>
   );
 }

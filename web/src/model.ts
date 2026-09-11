@@ -153,3 +153,29 @@ export function evTime(e: CalEvent): string { return bool(e.isAllDay) ? '終日'
 export function evTitle(e: CalEvent): string {
   return String(e.title || '').replace(/^\s*\d{1,2}(:\d{2})?\s*[-−–〜~]\s*\d{1,2}(:\d{2})?\s*/, '').trim() || String(e.title || '');
 }
+
+// ---- 書き込み用の補助（V2.gs と同じ計算） ----
+export const r10 = (n: number) => Math.round(n / 10) * 10;
+let uidSeq = 0;
+export function uid(prefix: string): string {
+  uidSeq++;
+  return `${prefix}_${Date.now().toString(36)}_${uidSeq.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+export function sumItems(items: LedgerItem[]): number { return items.reduce((s, it) => s + num(it.amount), 0); }
+// 明細ごとに等分・10円丸め。端数は支払者（対象に含まれなければ先頭）が持つ＝ゼロサム
+export function shareItems(items: LedgerItem[], fams: string[], payer: string): Record<string, number> {
+  const owed: Record<string, number> = {};
+  fams.forEach((f) => { owed[f] = 0; });
+  items.forEach((it) => {
+    const tg = (it.targets || []).filter((t) => owed[t] !== undefined);
+    if (!tg.length) return;
+    const amt = Math.round(num(it.amount));
+    const per = r10(amt / tg.length);
+    let sum = 0;
+    tg.forEach((t) => { owed[t] += per; sum += per; });
+    const rest = amt - sum;
+    if (rest !== 0) owed[tg.includes(payer) ? payer : tg[0]] += rest;
+  });
+  return owed;
+}
+export const KIND_LABEL: Record<string, string> = { entry: 'エントリー', music: '音源', backup_cd: '持ち物', entry_fee: 'エントリー費', view_fee: '観覧費', other: 'その他' };

@@ -3,6 +3,8 @@ import { ledger, families, contests } from '../store';
 import { computeBalance, yen, fmtMD, fmtDow, famJa, itemsOf, owedOf, ledgerIcon } from '../model';
 import type { Ledger } from '../types';
 import { Icon, Glass, Avatar, WhoChips, SectionHead, Pill } from '../ui';
+import { modal } from '../modal';
+import { go } from '../router';
 
 const limit = signal(30);
 const showSettle = signal(false);
@@ -23,7 +25,7 @@ export function Money() {
   const receivers = fams.filter((f) => bal.net[f] > 0);
   return (
     <>
-      <div class="hd"><span class="title">お金</span></div>
+      <div class="hd"><span class="title">お金</span><button class="icnbtn" aria-label="設定" onClick={() => go('/settings')}><Icon name="settings" /></button></div>
       <Glass className="balcard">
         {bal.transfers.length === 0 ? (
           <>
@@ -39,7 +41,7 @@ export function Money() {
                 <Avatar fam={t.from} />
                 <div class="t">{famJa(t.from)}<small>→ {famJa(t.to)} へ</small></div>
                 <div class="v">{yen(t.amount)}</div>
-                <button class="btn" onClick={() => alert('消し込みはフェーズ3で実装します')}><Icon name="check" />受け取った</button>
+                <button class="btn" onClick={() => (modal.value = { type: 'settle', from: t.from, to: t.to, amount: t.amount })}><Icon name="check" />受け取った</button>
               </div>
             ))}
           </>
@@ -57,7 +59,7 @@ export function Money() {
           {rows.length === 0 && <div class="empty">台帳は空です</div>}
         </Glass>
       </div>
-      <button class="fab" aria-label="記録する" onClick={() => alert('台帳の入力はフェーズ3で実装します')}><Icon name="add" /></button>
+      <button class="fab" aria-label="記録する" onClick={() => (modal.value = { type: 'ledger-choose' })}><Icon name="add" /></button>
     </>
   );
 }
@@ -73,11 +75,11 @@ function LedgerRow({ l }: { l: Ledger }) {
     ? `${fmtMD(l.日付)} ${fmtDow(l.日付)}`
     : `${fmtMD(l.日付)} ${fmtDow(l.日付)} · ${famJa(l.支払者)}払${items.length > 1 ? ` · ${items.length}点` : ''}${c && !l.内容.includes(c.コンテスト名) ? ` · ${c.コンテスト名}` : ''}`;
   return (
-    <div class="row">
+    <button class="row" onClick={() => (modal.value = { type: 'ledger-detail', ledger: l })}>
       <span class={`tile ${tile}`}><Icon name={icon} /></span>
       <div class="t">{isSettle ? jaNames(l.内容, families.value) : l.内容}<small>{sub}</small></div>
       {!isSettle && targets.length > 0 && <WhoChips fams={targets} />}
       {isSettle ? <Pill tone="p-ok">済</Pill> : <div class="v">{yen(l.合計)}</div>}
-    </div>
+    </button>
   );
 }

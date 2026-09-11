@@ -1,4 +1,4 @@
-// GAS 公開API との通信。読みは JSONP（script注入）。
+// GAS 公開API との通信。読みも書きも JSONP（script注入）。
 // script.google.com は別オリジンなので、既存の子供用アプリと同じ方式を踏襲する。
 import type { Bundle, CalEvent } from './types';
 
@@ -38,3 +38,43 @@ export function jsonp<T>(params: Record<string, string | number>, timeoutMs = 25
 export const fetchBundle = () => jsonp<Bundle>({ action: 'v2', mode: APP_MODE });
 export const fetchCalendar = (year: number, month: number) =>
   jsonp<CalEvent[]>({ action: 'calendar', year, month });
+
+// ---- PIN ----
+const PIN_KEY = 'ramuse.pin';
+export function getPin(): string { try { return localStorage.getItem(PIN_KEY) || ''; } catch { return ''; } }
+export function setPin(pin: string) { try { if (pin) localStorage.setItem(PIN_KEY, pin); else localStorage.removeItem(PIN_KEY); } catch { /* noop */ } }
+
+// PIN入力を求めるUIは app 側で登録する（循環参照を避ける）
+let pinPrompter: ((message: string) => Promise<string | null>) | null = null;
+export function registerPinPrompter(fn: (message: string) => Promise<string | null>) { pinPrompter = fn; }
+
+export class RpcError extends Error {}
+
+function b64url(s: string): string {
+  const bytes = new TextEncoder().encode(s);
+  let bin = '';
+  bytes.forEach((b) => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// 書き込みRPC。PINが無ければ入力を促し、違えば1回だけ聞き直す。
+export async function rpc<T>(method: string, args: unknown[]): Promise<T> {
+  if (IS_KID) throw new RpcError('子供用アプリからは変更できません');
+  let pin = getPin();
+  let message = '変更を保存するにはPINが必要です。設定シートの「大人用PIN」の4桁を入れてください。';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (!pin) {
+      if (!pinPrompter) throw new RpcError('PINが必要です');
+      const entered = await pinPrompter(message);
+      if (!entered) throw new RpcError('キャンセルしました');
+      pin = entered;
+    }
+    const res = await jsonp<{ ok: boolean; value?: T; error?: string }>({
+      action: 'v2rpc', method, pin, args64: b64url(JSON.stringify(args)),
+    });
+    if (res.ok) { setPin(pin); return res.value as T; }
+    if (/PIN/.test(res.error || '')) { setPin(''); pin = ''; message = 'PINが違います。もう一度入れてください。'; continue; }
+    throw new RpcError(res.error || 'error');
+  }
+  throw new RpcError('PINが違います');
+}
