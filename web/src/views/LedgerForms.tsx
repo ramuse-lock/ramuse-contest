@@ -69,7 +69,7 @@ export function ReceiptForm() {
           ))}
           <button class="row" style="justify-content:center;color:var(--acc-ink);font-weight:600;font-size:13px" onClick={() => setLines([...lines, { amount: '', label: '', targets: [] }])}><Icon name="add" />行を追加</button>
           <div class="rtotal"><span class="kicker">合計</span><span class="big">{yen(total)}</span></div>
-          <div class="split">{fams.map((f) => <div><Avatar fam={f} small on /><div><span class="n">{yen(owed[f])}</span><small>{famJa(f)}{f === payer ? '（払った）' : ''}</small></div></div>)}</div>
+          <div class="split">{fams.map((f) => <div><Avatar fam={f} small on /><div><span class="n">{yen(owed[f])}</span><small>{famJa(f)}{f === payer ? ' · 払' : ''}</small></div></div>)}</div>
         </Glass>
       </div>
     </Sheet>
