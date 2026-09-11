@@ -95,6 +95,11 @@ export function CarForm() {
   const [driver, setDriver] = useState(lastPayer('Rinka'));
   const [riders, setRiders] = useState<string[]>(fams);
   const [roundTrip, setRoundTrip] = useState(true);
+  // 行き・帰りそれぞれ「高速か下道か」と、その日の実額（初期値は行き先マスタ）
+  const [goToll, setGoToll] = useState(true);
+  const [backToll, setBackToll] = useState(true);
+  const [goFare, setGoFare] = useState('');
+  const [backFare, setBackFare] = useState('');
   const [parking, setParking] = useState('');
   const [gasUnit, setGasUnit] = useState(String(settings.value['ガソリン単価'] || 165));
   const [busy, setBusy] = useState(false);
@@ -104,25 +109,35 @@ export function CarForm() {
   const fe = num(car?.燃費) || 15;
   const dist = dest ? num(dest.片道距離) * (roundTrip ? 2 : 1) : 0;
   const gas = dist > 0 && num(gasUnit) > 0 ? Math.floor(num(gasUnit) * dist / fe) : 0;
-  const highway = dest ? num(dest.行き高速代) + (roundTrip ? num(dest.帰り高速代) : 0) : 0;
+  const goAmt = goToll ? Math.round(num(goFare)) : 0;
+  const backAmt = roundTrip && backToll ? Math.round(num(backFare)) : 0;
+  const highway = goAmt + backAmt;
   const park = Math.round(num(parking));
   const items: LedgerItem[] = [];
   if (gas > 0) items.push({ label: 'ガソリン', amount: gas, targets: riders });
-  if (highway > 0) items.push({ label: '高速', amount: highway, targets: riders });
+  if (highway > 0) items.push({ label: goAmt && backAmt ? '高速（往復）' : goAmt ? '高速（行きのみ）' : '高速（帰りのみ）', amount: highway, targets: riders });
   if (park > 0) items.push({ label: '駐車場', amount: park, targets: riders });
   const total = sumItems(items);
   const per = riders.length ? Math.round(total / riders.length / 10) * 10 : 0;
   const canSave = items.length > 0 && riders.length > 0 && !!dest && !!dest.名前;
   const contest = contests.value.find((c) => c.ID === contestId);
 
+  function pickDest(id: string) {
+    setDestId(id);
+    const d = id === 'new' ? null : dests.find((x) => x.ID === id);
+    setGoFare(d ? String(d.行き高速代 || '') : '');
+    setBackFare(d ? String(d.帰り高速代 || '') : '');
+    setGoToll(!d || num(d.行き高速代) > 0);
+    setBackToll(!d || num(d.帰り高速代) > 0);
+  }
   function pickContest(id: string) {
     setContestId(id);
     const c = contests.value.find((x) => x.ID === id);
     if (!c) return;
     setDate(c.開催日);
     const d = dests.find((x) => x.名前 === c.会場);
-    if (d) setDestId(d.ID);
-    else if (c.会場) { setDestId('new'); setNewDest({ ...newDest, 名前: c.会場 }); }
+    if (d) pickDest(d.ID);
+    else if (c.会場) { pickDest('new'); setNewDest({ ...newDest, 名前: c.会場 }); }
   }
   async function save() {
     if (!canSave || busy || !dest) return;
@@ -135,7 +150,7 @@ export function CarForm() {
       await saveLedger({
         ID: uid('l'), 日付: date, 内容: `${contest ? contest.コンテスト名 : d.名前} 車`, 種別: 'car', 合計: total, 支払者: driver, 大会ID: contestId,
         明細JSON: items, 負担JSON: shareItems(items, fams, driver),
-        車JSON: { 行き先: d.名前, 行き先ID: d.ID, 運転者: driver, 往復: roundTrip, 距離: dist, 燃費: fe, 単価: num(gasUnit), 駐車場: park },
+        車JSON: { 行き先: d.名前, 行き先ID: d.ID, 運転者: driver, 往復: roundTrip, 距離: dist, 燃費: fe, 単価: num(gasUnit), 駐車場: park, 行き高速: goAmt, 帰り高速: backAmt, 行き: goToll ? '高速' : '下道', 帰り: roundTrip ? (backToll ? '高速' : '下道') : '—' },
         メモ: '', 作成日時: '',
       });
       closeModal();
@@ -147,7 +162,7 @@ export function CarForm() {
         <Field label="大会"><ContestSelect value={contestId} onChange={pickContest} /></Field>
         <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} style="flex:0 0 150px" /></Field>
         <Field label="行き先">
-          <select value={destId} onChange={(e) => setDestId((e.target as HTMLSelectElement).value)}>
+          <select value={destId} onChange={(e) => pickDest((e.target as HTMLSelectElement).value)}>
             <option value="">選ぶ</option>
             {dests.map((d) => <option value={d.ID}>{d.名前}（{d.片道距離}km）</option>)}
             <option value="new">＋ 新しい行き先</option>
@@ -157,18 +172,24 @@ export function CarForm() {
           <>
             <Field label="名前"><input value={newDest.名前} placeholder="会場名" onInput={(e) => setNewDest({ ...newDest, 名前: (e.target as HTMLInputElement).value })} /></Field>
             <Field label="片道"><input class="n" type="number" inputMode="decimal" value={String(newDest.片道距離 || '')} placeholder="km" onInput={(e) => setNewDest({ ...newDest, 片道距離: num((e.target as HTMLInputElement).value) })} /><span class="unit">km</span></Field>
-            <Field label="高速代"><input class="n" type="number" inputMode="numeric" value={String(newDest.行き高速代 || '')} placeholder="行き" onInput={(e) => setNewDest({ ...newDest, 行き高速代: num((e.target as HTMLInputElement).value) })} /><span class="unit">行き</span><input class="n" type="number" inputMode="numeric" value={String(newDest.帰り高速代 || '')} placeholder="帰り" onInput={(e) => setNewDest({ ...newDest, 帰り高速代: num((e.target as HTMLInputElement).value) })} /><span class="unit">帰り</span></Field>
+            <Field label="高速代"><input class="n" type="number" inputMode="numeric" value={String(newDest.行き高速代 || '')} placeholder="行き" onInput={(e) => { const v = (e.target as HTMLInputElement).value; setNewDest({ ...newDest, 行き高速代: num(v) }); setGoFare(v); setGoToll(num(v) > 0); }} /><span class="unit">行き</span><input class="n" type="number" inputMode="numeric" value={String(newDest.帰り高速代 || '')} placeholder="帰り" onInput={(e) => { const v = (e.target as HTMLInputElement).value; setNewDest({ ...newDest, 帰り高速代: num(v) }); setBackFare(v); setBackToll(num(v) > 0); }} /><span class="unit">帰り</span></Field>
           </>
         )}
         <Field label="運転者"><OnePicker fams={fams} value={driver} onChange={setDriver} /><span class="unit" style="margin-left:auto">{car ? `${car.車名} · ${fe} km/L` : ''}</span></Field>
         <Field label="乗った人"><WhoPicker fams={fams} value={riders} onChange={setRiders} /><span class="unit" style="margin-left:auto">{riders.length}人で割る</span></Field>
         <Field label="往復"><Seg small options={[{ v: 'rt', label: '往復' }, { v: 'ow', label: '片道' }]} value={roundTrip ? 'rt' : 'ow'} onChange={(v) => setRoundTrip(v === 'rt')} /><span class="unit">駐車場</span><input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={parking} onInput={(e) => setParking((e.target as HTMLInputElement).value)} /></Field>
+        {dest && (
+          <>
+            <Field label="行き"><Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={goToll ? 'toll' : 'free'} onChange={(v) => setGoToll(v === 'toll')} />{goToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={goFare} onInput={(e) => setGoFare((e.target as HTMLInputElement).value)} />}</Field>
+            {roundTrip && <Field label="帰り"><Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={backToll ? 'toll' : 'free'} onChange={(v) => setBackToll(v === 'toll')} />{backToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={backFare} onInput={(e) => setBackFare((e.target as HTMLInputElement).value)} />}</Field>}
+          </>
+        )}
       </Glass>
       <Glass className="calc" style="margin-top:10px">
         <div class="kicker" style="margin-bottom:4px">計算</div>
         <div class="crow"><span class="lb"><Icon name="route" style="font-size:16px" />距離 <small>{dest ? `${dest.片道距離} km ${roundTrip ? '× 2' : ''}` : ''}</small></span><span class="v">{dist} km</span></div>
         <div class="crow"><span class="lb"><Icon name="local_gas_station" style="font-size:16px" />ガソリン <small>{dist} ÷ {fe} × ¥</small><input class="amt-in" style="width:70px;padding:3px 8px" type="number" inputMode="numeric" value={gasUnit} onInput={(e) => setGasUnit((e.target as HTMLInputElement).value)} /></span><span class="v">{yen(gas)}</span></div>
-        <div class="crow"><span class="lb"><Icon name="add_road" style="font-size:16px" />高速 <small>{dest ? `行き ${yen(dest.行き高速代)}${roundTrip ? ` · 帰り ${yen(dest.帰り高速代)}` : ''}` : ''}</small></span><span class="v">{yen(highway)}</span></div>
+        <div class="crow"><span class="lb"><Icon name="add_road" style="font-size:16px" />高速 <small>{dest ? `行き ${goToll ? yen(goAmt) : '下道'}${roundTrip ? ` · 帰り ${backToll ? yen(backAmt) : '下道'}` : ''}` : ''}</small></span><span class="v">{yen(highway)}</span></div>
         <div class="crow"><span class="lb"><Icon name="local_parking" style="font-size:16px" />駐車場</span><span class="v">{yen(park)}</span></div>
         <div class="crow tot"><span class="lb" style="color:var(--ink);font-weight:600">合計 <small>1人 {yen(per)}</small></span><span class="v">{yen(total)}</span></div>
       </Glass>
