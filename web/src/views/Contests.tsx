@@ -55,13 +55,14 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
         <div class="cm"><TypeBadge round={c.ラウンド} />{c.会場 && <><Icon name="location_on" />{c.会場}</>}{!c.会場 && c.開始時間 && <><Icon name="schedule" />{c.開始時間}{c.終了時間 && ` – ${c.終了時間}`}</>}</div>
         {pastMode ? (
           <div class="prog">
-            {c.結果 ? <Pill tone={/入賞|優勝/.test(c.結果) ? 'p-acc' : /通過|進出/.test(c.結果) ? 'p-ok' : 'p-mu'} icon={/入賞|優勝/.test(c.結果) ? 'emoji_events' : undefined}>{c.結果}{c.結果詳細 ? ` · ${c.結果詳細}` : ''}</Pill> : <Pill tone="p-mu">結果 未入力</Pill>}
+            {c.結果 ? <Pill tone={/入賞|優勝/.test(c.結果) ? 'p-acc' : /通過|進出/.test(c.結果) ? 'p-ok' : 'p-mu'} icon={/入賞|優勝/.test(c.結果) ? 'emoji_events' : undefined}>{resultText(c)}</Pill> : <Pill tone="p-mu">結果 未入力{c.総組数 ? ` · ${c.総組数}組` : ''}</Pill>}
             {finalLink && <span class="pill p-acc" style="margin-left:auto"><Icon name="arrow_forward" />{fmtDay(finalLink.開催日) ? `${parseDate(finalLink.開催日)!.getMonth() + 1}/${fmtDay(finalLink.開催日)} 決勝` : '決勝'}</span>}
           </div>
         ) : (
           <div class="prog">
             {!IS_KID && pg.total > 0 && <><span class="dots">{ts.map((t) => <i class={t.済 ? 'on' : ''} />)}</span><small>{pg.done}/{pg.total}</small></>}
             {IS_KID && c.集合時間 && <small>集合 {c.集合時間}</small>}
+            {orderText(c) && <Pill tone="p-blue" icon="format_list_numbered">{orderText(c)}</Pill>}
             {!IS_KID && near && daysUntil(near.期限日, today.value) <= 14
               ? <Pill tone="p-wn" icon="alarm">{fmtMonthDay(near.期限日)} {shortName(near.名前)}</Pill>
               : dayItem ? <Pill tone="p-violet" icon="album">当日CD</Pill>
@@ -72,6 +73,23 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
       </div>
     </button>
   );
+}
+
+// 「32組中1番」／「35組中5位（予選通過）」の表記
+function orderText(c: Contest): string {
+  const n = Number(c.総組数) || 0, o = Number(c.出演順) || 0;
+  if (o && n) return `${n}組中${o}番`;
+  if (o) return `${o}番目`;
+  if (n) return `${n}組`;
+  return '';
+}
+function resultText(c: Contest): string {
+  const n = Number(c.総組数) || 0;
+  const detail = String(c.結果詳細 || '').trim();
+  if (detail && n) return `${n}組中${detail}（${c.結果}）`;
+  if (detail) return `${detail}（${c.結果}）`;
+  if (n) return `${c.結果} · ${n}組`;
+  return c.結果;
 }
 
 function findFinal(c: Contest) {
