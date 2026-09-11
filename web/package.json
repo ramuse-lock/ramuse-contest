@@ -8,7 +8,7 @@
     "dev:kid": "VITE_APP_MODE=kid vite --port 4781",
     "build": "npm run build:adult && npm run build:kid",
     "build:adult": "VITE_APP_MODE=adult vite build --outDir ../app --emptyOutDir",
-    "build:kid": "VITE_APP_MODE=kid vite build --outDir ../../ramuse-kid/app --emptyOutDir",
+    "build:kid": "VITE_APP_MODE=kid vite build --outDir ../../ramuse-kid/app --emptyOutDir && cp public/kid/icon-192.png public/kid/icon-512.png public/kid/apple-touch-icon.png ../../ramuse-kid/app/ && rm -rf ../../ramuse-kid/app/kid && rm -rf ../app/kid",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
