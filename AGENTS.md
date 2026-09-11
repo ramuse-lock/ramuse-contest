@@ -1,6 +1,6 @@
 # RAMUSE（大人用アプリ・GAS）— 案件ノート
 
-ステータス：作業中（UI刷新フェーズ2＝フロント骨格に着手）。フェーズ1完了（v2シート移行済み・本番@46・action=v2稼働）。旧アプリは無変更で稼働中。次の節目＝大人用4タブが実データで表示・キャッシュ起動
+ステータス：作業中（UI刷新フェーズ2＝閲覧4タブ実装・並行運用URLで公開）。次＝フェーズ3（入力：大会追加・やること→台帳・レシート・車・精算・PIN）。旧アプリは無変更で稼働中
 
 ## この案件は何か
 
@@ -53,3 +53,5 @@ GitHubに存在しない状態を先に本番へ出さない。`clasp push`だ�
 - 金の使い方の原則：面で塗らない。光・ラベル・アイコンの小面積だけ
 - v2データ層＝`V2.gs`（新シート：大会v2／やること／台帳／行き先／車／設定）。`serveApi` の `action=v2&mode=adult|kid`。変換ロジックは純関数で `node docs/tools/v2-dryrun.mjs <contests.json> <trips.json> [today]` により実データで検証可（JSONは `exec?action=init` と `exec?action=rpc&method=getAllTripData` の返り）
 - 台帳の丸め原則：明細ごとに等分10円丸め、端数は支払者が持つ（ゼロサム）。残高＝支払合計−負担合計
+- 新フロント＝`web/`（Vite＋Preact＋TS・1ソース2出力）。`cd web && npm run build` で `app/`（大人用）と `../ramuse-kid/app/`（子供用）を生成し、**成果物もコミットしてpush**（Pagesはビルドなしで配信）。dev＝`npm run dev`（4780）／`npm run dev:kid`（4781）
+- 並行運用URL：大人用 https://ramuse-lock.github.io/ramuse-contest/app/ ／ 子供用 https://ramuse-lock.github.io/ramuse-kid/app/。切替（ルートの差し替え）はフェーズ5

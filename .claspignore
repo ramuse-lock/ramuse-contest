@@ -9,3 +9,5 @@ manifest.json
 README*
 # 設計書・モック・ツール（GASには不要）
 docs/**
+web/**
+app/**

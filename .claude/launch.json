@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "ramuse-web", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--prefix", "web"], "port": 4780 },
+    { "name": "ramuse-web-kid", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev:kid", "--prefix", "web"], "port": 4781 }
+  ]
+}
