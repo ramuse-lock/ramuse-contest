@@ -8,6 +8,20 @@ import { resultTone, resultIcon } from './Contests';
 import { openModal } from '../modal';
 import { saveTasks } from '../store';
 
+// 会場名でGoogleマップを引く。住所まで持っていないので、名前で検索させるのがいちばん外れない
+const mapUrl = (venue: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`;
+
+// Instagramのマークは Material Symbols に無いので自前で描く
+function InstagramMark() {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.4" />
+      <circle cx="12" cy="12" r="4.1" />
+      <circle cx="17.7" cy="6.4" r="1.15" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function ContestDetail({ id }: { id: string }) {
   const c = contests.value.find((x) => x.ID === id);
   if (!c) return <><div class="back"><button onClick={() => go('/contests')}><Icon name="arrow_back_ios_new" />大会</button></div><div class="empty">見つかりませんでした</div></>;
@@ -24,24 +38,17 @@ export function ContestDetail({ id }: { id: string }) {
         <button style="display:flex;align-items:center;gap:4px" onClick={() => history.length > 1 ? history.back() : go('/contests')}><Icon name="arrow_back_ios_new" />大会</button>
         {!IS_KID && <button class="icnbtn" style="margin-left:auto" aria-label="編集" onClick={() => (openModal({ type: 'contest', contest: c }))}><Icon name="edit" /></button>}
       </div>
+      {/* 見出し：シリーズ名を小見出しにして上へ。大会名のあと、種別・状態・部門・予選結果を1行に */}
       <div class="dt-hd">
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        {c.シリーズ名 && <div class="kick"><Icon name="flag" />{c.シリーズ名}</div>}
+        <div class="name">{c.コンテスト名}</div>
+        <div class="tags">
           <TypeBadge round={c.ラウンド} />
           {c.決勝ステータス === '進出決定' && <Pill tone="p-ok" icon="check_circle">進出決定</Pill>}
           {part !== 'confirmed' && <Pill tone="p-mu" icon={part === 'unentered' ? 'edit_note' : 'hourglass_empty'}>{PARTICIPATION_LABEL[part]}</Pill>}
           {!IS_KID && part === 'confirmed' && <Pill tone={status === '完了' ? 'p-mu' : status === '会計待ち' ? 'p-wn' : 'p-blue'}>{status}</Pill>}
-        </div>
-        <div class="name">{c.コンテスト名}</div>
-        <div class="sub">
           {c.部門 && <span>{c.部門}</span>}
-          {c.シリーズ名 && <span><Icon name="flag" />{c.シリーズ名}</span>}
-          {prelim && <span>· 予選 {prelim.結果}{prelim.結果詳細 ? `（${prelim.結果詳細}）` : ''}</span>}
-        </div>
-        <div class="dt-date">
-          <span class="big">{fmtMD(c.開催日)}</span><span class="w">{fmtDow(c.開催日)}</span>
-          {d > 1 && <span class="cdn">あと{d}日</span>}
-          {d === 1 && <span class="cdn">明日</span>}
-          {d === 0 && <span class="cdn">今日</span>}
+          {prelim && <span>予選 {prelim.結果詳細 ? `${prelim.結果詳細}・` : ''}{prelim.結果}</span>}
         </div>
       </div>
       {part !== 'confirmed' && (
@@ -53,14 +60,45 @@ export function ContestDetail({ id }: { id: string }) {
           </div>
         </Glass>
       )}
-      <Glass className="tiles">
-        <div><Icon name="groups" /><span class="kicker">集合</span><span class="n">{c.集合時間 || '—'}</span></div>
-        <div><Icon name="play_arrow" /><span class="kicker">開始</span><span class="n">{c.開始時間 || '—'}</span></div>
-        <div><Icon name="stop" /><span class="kicker">終了</span><span class="n">{c.終了時間 || '—'}</span></div>
-        <div><Icon name="format_list_numbered" /><span class="kicker">出演</span><span class="n">{c.出演順 || '—'}{c.総組数 ? <small>/{c.総組数}</small> : null}</span></div>
+      {/* 当日いちばん使う数字は受付開始の時刻。それだけ大きく出し、行き先とリンクも同じカードに収める */}
+      <Glass className="daycard">
+        <div class="d1">
+          <span class="md">{fmtMD(c.開催日)}</span><span>{fmtDow(c.開催日)}</span>
+          {d > 1 && <span class="cdn">あと{d}日</span>}
+          {d === 1 && <span class="cdn">明日</span>}
+          {d === 0 && <span class="cdn">今日</span>}
+        </div>
+        {c.集合時間
+          ? <div class="meet"><span class="tm">{c.集合時間}</span><span class="lb">受付開始</span></div>
+          : <div class="meet"><span class="none">時間はまだ未定</span></div>}
+        {c.会場 && (
+          <div class="place">
+            <span class="vt"><Icon name="location_on" />{c.会場}</span>
+            <a class="icnbtn mapb" href={mapUrl(c.会場)} target="_blank" rel="noopener" aria-label="地図で開く" title="地図で開く"><Icon name="location_on" fill /></a>
+          </div>
+        )}
+        {(c.集合時間 || c.開始時間 || c.終了時間 || c.出演順) && (
+          <div class="subline">
+            <div><span class="lb">開始</span><span class="v">{c.開始時間 || '—'}</span></div>
+            <div><span class="lb">終了</span><span class="v">{c.終了時間 || '—'}</span></div>
+            <div><span class="lb">出演</span><span class="v">{c.出演順 ? <>{c.出演順}{c.総組数 ? <small>/{c.総組数}</small> : null}</> : '—'}</span></div>
+          </div>
+        )}
+        {(c.URL || c.Instagram) && (
+          <div class="linkstrip">
+            {c.URL && <a class="icnbtn siteb" href={c.URL} target="_blank" rel="noopener" aria-label="大会サイト" title="大会サイト"><Icon name="public" /></a>}
+            {c.Instagram && <a class="icnbtn ig" href={c.Instagram} target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><InstagramMark /></a>}
+          </div>
+        )}
       </Glass>
-      {c.会場 && <div class="venue"><Icon name="location_on" /><b>{c.会場}</b></div>}
-      {c.URL && <div class="venue"><Icon name="link" /><a href={c.URL} target="_blank" rel="noopener" style="color:var(--blue)">大会サイト</a></div>}
+
+      {/* 資料。見出しは置かず、チップと末尾の＋だけ。＋は編集画面をひらく */}
+      {(docs.length > 0 || !IS_KID) && (
+        <div class="docs">
+          {docs.map((dd) => <a class="chip" href={dd.url} target="_blank" rel="noopener"><Icon name="description" />{dd.label}</a>)}
+          {!IS_KID && <button class="chip add" aria-label="資料を追加" title="資料を追加" onClick={() => openModal({ type: 'contest', contest: c })}><Icon name="add" /></button>}
+        </div>
+      )}
 
       <div class="sec">
         <SectionHead title={IS_KID ? 'もっていくもの' : 'やること'} more={IS_KID ? undefined : '追加'} onMore={() => (openModal({ type: 'task', contestId: c.ID }))} />
@@ -70,14 +108,8 @@ export function ContestDetail({ id }: { id: string }) {
         </Glass>
       </div>
 
+      {c.メモ && !IS_KID && <div class="sec"><SectionHead title="メモ" /><Glass className="card" style="font-size:13px;white-space:pre-wrap">{c.メモ}</Glass></div>}
       {!IS_KID && <MoneySection contestId={c.ID} />}
-
-      {docs.length > 0 && (
-        <div class="sec">
-          <SectionHead title={`資料 · ${docs.length}`} />
-          <div class="doc">{docs.map((dd) => <a class="glass" href={dd.url} target="_blank" rel="noopener"><Icon name="description" />{dd.label}</a>)}</div>
-        </div>
-      )}
 
       <div class="sec">
         <SectionHead title="結果" />
@@ -91,7 +123,6 @@ export function ContestDetail({ id }: { id: string }) {
             : <span style="color:var(--mu);font-size:13px">{d >= 0 ? '大会が終わったらここに出ます' : '未入力'}</span>}
         </Glass>
       </div>
-      {c.メモ && !IS_KID && <div class="sec"><SectionHead title="メモ" /><Glass className="card" style="font-size:13px;white-space:pre-wrap">{c.メモ}</Glass></div>}
     </>
   );
 }

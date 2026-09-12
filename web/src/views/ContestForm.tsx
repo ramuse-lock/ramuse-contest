@@ -16,7 +16,7 @@ type Tpl = {
 
 const blank = (): Contest => ({
   ID: '', コンテスト名: '', 開催日: '', 会場: '', 部門: '小学生部門', ラウンド: '単発', シリーズ名: '', 決勝ステータス: '',
-  集合時間: '', 開始時間: '', 終了時間: '', 出演順: '', 総組数: '', URL: '', 資料JSON: [], 結果: '', 結果詳細: '', キャンセル: false, メモ: '', 更新日時: '',
+  集合時間: '', 開始時間: '', 終了時間: '', 出演順: '', 総組数: '', URL: '', Instagram: '', 資料JSON: [], 結果: '', 結果詳細: '', キャンセル: false, メモ: '', 更新日時: '',
 });
 
 // あとから足すことが多い項目。編集画面のショートカット
@@ -89,7 +89,8 @@ export function ContestForm({ contest }: { contest?: Contest }) {
               <Field label="集合"><input type="time" value={c.集合時間} onInput={(e) => set('集合時間', (e.target as HTMLInputElement).value)} /><span class="unit">開始</span><input type="time" value={c.開始時間} onInput={(e) => set('開始時間', (e.target as HTMLInputElement).value)} /></Field>
               <Field label="終了"><input type="time" value={c.終了時間} onInput={(e) => set('終了時間', (e.target as HTMLInputElement).value)} /></Field>
               <Field label="出演順"><input class="n" type="number" inputMode="numeric" value={String(c.出演順 || '')} onInput={(e) => set('出演順', (e.target as HTMLInputElement).value)} placeholder="—" /><span class="unit">番 ／</span><input class="n" type="number" inputMode="numeric" value={String(c.総組数 || '')} onInput={(e) => set('総組数', (e.target as HTMLInputElement).value)} placeholder="—" /><span class="unit">組</span></Field>
-              <Field label="URL"><input type="url" value={c.URL} onInput={(e) => set('URL', (e.target as HTMLInputElement).value)} placeholder="https://" /></Field>
+              <Field label="大会サイト"><input type="url" value={c.URL} onInput={(e) => set('URL', (e.target as HTMLInputElement).value)} placeholder="https://" /></Field>
+              <Field label="Instagram"><input type="url" value={c.Instagram || ''} onInput={(e) => set('Instagram', (e.target as HTMLInputElement).value)} placeholder="https://www.instagram.com/..." /></Field>
             </Glass>
           </div>
 

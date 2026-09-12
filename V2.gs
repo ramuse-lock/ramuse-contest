@@ -21,7 +21,7 @@ var V2_SHEETS = {
 
 var V2_HEADERS = {
   CONTESTS: ['ID','コンテスト名','開催日','会場','部門','ラウンド','シリーズ名','決勝ステータス',
-             '集合時間','開始時間','終了時間','出演順','総組数','URL','資料JSON','結果','結果詳細',
+             '集合時間','開始時間','終了時間','出演順','総組数','URL','Instagram','資料JSON','結果','結果詳細',
              'キャンセル','メモ','更新日時','旧行番号'],
   TASKS:    ['ID','大会ID','種別','名前','期限日','当日','済','済日','単価','数量','台帳ID','メモ','表示順'],
   LEDGER:   ['ID','日付','内容','種別','合計','支払者','大会ID','明細JSON','負担JSON','車JSON','メモ','作成日時'],
@@ -885,4 +885,50 @@ function restoreMissingContestsApply() {
   var names = res.data.contests.map(function(c) { return c['開催日'] + ' ' + c['コンテスト名']; });
   Logger.log(JSON.stringify({ restored: names, tasks: res.data.tasks.length }, null, 2));
   return { restored: names, tasks: res.data.tasks.length };
+}
+
+// ============================================================
+// 移行で落ちた Instagram_URL を旧シートから戻す（2026-09-13）
+//   新シート 大会v2 に Instagram 列が無かったため、移行時に落ちていた。
+//   大会名（＋開催日）で突き合わせ、v2側が空のときだけ埋める。何度実行しても安全。
+// ============================================================
+function restoreInstagramUrlsDry() { return v2RestoreInstagram_(false); }
+function restoreInstagramUrlsApply() { return v2RestoreInstagram_(true); }
+
+function v2RestoreInstagram_(apply) {
+  // 列が無ければ作る
+  var s = v2Sheet_(V2_SHEETS.CONTESTS, V2_CONTEST_HEADERS_W);
+  var sh = s.sh, headers = s.headers;
+  var iIg = headers.indexOf('Instagram');
+  var iName = headers.indexOf('コンテスト名');
+  var iDate = headers.indexOf('開催日');
+  if (iIg < 0 || iName < 0) throw new Error('大会v2 の列が見つかりません');
+
+  // 旧シートの Instagram_URL を 大会名 → URL で引けるようにする
+  var legacy = {};
+  getContests().forEach(function(c) {
+    var url = String(c['Instagram_URL'] || '').trim();
+    if (!url) return;
+    var nm = String(c['コンテスト名'] || '').trim();
+    if (nm && !legacy[nm]) legacy[nm] = url;
+  });
+
+  var last = sh.getLastRow();
+  if (last < 2) return { filled: 0, rows: [] };
+  var rows = sh.getRange(2, 1, last - 1, headers.length).getValues();
+  var out = [], filled = 0;
+  rows.forEach(function(row, i) {
+    var nm = String(row[iName] || '').trim();
+    if (!nm) return;
+    var cur = String(row[iIg] || '').trim();
+    if (cur) return;                       // すでに入っているものは触らない
+    var url = legacy[nm];
+    if (!url) { out.push({ 大会名: nm, 結果: '旧シートに無し' }); return; }
+    if (apply) sh.getRange(i + 2, iIg + 1).setValue(url);
+    filled++;
+    out.push({ 大会名: nm, 開催日: iDate >= 0 ? String(row[iDate] || '') : '', url: url, 結果: apply ? '書き込んだ' : '書き込む予定' });
+  });
+  Logger.log(JSON.stringify(out, null, 1));
+  Logger.log((apply ? '書き込んだ件数=' : '書き込める件数=') + filled);
+  return { filled: filled, rows: out };
 }

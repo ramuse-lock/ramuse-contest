@@ -21,6 +21,7 @@ export interface Contest {
   出演順: number | string;
   総組数: number | string;
   URL: string;
+  Instagram: string;
   資料JSON: Doc[] | string;
   結果: string;
   結果詳細: string;

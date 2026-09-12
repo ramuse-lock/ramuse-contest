@@ -176,26 +176,44 @@ a{color:inherit;text-decoration:none}
 /* detail */
 .back{display:flex;align-items:center;gap:6px;padding:8px 0 4px;min-height:46px;font-size:13px;color:var(--mu)}
 .back .ms{font-size:20px;color:var(--ink)}
-.dt-hd .name{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.3;margin:6px 0 4px;text-wrap:balance}
-.dt-hd .sub{font-size:12.5px;color:var(--mu);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.dt-hd .sub .ms{font-size:15px}
-.dt-date{display:flex;align-items:baseline;gap:8px;margin-top:10px}
-.dt-date .big{font-size:40px;letter-spacing:-.04em}
-.dt-date .w{font-size:14px;color:var(--mu);font-weight:600}
-.dt-date .cdn{margin-left:auto;font-family:var(--num);font-size:12px;color:var(--acc-ink);font-weight:700;background:var(--acc-bg);padding:3px 10px;border-radius:999px}
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);overflow:hidden;margin-top:12px}
-.tiles>div{padding:10px 6px 9px;text-align:center}
-.tiles>div+div{border-left:1px solid var(--hair)}
-.tiles .ms{font-size:16px;color:var(--mu)}
-.tiles .kicker{font-size:9.5px;display:block;margin-top:2px}
-.tiles .n{font-size:16px;font-weight:700;display:block;margin-top:2px}
-.tiles .n small{font-size:10px;color:var(--mu);font-weight:500}
-.venue{font-size:12.5px;color:var(--mu);margin-top:8px;display:flex;gap:4px;align-items:center}
-.venue .ms{font-size:16px}
-.venue b{color:var(--ink);font-weight:500}
-.doc{display:flex;gap:8px;flex-wrap:wrap}
-.doc a{font-size:12px;padding:6px 10px 6px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:4px}
-.doc .ms{font-size:15px;color:var(--blue)}
+/* 見出し：シリーズ名を小見出しにして上へ。行数を減らす */
+.dt-hd{padding:0 2px}
+.dt-hd .kick{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--mu);display:flex;align-items:center;gap:4px}
+.dt-hd .kick .ms{font-size:14px}
+.dt-hd .name{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.28;margin:3px 0 6px;text-wrap:balance}
+.dt-hd .tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--mu)}
+
+/* 当日カード：受付開始の時刻が主役。行き先と外へのリンクも同じカードに収める */
+.daycard{margin-top:12px;padding:14px 16px}
+.daycard .d1{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--mu)}
+.daycard .d1 .md{font-family:var(--num);font-size:15px;font-weight:700;color:var(--ink)}
+.daycard .d1 .cdn{margin-left:auto;font-family:var(--num);font-size:12px;color:var(--acc-ink);font-weight:700;background:var(--acc-bg);padding:3px 10px;border-radius:999px}
+.daycard .meet{display:flex;align-items:flex-end;gap:9px;margin-top:8px}
+.daycard .meet .tm{font-family:var(--num);font-size:44px;font-weight:700;letter-spacing:-.04em;line-height:1}
+.daycard .meet .lb{font-size:12.5px;font-weight:700;color:var(--mu);padding-bottom:8px;letter-spacing:.04em}
+.daycard .meet .none{font-size:22px;font-weight:700;color:var(--mu)}
+.daycard .place{display:flex;align-items:center;gap:8px;margin-top:11px}
+.daycard .place .vt{flex:1;min-width:0;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px;line-height:1.35}
+.daycard .place .vt .ms{font-size:17px;color:var(--mu);flex-shrink:0}
+.daycard .subline{display:grid;grid-template-columns:repeat(3,1fr);margin-top:12px;padding-top:11px;border-top:1px solid var(--hair2);text-align:center}
+.daycard .subline>div{display:flex;flex-direction:column;gap:2px;border-left:1px solid var(--hair2)}
+.daycard .subline>div:first-child{border-left:0}
+.daycard .subline .lb{font-size:10.5px;font-weight:700;color:var(--mu);letter-spacing:.04em}
+.daycard .subline .v{font-family:var(--num);font-size:14.5px;font-weight:700}
+.daycard .subline .v small{font-size:10.5px;color:var(--mu)}
+.daycard .linkstrip{display:flex;align-items:center;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hair2)}
+
+/* 外へ出ていくアイコン。文字を書かなくても分かるものは文字を書かない */
+.icnbtn.mapb{background:linear-gradient(var(--blue-bg),var(--blue-bg));color:var(--blue);border:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+.icnbtn.siteb{background:linear-gradient(var(--hair2),var(--hair2));color:var(--ink);border:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+.icnbtn.ig{background:radial-gradient(circle at 28% 108%,#F58529 0%,#DD2A7B 55%,#8134AF 100%);color:#fff;border:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* 資料。見出しは置かず、チップと末尾の＋だけ */
+.docs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:0 13px;height:36px;border-radius:999px;background:var(--sfc);border:var(--card-bd);box-shadow:var(--card-sh);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.chip .ms{font-size:15px;color:var(--mu)}
+.chip.add{width:36px;padding:0;justify-content:center}
+.chip.add .ms{font-size:19px;color:var(--mu)}
 .result{display:flex;align-items:center;gap:12px;padding:12px 16px}
 .stats3{display:flex;gap:14px;margin-top:4px}
 .stats3 .big{font-size:26px}
