@@ -52,7 +52,7 @@ button,a{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:po
 
 .top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
-.lead{font-size:12.5px;color:var(--mu);max-width:76ch;margin:8px 0 4px;line-height:1.75}
+.lead{font-size:12.5px;color:var(--mu);max-width:78ch;margin:8px 0 4px;line-height:1.75}
 .lead b{color:var(--ink)}
 .tools{margin-left:auto;display:flex;gap:5px;align-items:center}
 .tbtn{font-size:11.5px;font-weight:700;border:var(--card-bd);background:var(--sfc2);color:var(--ink);border-radius:999px;padding:6px 13px}
@@ -68,74 +68,34 @@ h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
 
 /* ===== 本体と同じ部品 ===== */
 .glass{background:var(--sfc);border:var(--card-bd);border-radius:var(--r);box-shadow:var(--card-sh);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
-.sec{margin-top:14px}
-.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding:0 2px}
-.sec-hd .ttl{font-size:13px;font-weight:700}
 .back{display:flex;align-items:center;padding:2px 0 8px;font-size:13px;color:var(--mu)}
 .back .ms{font-size:16px}
 .icnbtn{width:36px;height:36px;border-radius:999px;border:var(--card-bd);background:var(--sfc2);display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;box-shadow:var(--card-sh)}
 .icnbtn .ms{font-size:19px}
 .ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;white-space:nowrap;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;vertical-align:middle}
 .ms.f{font-variation-settings:'FILL' 1,'wght' 300,'GRAD' 0,'opsz' 24}
-.n{font-family:var(--num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .type{font-family:var(--num);font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;color:#fff;white-space:nowrap}
 .ty-qual{background:var(--violet)}.ty-final{background:var(--acc);color:#1C1B17}
 .pill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;line-height:1.5;white-space:nowrap;background-color:var(--sfc2)}
 .pill .ms{font-size:12px}
 .p-ok{background-image:linear-gradient(var(--green-bg),var(--green-bg));color:var(--green)}
-.p-mu{background-image:linear-gradient(var(--hair2),var(--hair2));color:var(--mu)}
-.p-blue{background-image:linear-gradient(var(--blue-bg),var(--blue-bg));color:var(--blue)}
-.doc{display:flex;flex-wrap:wrap;gap:8px}
-.doc a{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:8px 12px;border-radius:12px;background:var(--sfc);border:var(--card-bd);box-shadow:var(--card-sh)}
-.doc a .ms{font-size:15px;color:var(--mu)}
 
-/* ===== 見出し（3案で共通）：シリーズ名を上の小見出しにして行数を減らす ===== */
+/* ===== 見出し（3案共通） ===== */
 .hd2{padding:0 2px}
 .hd2 .kick{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--mu);display:flex;align-items:center;gap:4px}
 .hd2 .kick .ms{font-size:14px}
 .hd2 .name{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.28;margin:3px 0 6px;text-wrap:balance}
 .hd2 .tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--mu)}
 
-/* ===== アイコンだけのリンク ===== */
-.iconbar{display:flex;gap:8px;flex-shrink:0}
-.ig{background:radial-gradient(circle at 28% 108%,#F58529 0%,#DD2A7B 55%,#8134AF 100%);border:0;color:#fff}
-.ig svg{width:19px;height:19px}
-.mapb{background:linear-gradient(var(--blue-bg),var(--blue-bg));color:var(--blue);border:0}
-.siteb{background:linear-gradient(var(--hair2),var(--hair2));color:var(--ink);border:0}
-
-/* 会場の行（A・Cで使う） */
-.venue2{display:flex;align-items:center;gap:10px;margin-top:10px;padding:0 2px}
-.venue2 .vt{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.35;display:flex;align-items:center;gap:6px}
-.venue2 .vt .ms{font-size:18px;color:var(--mu);flex-shrink:0}
-
-/* ---------- A：時間の流れ ---------- */
-.flowcard{margin-top:12px;padding:14px 16px 16px}
-.flowcard .dline{display:flex;align-items:baseline;gap:10px}
-.flowcard .dline .big{font-family:var(--num);font-size:32px;font-weight:700;letter-spacing:-.03em}
-.flowcard .dline .w{font-size:14px;color:var(--mu);font-weight:600}
-.flowcard .dline .cdn{margin-left:auto;font-family:var(--num);font-size:12px;color:var(--acc-ink);font-weight:700;background:var(--acc-bg);padding:3px 10px;border-radius:999px}
-.flow{display:grid;grid-template-columns:repeat(3,1fr);margin-top:14px;position:relative}
-.flow::before{content:'';position:absolute;left:16%;right:16%;top:5px;height:2px;background:var(--hair)}
-.flow > div{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
-.flow i{width:12px;height:12px;border-radius:999px;background:var(--sfc2);border:2.5px solid var(--mu2);z-index:1}
-.flow div:first-child i{border-color:var(--blue);background:var(--blue)}
-.flow .lb{font-size:10.5px;font-weight:700;color:var(--mu);letter-spacing:.04em}
-.flow .tm{font-family:var(--num);font-size:17px;font-weight:700;letter-spacing:-.02em}
-.flowcard .ordline{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--hair2);font-size:12.5px;color:var(--mu)}
-.flowcard .ordline b{font-family:var(--num);font-size:15px;color:var(--ink);margin-left:auto}
-.flowcard .ordline b small{font-size:11px;color:var(--mu);font-weight:600}
-.undecided{margin-top:14px;font-size:12.5px;color:var(--mu);display:flex;align-items:center;gap:6px}
-.undecided .ms{font-size:16px}
-
-/* ---------- B：集合が主役 ---------- */
+/* ===== 集合カード（3案共通の中身） ===== */
 .actcard{margin-top:12px;padding:14px 16px 14px}
 .actcard .top1{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--mu)}
 .actcard .top1 .d{font-family:var(--num);font-size:15px;font-weight:700;color:var(--ink)}
 .actcard .top1 .cdn{margin-left:auto;font-family:var(--num);font-size:12px;color:var(--acc-ink);font-weight:700;background:var(--acc-bg);padding:3px 10px;border-radius:999px}
-.actcard .meet{display:flex;align-items:flex-end;gap:10px;margin-top:8px}
-.actcard .meet .lb{font-size:12px;font-weight:700;color:var(--mu);padding-bottom:9px;letter-spacing:.04em}
+.actcard .meet{display:flex;align-items:flex-end;gap:9px;margin-top:8px}
 .actcard .meet .tm{font-family:var(--num);font-size:44px;font-weight:700;letter-spacing:-.04em;line-height:1}
-.actcard .place{display:flex;align-items:center;gap:10px;margin-top:10px}
+.actcard .meet .lb{font-size:12.5px;font-weight:700;color:var(--mu);padding-bottom:8px;letter-spacing:.04em}
+.actcard .place{display:flex;align-items:center;gap:8px;margin-top:11px}
 .actcard .place .vt{flex:1;min-width:0;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px;line-height:1.35}
 .actcard .place .vt .ms{font-size:17px;color:var(--mu);flex-shrink:0}
 .subline{display:grid;grid-template-columns:repeat(3,1fr);margin-top:12px;padding-top:11px;border-top:1px solid var(--hair2);text-align:center}
@@ -144,23 +104,27 @@ h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
 .subline .lb{font-size:10.5px;font-weight:700;color:var(--mu);letter-spacing:.04em}
 .subline .v{font-family:var(--num);font-size:14.5px;font-weight:700}
 .subline .v small{font-size:10.5px;color:var(--mu)}
-.linkrow2{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 
-/* ---------- C：日付ブロック＋時刻の表 ---------- */
-.splitcard{margin-top:12px;display:grid;grid-template-columns:104px minmax(0,1fr);overflow:hidden}
-.daybox{background:linear-gradient(var(--hair2),var(--hair2));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:16px 8px}
-.daybox .mo{font-family:var(--num);font-size:12px;font-weight:700;color:var(--mu)}
-.daybox .dd{font-family:var(--num);font-size:38px;font-weight:700;letter-spacing:-.04em;line-height:1}
-.daybox .w{font-size:12px;font-weight:700;color:var(--mu);margin-top:2px}
-.daybox .cdn{font-family:var(--num);font-size:11px;color:var(--acc-ink);font-weight:700;background:var(--acc-bg);padding:2px 8px;border-radius:999px;margin-top:7px}
-.tlist{padding:10px 16px;display:flex;flex-direction:column;justify-content:center}
-.tlist > div{display:flex;align-items:baseline;gap:10px;padding:6px 0;border-top:1px solid var(--hair2)}
-.tlist > div:first-child{border-top:0}
-.tlist .lb{font-size:11.5px;font-weight:700;color:var(--mu);width:34px;flex-shrink:0;letter-spacing:.04em}
-.tlist .v{font-family:var(--num);font-size:17px;font-weight:700;letter-spacing:-.02em;margin-left:auto}
-.tlist .v.sm{font-size:14px}
-.tlist .v small{font-size:11px;color:var(--mu);font-weight:600}
-.tlist .none{font-size:12.5px;color:var(--mu);font-family:var(--jp);font-weight:500}
+/* ===== アイコンボタン ===== */
+.ig{background:radial-gradient(circle at 28% 108%,#F58529 0%,#DD2A7B 55%,#8134AF 100%);border:0;color:#fff;box-shadow:var(--card-sh)}
+.ig svg{width:19px;height:19px}
+.mapb{background:linear-gradient(var(--blue-bg),var(--blue-bg));color:var(--blue);border:0;box-shadow:none}
+.siteb{background:linear-gradient(var(--hair2),var(--hair2));color:var(--ink);border:0;box-shadow:none}
+.iconbar{display:flex;gap:7px;flex-shrink:0}
+
+/* 資料チップ（見出しなし・末尾に＋）。アイコンボタンと混ざっても潰れないよう .chip だけに当てる */
+.docs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:0 13px;height:36px;border-radius:999px;background:var(--sfc);border:var(--card-bd);box-shadow:var(--card-sh)}
+.chip .ms{font-size:15px;color:var(--mu)}
+.chip.add{width:36px;padding:0;justify-content:center}
+.chip.add .ms{font-size:19px;color:var(--mu)}
+
+/* ①：カード下辺のリンク帯 */
+.linkstrip{display:flex;align-items:center;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hair2)}
+
+/* ③：資料と同じ列に混ぜる */
+.mixrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.mixrow .divider{width:1px;height:22px;background:var(--hair);margin:0 1px}
 
 .note{font-size:11.5px;color:var(--mu);margin:26px 0 0;padding-top:16px;border-top:1px solid var(--hair);line-height:1.85;max-width:82ch}
 .note b{color:var(--ink)}
@@ -170,24 +134,24 @@ h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
 <div class="blobs" aria-hidden="true"><i class="b1"></i><i class="b2"></i></div>
 <div class="wrap">
   <div class="top">
-    <h1>大会詳細ファーストビュー案</h1>
+    <h1>大会詳細ファーストビュー案（Bの続き）</h1>
     <div class="tools">
       <button class="tbtn on" data-t="light">明るい</button>
       <button class="tbtn" data-t="dark">暗い</button>
     </div>
   </div>
   <p class="lead">
-    一番上から資料までの3案です。3案とも見出しは同じ作りにして、<b>シリーズ名を小見出しとして上に出し、大会名・部門を続ける</b>ことで行数を減らしました。
-    リンクは<b>文字なしのアイコンだけ</b>（ピン＝地図、地球＝大会サイト、Instagramのマーク）。会場名はテキストで置いて、ピンを押すと地図へ飛びます。<br>
-    違うのは<b>日付と集合〜出演順の見せ方</b>です。各案とも、情報が揃った大会（9/26 FINAL）と、時間がまだ決まっていない大会（10/25 予選2回戦）の2つを並べてあります。実データです。
+    B（集合時刻を主役にする）の続きです。3案とも<b>見出しと集合カードの中身は同じ</b>で、違うのは<b>大会サイトとInstagramをどこに置くか</b>だけ。
+    「資料」という見出しは<b>消しました</b>。資料はチップだけを並べ、末尾の<b>＋</b>から追加します。まだ無いときは＋だけが残ります。<br>
+    実データ2件（9/26 FINAL＝情報が揃った大会／10/25 予選2回戦＝時間も資料もまだの大会）で並べています。
   </p>
 
   <div class="cols" id="cols"></div>
 
   <p class="note">
-    <b>A｜時間を線でつなぐ</b>　集合→開始→終了は順番に起きることなので、横一列の箱ではなく線でつなぐ。いま何を待っているかが形で分かる。出演順は時刻ではないので、線から外して下に別の行として置く。<br>
-    <b>B｜集合時刻を主役にする</b>　当日いちばん使う数字は集合時刻なので、それだけ特大にする。会場も同じカードに入れる（「いつ・どこに行くか」はひとつの情報だから）。開始・終了・出演順は下に小さく添える。<br>
-    <b>C｜カレンダーの1枚＋時刻の表</b>　左に日付を大きく、右に集合・開始・終了・出演を表として縦に読ませる。4つの箱が横に並ぶ今の形をやめて、上から順に読める形にする。時間が未定なら右側が1行で済む。
+    <b>①｜カードの下辺に置く</b>　集合カードの中に区切り線を引き、その下に大会サイトとInstagramを並べる。地図は会場の行に。この大会のことがカード1枚に収まるので、浮いた感じが出ない。<br>
+    <b>②｜会場の行に3つ並べる</b>　会場名の右に、地図・大会サイト・Instagramを続けて置く。どれも外へ出ていく入口なので、ひとかたまりにする。行数がいちばん少ない。<br>
+    <b>③｜資料と同じ列に混ぜる</b>　地図だけ会場の行に残し、大会サイトとInstagramは資料チップと同じ列に。大会サイトと資料が同じ重さ、という話が素直に形になる。
   </p>
 </div>
 
@@ -195,14 +159,14 @@ h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
 const FULL = {
   series:'THE ROOKIES 2026 1stシリーズ', name:'THE ROOKIES 2026 1stシリーズ FINAL', dept:'小学生部門',
   round:'決勝', roundCls:'ty-final', advanced:true, prelim:'予選 5位・通過',
-  mo:'9', dd:'26', dow:'金', md:'9/26', cdn:'あと14日',
+  md:'9/26', dow:'金', cdn:'あと14日',
   venue:'愛知県 青少年文化センター', meet:'10:15', start:'11:35', end:'15:00', order:1, total:32,
   docs:['ファイナリスト様へ','当日の流れ','音源提出','スケジュール','出演順'],
 };
 const SPARSE = {
   series:'ALL JAPAN SUPER KIDS DANCE CONTEST 2026', name:'ALL JAPAN SUPER KIDS DANCE CONTEST 2026 中部予選2回戦', dept:'小学生部門',
   round:'予選', roundCls:'ty-qual', advanced:false, prelim:'',
-  mo:'10', dd:'25', dow:'日', md:'10/25', cdn:'あと43日',
+  md:'10/25', dow:'日', cdn:'あと43日',
   venue:'東文化小劇場', meet:'', start:'', end:'', order:'', total:'',
   docs:[],
 };
@@ -214,7 +178,6 @@ const igBtn   = `<a class="icnbtn ig" title="Instagram" aria-label="Instagram">$
 
 const back = () => `<div class="back"><span class="ms">arrow_back_ios_new</span>大会<span style="margin-left:auto"><span class="icnbtn"><span class="ms">edit</span></span></span></div>`;
 
-// 見出しは3案共通
 const head = (c) => `${back()}
   <div class="hd2">
     ${c.series ? `<div class="kick"><span class="ms">flag</span>${c.series}</div>` : ''}
@@ -227,34 +190,8 @@ const head = (c) => `${back()}
     </div>
   </div>`;
 
-const docsSec = (c) => c.docs.length ? `
-  <div class="sec"><div class="sec-hd"><span class="ttl">資料 · ${c.docs.length}</span></div>
-    <div class="doc">${c.docs.map(d => `<a><span class="ms">description</span>${d}</a>`).join('')}</div>
-  </div>` : `
-  <div class="sec"><div class="sec-hd"><span class="ttl">資料</span></div>
-    <div class="doc"><a style="color:var(--mu)"><span class="ms">add</span>まだありません</a></div>
-  </div>`;
-
-/* ---------- A ---------- */
-const A = (c) => head(c) + `
-  <div class="glass flowcard">
-    <div class="dline"><span class="big">${c.md}</span><span class="w">${c.dow}</span><span class="cdn">${c.cdn}</span></div>
-    ${c.meet ? `
-    <div class="flow">
-      <div><i></i><span class="lb">集合</span><span class="tm">${c.meet}</span></div>
-      <div><i></i><span class="lb">開始</span><span class="tm">${c.start}</span></div>
-      <div><i></i><span class="lb">終了</span><span class="tm">${c.end}</span></div>
-    </div>` : `<div class="undecided"><span class="ms">schedule</span>時間はまだ決まっていません</div>`}
-    ${c.order ? `<div class="ordline"><span class="ms" style="font-size:16px">format_list_numbered</span>出演順<b>${c.order}<small>／${c.total}組</small></b></div>` : ''}
-  </div>
-  <div class="venue2">
-    <span class="vt"><span class="ms">location_on</span>${c.venue}</span>
-    <span class="iconbar">${mapBtn}${siteBtn}${igBtn}</span>
-  </div>
-  ` + docsSec(c);
-
-/* ---------- B ---------- */
-const B = (c) => head(c) + `
+// placeTail＝会場行の右に入れるもの、tail＝カード末尾に足すもの
+const meetCard = (c, placeTail, tail) => `
   <div class="glass actcard">
     <div class="top1"><span class="d">${c.md}</span><span>${c.dow}</span><span class="cdn">${c.cdn}</span></div>
     ${c.meet
@@ -262,43 +199,38 @@ const B = (c) => head(c) + `
       : `<div class="meet"><span class="tm" style="font-size:22px;color:var(--mu);letter-spacing:0">時間はまだ未定</span></div>`}
     <div class="place">
       <span class="vt"><span class="ms">location_on</span>${c.venue}</span>
-      ${mapBtn}
+      ${placeTail}
     </div>
     ${c.meet || c.order ? `<div class="subline">
       <div><span class="lb">開始</span><span class="v">${c.start || '—'}</span></div>
       <div><span class="lb">終了</span><span class="v">${c.end || '—'}</span></div>
       <div><span class="lb">出演</span><span class="v">${c.order ? `${c.order}<small>/${c.total}</small>` : '—'}</span></div>
     </div>` : ''}
-  </div>
-  <div class="linkrow2">${siteBtn}${igBtn}</div>
-  ` + docsSec(c);
+    ${tail}
+  </div>`;
 
-/* ---------- C ---------- */
-const C = (c) => head(c) + `
-  <div class="glass splitcard">
-    <div class="daybox">
-      <span class="mo">${c.mo}月</span><span class="dd">${c.dd}</span><span class="w">${c.dow}</span>
-      <span class="cdn">${c.cdn}</span>
-    </div>
-    <div class="tlist">
-      ${c.meet ? `
-        <div><span class="lb">集合</span><span class="v">${c.meet}</span></div>
-        <div><span class="lb">開始</span><span class="v">${c.start}</span></div>
-        <div><span class="lb">終了</span><span class="v">${c.end}</span></div>`
-      : `<div><span class="lb">時間</span><span class="none" style="margin-left:auto">まだ決まっていません</span></div>`}
-      ${c.order ? `<div><span class="lb">出演</span><span class="v sm">${c.order}<small>／${c.total}組</small></span></div>` : ''}
-    </div>
-  </div>
-  <div class="venue2">
-    <span class="vt"><span class="ms">location_on</span>${c.venue}</span>
-    <span class="iconbar">${mapBtn}${siteBtn}${igBtn}</span>
-  </div>
-  ` + docsSec(c);
+const docChip = (d) => `<a class="chip"><span class="ms">description</span>${d}</a>`;
+const addChip = `<a class="chip add" title="資料を追加" aria-label="資料を追加"><span class="ms">add</span></a>`;
+
+/* ---------- ① カードの下辺にリンク帯 ---------- */
+const P1 = (c) => head(c)
+  + meetCard(c, mapBtn, `<div class="linkstrip">${siteBtn}${igBtn}</div>`)
+  + `<div class="docs">${c.docs.map(docChip).join('')}${addChip}</div>`;
+
+/* ---------- ② 会場の行に3つ並べる ---------- */
+const P2 = (c) => head(c)
+  + meetCard(c, `<span class="iconbar">${mapBtn}${siteBtn}${igBtn}</span>`, '')
+  + `<div class="docs">${c.docs.map(docChip).join('')}${addChip}</div>`;
+
+/* ---------- ③ 資料と同じ列に混ぜる ---------- */
+const P3 = (c) => head(c)
+  + meetCard(c, mapBtn, '')
+  + `<div class="mixrow">${siteBtn}${igBtn}<span class="divider"></span>${c.docs.map(docChip).join('')}${addChip}</div>`;
 
 const PATS = [
-  {tag:'A', title:'時間を線でつなぐ', desc:'集合→開始→終了は順番に起きること。横並びの箱ではなく線でつないで流れとして見せる。出演順は時刻ではないので下に分ける。', render:A},
-  {tag:'B', title:'集合時刻を主役にする', desc:'当日いちばん使う数字は集合時刻。それだけ特大にして、会場も同じカードに入れる。開始・終了・出演順は下に小さく添える。', render:B},
-  {tag:'C', title:'カレンダーの1枚＋時刻の表', desc:'左に日付を大きく、右に集合・開始・終了・出演を表として縦に読ませる。横並びの4つの箱をやめて上から読める形に。', render:C},
+  {tag:'①', title:'カードの下辺に置く', desc:'集合カードの中に区切り線を引き、その下に大会サイトとInstagramを並べる。地図は会場の行に。この大会のことがカード1枚に収まる。', render:P1},
+  {tag:'②', title:'会場の行に3つ並べる', desc:'会場名の右に、地図・大会サイト・Instagramを続けて置く。どれも外へ出ていく入口なので、ひとかたまりにする。行数がいちばん少ない。', render:P2},
+  {tag:'③', title:'資料と同じ列に混ぜる', desc:'地図だけ会場の行に残し、大会サイトとInstagramは資料チップと同じ列に。大会サイトと資料が同じ重さ、という話が素直に形になる。', render:P3},
 ];
 
 document.getElementById('cols').innerHTML = PATS.map(p => `
@@ -307,7 +239,7 @@ document.getElementById('cols').innerHTML = PATS.map(p => `
     <p>${p.desc}</p>
     <div class="caseLabel">情報が揃った大会</div>
     <div class="phone">${p.render(FULL)}</div>
-    <div class="caseLabel">まだ時間が決まっていない大会</div>
+    <div class="caseLabel">時間も資料もまだの大会</div>
     <div class="phone">${p.render(SPARSE)}</div>
   </section>`).join('');
 
