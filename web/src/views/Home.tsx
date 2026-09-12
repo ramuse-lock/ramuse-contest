@@ -64,7 +64,7 @@ function Ticket({ c, first }: { c: Contest; first: boolean }) {
         <span class="dt n">{fmtMD(c.開催日)}<small>{fmtDow(c.開催日)}</small></span>
       </div>
       <div class="tinfo">
-        <div><span class="kicker">集合</span><span class="n">{c.集合時間 || '—'}</span></div>
+        <div><span class="kicker">受付開始</span><span class="n">{c.集合時間 || '—'}</span></div>
         <div><span class="kicker">開始</span><span class="n">{c.開始時間 || '—'}</span></div>
         {IS_KID
           ? <div><span class="kicker">終了</span><span class="n">{c.終了時間 || '—'}</span></div>

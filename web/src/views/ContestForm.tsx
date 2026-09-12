@@ -86,7 +86,9 @@ export function ContestForm({ contest }: { contest?: Contest }) {
           </Glass>
           <div class="sec"><div class="kicker" style="padding:0 2px 6px">当日</div>
             <Glass className="fgrp">
-              <Field label="集合"><input type="time" value={c.集合時間} onInput={(e) => set('集合時間', (e.target as HTMLInputElement).value)} /><span class="unit">開始</span><input type="time" value={c.開始時間} onInput={(e) => set('開始時間', (e.target as HTMLInputElement).value)} /></Field>
+              {/* 時刻は1行に2つ入れると折り返して、ラベルがどちらに掛かるのか分からなくなる。1つずつ置く */}
+              <Field label="受付開始"><input type="time" value={c.集合時間} onInput={(e) => set('集合時間', (e.target as HTMLInputElement).value)} /></Field>
+              <Field label="開始"><input type="time" value={c.開始時間} onInput={(e) => set('開始時間', (e.target as HTMLInputElement).value)} /></Field>
               <Field label="終了"><input type="time" value={c.終了時間} onInput={(e) => set('終了時間', (e.target as HTMLInputElement).value)} /></Field>
               <Field label="出演順"><input class="n" type="number" inputMode="numeric" value={String(c.出演順 || '')} onInput={(e) => set('出演順', (e.target as HTMLInputElement).value)} placeholder="—" /><span class="unit">番 ／</span><input class="n" type="number" inputMode="numeric" value={String(c.総組数 || '')} onInput={(e) => set('総組数', (e.target as HTMLInputElement).value)} placeholder="—" /><span class="unit">組</span></Field>
               <Field label="大会サイト"><input type="url" value={c.URL} onInput={(e) => set('URL', (e.target as HTMLInputElement).value)} placeholder="https://" /></Field>
