@@ -201,7 +201,7 @@ a{color:inherit;text-decoration:none}
 .daycard .subline .lb{font-size:10.5px;font-weight:700;color:var(--mu);letter-spacing:.04em}
 .daycard .subline .v{font-family:var(--num);font-size:14.5px;font-weight:700}
 .daycard .subline .v small{font-size:10.5px;color:var(--mu)}
-.daycard .linkstrip{display:flex;align-items:center;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hair2)}
+.daycard .linkstrip{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hair2)}
 
 /* 外へ出ていくアイコン。文字を書かなくても分かるものは文字を書かない */
 .icnbtn.mapb{background:linear-gradient(var(--blue-bg),var(--blue-bg));color:var(--blue);border:0;backdrop-filter:none;-webkit-backdrop-filter:none}
