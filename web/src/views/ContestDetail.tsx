@@ -161,10 +161,13 @@ function MoneySection({ contestId }: { contestId: string }) {
 function LedgerLine({ l }: { l: Ledger }) {
   const { icon, tile } = ledgerIcon(l);
   return (
-    <button class="row" onClick={() => openModal({ type: 'ledger-detail', ledger: l })}>
+    <button class="lrow" onClick={() => openModal({ type: 'ledger-detail', ledger: l })}>
       <span class={`tile ${tile}`}><Icon name={icon} /></span>
-      <div class="t"><span class="nm">{l.内容}</span><small>{fmtMD(l.日付)} {fmtDow(l.日付)} · {famJa(l.支払者)}払</small></div>
-      <div class="v">{yen(l.合計)}</div>
+      <span class="nm">{l.内容}</span>
+      <span class="meta">
+        <span class="sub">{fmtMD(l.日付)} {fmtDow(l.日付)} · {famJa(l.支払者)}払</span>
+        <span class="rt"><span class="amt">{yen(l.合計)}</span></span>
+      </span>
     </button>
   );
 }

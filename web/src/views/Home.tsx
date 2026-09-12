@@ -110,7 +110,8 @@ function Week() {
               {r.dl.map((t) => {
                 const c = contests.value.find((x) => x.ID === t.大会ID);
                 return (
-                  <button class="evi" onClick={() => c && go(`/contest/${encodeURIComponent(c.ID)}`)}>
+                  // 金額がつく行は名前を折り返す（横並びのままだと何の締切か切れてしまう）
+                  <button class={`evi${taskAmount(t) > 0 ? ' pay' : ''}`} onClick={() => c && go(`/contest/${encodeURIComponent(c.ID)}`)}>
                     <i class="c-green" /><span class="tm">締切</span>
                     <span class="tt">{t.名前}{c && <small>{c.コンテスト名}</small>}</span>
                     {taskAmount(t) > 0 && <span class="amt">{yen(taskAmount(t))}</span>}

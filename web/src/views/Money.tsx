@@ -104,11 +104,16 @@ function SettleGroup({ date, rows }: { date: string; rows: Ledger[] }) {
   if (rows.length === 1) return <LedgerRow l={rows[0]} />;
   return (
     <>
-      <button class="settle-group" onClick={() => (expanded.value = { ...expanded.value, [date]: !open })}>
+      <button class="lrow" onClick={() => (expanded.value = { ...expanded.value, [date]: !open })}>
         <span class="tile t-green"><Icon name="swap_horiz" /></span>
-        <div class="t" style="color:var(--ink)">精算 {rows.length}件<small>{fmtMD(date)} {fmtDow(date)} · まとめて表示</small></div>
-        <span class="v">{yen(total)}</span>
-        <Icon name={open ? 'expand_less' : 'expand_more'} style="color:var(--mu2)" />
+        <span class="nm">精算 {rows.length}件</span>
+        <span class="meta">
+          <span class="sub">{fmtMD(date)} {fmtDow(date)} · まとめて表示</span>
+          <span class="rt">
+            <span class="amt" style="color:var(--green)">{yen(total)}</span>
+            <Icon name={open ? 'expand_less' : 'expand_more'} style="color:var(--mu2)" />
+          </span>
+        </span>
       </button>
       {open && rows.map((l) => <LedgerRow l={l} sub />)}
     </>
@@ -122,14 +127,22 @@ function LedgerRow({ l, sub }: { l: Ledger; sub?: boolean }) {
   const targets = Object.keys(owed).filter((f) => owed[f] > 0);
   const c = l.大会ID ? contests.value.find((x) => x.ID === l.大会ID) : null;
   const isSettle = l.種別 === 'settle';
-  const detail = isSettle ? '' : `${famJa(l.支払者)}払${items.length > 1 ? ` · ${items.length}点` : ''}${c && !l.内容.includes(c.コンテスト名) ? ` · ${c.コンテスト名}` : ''}`;
+  const detail = isSettle ? '' : `${famJa(l.支払者)}払${items.length > 1 ? ` · ${items.length}点` : ''}`;
+  // 大会名は日付の行に足すと長さで切れるので、独立した行にして折り返す
+  const ctx = !isSettle && c && !l.内容.includes(c.コンテスト名) ? c.コンテスト名 : '';
+  // 何に払ったかは全幅で折り返し、金額はその下の行へ。横並びにすると名前が「…」で切れる
   return (
-    <button class={`row${sub ? ' sub-row' : ''}`} onClick={() => openModal({ type: 'ledger-detail', ledger: l })}>
+    <button class={`lrow${sub ? ' sub-row' : ''}`} onClick={() => openModal({ type: 'ledger-detail', ledger: l })}>
       {!sub && <span class={`tile ${tile}`}><Icon name={icon} /></span>}
-      <div class="t"><span class="nm">{isSettle ? jaNames(l.内容, families.value) : l.内容}</span><small>{`${fmtMD(l.日付)} ${fmtDow(l.日付)}`}{detail && ` · ${detail}`}</small></div>
-      {!isSettle && targets.length > 0 && <WhoChips fams={targets} />}
-      <div class="v" style={isSettle ? 'color:var(--green)' : ''}>{yen(l.合計)}</div>
-      {isSettle && !sub && <Pill tone="p-ok">済</Pill>}
+      <span class="nm">{isSettle ? jaNames(l.内容, families.value) : l.内容}{isSettle && !sub && <Pill tone="p-ok">済</Pill>}</span>
+      {ctx && <span class="ctx">{ctx}</span>}
+      <span class="meta">
+        <span class="sub">{`${fmtMD(l.日付)} ${fmtDow(l.日付)}`}{detail && ` · ${detail}`}</span>
+        <span class="rt">
+          {!isSettle && targets.length > 0 && <WhoChips fams={targets} />}
+          <span class="amt" style={isSettle ? 'color:var(--green)' : ''}>{yen(l.合計)}</span>
+        </span>
+      </span>
     </button>
   );
 }
