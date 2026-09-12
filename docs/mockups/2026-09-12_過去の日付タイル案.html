@@ -14,19 +14,20 @@
   --hair:rgba(29,29,31,.08);--hair2:rgba(29,29,31,.05);
   --acc:#D1A800;--acc-ink:#8A6F00;--acc-bg:rgba(209,168,0,.16);
   --blue:#0A7AFF;--blue-bg:rgba(10,122,255,.12);--green:#28A745;--green-bg:rgba(40,167,69,.12);
-  --violet:#5E5CE6;--violet-bg:rgba(94,92,230,.12);--orange:#FF9500;--orange-bg:rgba(255,149,0,.14);
+  --violet:#5E5CE6;--violet-bg:rgba(94,92,230,.12);
   --r:24px;--card-bd:1px solid rgba(255,255,255,.7);--card-sh:0 8px 30px -18px rgba(30,40,80,.35);
   --blur:blur(16px) saturate(1.4);
   --blob1:#BFD4FF;--blob2:#FFE7A8;--blob3:#E4D5FF;
   --jp:-apple-system,BlinkMacSystemFont,'SF Pro Text','Hiragino Sans','Noto Sans JP',sans-serif;
   --num:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;
+  /* 「結果を残した」1色。右上のボタンで金／緑を入れ替える */
+  --res:var(--acc);--res-ink:var(--acc-ink);--res-bg:var(--acc-bg);--res-on:#1C1B17;
 }
-:root:not([data-theme="light"]){}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0B0D14;--sfc:rgba(38,40,52,.55);--sfc2:#1E2030;--ink:#F5F5F7;--mu:#98989F;--mu2:#48484E;
   --hair:rgba(245,245,247,.10);--hair2:rgba(245,245,247,.06);
   --acc:#F0C400;--acc-ink:#F0C400;--acc-bg:rgba(240,196,0,.18);
-  --blue:#5AA3FF;--green:#3DD16E;--violet:#8E8CFF;--orange:#FFA939;
+  --blue:#5AA3FF;--green:#3DD16E;--violet:#8E8CFF;--green-bg:rgba(61,209,110,.16);
   --card-bd:1px solid rgba(255,255,255,.10);--card-sh:0 12px 40px -20px rgba(0,0,0,.8);
   --blob1:#1E3A8A;--blob2:#7A5A00;--blob3:#3B2A7A;
 }}
@@ -34,10 +35,12 @@
   --bg:#0B0D14;--sfc:rgba(38,40,52,.55);--sfc2:#1E2030;--ink:#F5F5F7;--mu:#98989F;--mu2:#48484E;
   --hair:rgba(245,245,247,.10);--hair2:rgba(245,245,247,.06);
   --acc:#F0C400;--acc-ink:#F0C400;--acc-bg:rgba(240,196,0,.18);
-  --blue:#5AA3FF;--green:#3DD16E;--violet:#8E8CFF;--orange:#FFA939;
+  --blue:#5AA3FF;--green:#3DD16E;--violet:#8E8CFF;--green-bg:rgba(61,209,110,.16);
   --card-bd:1px solid rgba(255,255,255,.10);--card-sh:0 12px 40px -20px rgba(0,0,0,.8);
   --blob1:#1E3A8A;--blob2:#7A5A00;--blob3:#3B2A7A;
 }
+/* 結果の色＝緑にしたとき */
+:root[data-res="green"]{--res:var(--green);--res-ink:var(--green);--res-bg:var(--green-bg);--res-on:#0A2C13}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--jp);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -48,16 +51,17 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--jp);font-s
 .blobs::after{content:'';position:absolute;left:0;right:0;top:0;height:100px;background:linear-gradient(to bottom,var(--bg),transparent)}
 .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:22px 18px 80px}
 
-/* ヘッダー */
-.top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
-.lead{font-size:12.5px;color:var(--mu);max-width:62ch;margin:6px 0 18px;line-height:1.65}
-.tools{margin-left:auto;display:flex;gap:6px}
+.lead{font-size:12.5px;color:var(--mu);max-width:66ch;margin:8px 0 6px;line-height:1.7}
+.lead b{color:var(--ink)}
+.tools{margin-left:auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.tgrp{display:flex;gap:5px;align-items:center}
+.tgrp > span{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--mu)}
 .tbtn{font-size:11.5px;font-weight:700;border:var(--card-bd);background:var(--sfc2);color:var(--ink);border-radius:999px;padding:6px 13px;cursor:pointer;font-family:inherit}
 .tbtn.on{background:var(--ink);color:var(--bg);border-color:transparent}
 
-/* 案の並び */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px;margin-top:18px}
 .pat{background:var(--sfc);border:var(--card-bd);border-radius:var(--r);box-shadow:var(--card-sh);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);padding:16px 16px 18px;min-width:0}
 .pat > h2{font-size:14px;font-weight:700;margin:0 0 2px;display:flex;align-items:baseline;gap:8px}
 .pat > h2 em{font-style:normal;font-family:var(--num);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--mu)}
@@ -77,70 +81,77 @@ h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
 .ty-single{background:var(--blue)}.ty-qual{background:var(--violet)}.ty-final{background:var(--acc);color:#1C1B17}
 .pill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;line-height:1.5;white-space:nowrap;background-color:var(--sfc2)}
 .pill .ms{font-size:12px}
-.p-ok{background-image:linear-gradient(var(--green-bg),var(--green-bg));color:var(--green)}
-.p-acc{background-image:linear-gradient(var(--acc-bg),var(--acc-bg));color:var(--acc-ink)}
+/* 結果ありのラベルは1色に統一。出場のみだけグレー */
+.p-res{background-image:linear-gradient(var(--res-bg),var(--res-bg));color:var(--res-ink)}
 .p-mu{background-image:linear-gradient(var(--hair2),var(--hair2));color:var(--mu)}
 .ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;white-space:nowrap;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;vertical-align:middle}
 
-/* 日付タイルの土台（全案で共通の形） */
 .dtile{width:48px;flex-shrink:0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   font-family:var(--num);line-height:1;padding:8px 0;align-self:flex-start;position:relative}
 .dtile b{font-size:20px;font-weight:700}
-.dtile small{font-size:10px;font-weight:700;opacity:.8;margin-top:2px}
+.dtile small{font-size:10px;font-weight:700;margin-top:2px}
 
-/* ---- 現状：面＝種別、左からのぼかし＝結果 ---- */
-.p0 .dtile{--tile:transparent;--res:transparent;background-color:var(--sfc2);
-  background-image:linear-gradient(to right,var(--res) 0%,rgba(0,0,0,0) 58%),linear-gradient(var(--tile),var(--tile))}
+/* ---- 現状：面＝種別、左からのぼかし＝結果（色が2つ重なる） ---- */
+.p0 .dtile{--tile:transparent;--edge:transparent;background-color:var(--sfc2);
+  background-image:linear-gradient(to right,var(--edge) 0%,rgba(0,0,0,0) 58%),linear-gradient(var(--tile),var(--tile))}
+.p0 .dtile small{opacity:.8}
 .p0 .r-single{--tile:rgba(10,122,255,.18)}
 .p0 .r-qual{--tile:rgba(94,92,230,.18)}
 .p0 .r-final{--tile:rgba(209,168,0,.24)}
-.p0 .res-pass{--res:rgba(40,167,69,.55)}
-.p0 .res-prize{--res:rgba(209,168,0,.85)}
+.p0 .res-pass{--edge:rgba(40,167,69,.55)}
+.p0 .res-prize{--edge:rgba(209,168,0,.85)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .p0 .r-single{--tile:rgba(90,163,255,.26)}
   :root:not([data-theme="light"]) .p0 .r-qual{--tile:rgba(142,140,255,.26)}
-  :root:not([data-theme="light"]) .p0 .res-pass{--res:rgba(61,209,110,.6)}
-  :root:not([data-theme="light"]) .p0 .res-prize{--res:rgba(240,196,0,.85)}}
+  :root:not([data-theme="light"]) .p0 .res-pass{--edge:rgba(61,209,110,.6)}
+  :root:not([data-theme="light"]) .p0 .res-prize{--edge:rgba(240,196,0,.85)}}
 
-/* ---- A：無色。日付はただの日付にする ---- */
+/* ---- A：色をやめる ---- */
 .pA .dtile{background:var(--hair2);color:var(--ink)}
-.pA .dtile small{color:var(--mu);opacity:1}
+.pA .dtile small{color:var(--mu)}
 
-/* ---- B：面は結果の1色だけ（種別は下のバッジが担当） ---- */
-.pB .dtile{background-color:var(--sfc2);background-image:linear-gradient(var(--tint),var(--tint));--tint:var(--hair2)}
-.pB .res-prize{--tint:var(--acc-bg)}
-.pB .res-pass{--tint:var(--green-bg)}
-.pB .res-prize b,.pB .res-prize small{color:var(--acc-ink)}
-.pB .res-pass b,.pB .res-pass small{color:var(--green)}
-.pB .dtile small{opacity:1}
+/* ---- B：面を薄く1色（結果あり） ---- */
+.pB .dtile{background-color:var(--sfc2);background-image:linear-gradient(var(--hair2),var(--hair2));color:var(--ink)}
+.pB .dtile small{color:var(--mu)}
+.pB .res-yes{background-image:linear-gradient(var(--res-bg),var(--res-bg))}
+.pB .res-yes b,.pB .res-yes small{color:var(--res-ink)}
 
-/* ---- C：日付は無色、結果はカード左端の細い縦線 ---- */
+/* ---- C：カード左端の縦線 ---- */
 .pC .dtile{background:var(--hair2)}
-.pC .dtile small{color:var(--mu);opacity:1}
+.pC .dtile small{color:var(--mu)}
 .pC .ccard{overflow:hidden}
-.pC .ccard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--edge,transparent)}
-.pC .c-prize{--edge:var(--acc)}
-.pC .c-pass{--edge:var(--green)}
+.pC .ccard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line,transparent)}
+.pC .c-yes{--line:var(--res)}
 
-/* ---- D：入賞だけしっかり塗る。通過は下線、出場のみは無色 ---- */
+/* ---- D：面をしっかり1色＋メダルの印 ---- */
 .pD .dtile{background:var(--hair2);color:var(--ink)}
-.pD .dtile small{color:var(--mu);opacity:1}
-.pD .res-prize{background:var(--acc);color:#1C1B17}
-.pD .res-prize small{color:#1C1B17;opacity:.72}
-.pD .res-prize::after{content:'emoji_events';font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1,'wght' 400;
-  position:absolute;top:-5px;right:-5px;font-size:15px;color:var(--acc-ink);background:var(--sfc2);border-radius:999px;padding:2px;line-height:1}
-.pD .res-pass{box-shadow:inset 0 -4px 0 0 var(--green)}
+.pD .dtile small{color:var(--mu)}
+.pD .res-yes{background:var(--res);color:var(--res-on)}
+.pD .res-yes small{color:var(--res-on);opacity:.7}
+.pD .res-yes::after{content:'workspace_premium';font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1,'wght' 400;
+  position:absolute;top:-6px;right:-6px;font-size:15px;color:var(--res-ink);background:var(--sfc2);border-radius:999px;padding:2px;line-height:1}
 
-/* ---- E：日付は無色、順位の数字を色で見せる ---- */
+/* ---- E：順位の数字を主役に ---- */
 .pE .dtile{background:var(--hair2)}
-.pE .dtile small{color:var(--mu);opacity:1}
-.pE .rank{font-family:var(--num);font-size:13px;font-weight:700;display:inline-flex;align-items:baseline;gap:1px}
+.pE .dtile small{color:var(--mu)}
+.pE .rank{font-family:var(--num);font-size:13px;font-weight:700;display:inline-flex;align-items:baseline;gap:1px;color:var(--ink)}
 .pE .rank .u{font-size:10.5px;font-weight:600;color:var(--mu)}
-.pE .rank.prize{color:var(--acc-ink)}
-.pE .rank.pass{color:var(--green)}
-.pE .rank.plain{color:var(--ink)}
+.pE .rank.yes{color:var(--res-ink)}
 
-.note{font-size:11.5px;color:var(--mu);margin:26px 0 0;padding-top:14px;border-top:1px solid var(--hair);line-height:1.7;max-width:74ch}
-.note b{color:var(--ink)}
+.foot{margin:26px 0 0;padding-top:16px;border-top:1px solid var(--hair)}
+.foot h3{font-size:13px;margin:0 0 4px}
+.foot p{font-size:11.5px;color:var(--mu);line-height:1.7;max-width:76ch;margin:0 0 12px}
+.foot p b{color:var(--ink)}
+.champ{display:flex;gap:14px;flex-wrap:wrap}
+.champ > div{flex:1 1 300px;min-width:280px}
+.champ h4{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--mu);margin:0 0 6px}
+.pZ .dtile{background:var(--hair2);color:var(--ink)}
+.pZ .dtile small{color:var(--mu)}
+.pZ .res-yes{background:var(--res);color:var(--res-on)}
+.pZ .res-yes small{color:var(--res-on);opacity:.7}
+.pZ .win{box-shadow:0 0 0 2px var(--sfc2),0 0 0 4px var(--res)}
+.pZ .win::after{content:'trophy';font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1,'wght' 400;
+  position:absolute;top:-8px;right:-8px;font-size:16px;color:var(--res-ink);background:var(--sfc2);border-radius:999px;padding:2px;line-height:1}
+.hypo{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--mu);background:var(--hair2);padding:2px 7px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -149,61 +160,63 @@ h1{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}
   <div class="top">
     <h1>過去の大会・日付タイルの案</h1>
     <div class="tools">
-      <button class="tbtn on" data-t="light">明るい</button>
-      <button class="tbtn" data-t="dark">暗い</button>
+      <div class="tgrp"><span>結果の色</span>
+        <button class="tbtn on" data-r="gold">金</button>
+        <button class="tbtn" data-r="green">緑</button>
+      </div>
+      <div class="tgrp"><span>画面</span>
+        <button class="tbtn on" data-t="light">明るい</button>
+        <button class="tbtn" data-t="dark">暗い</button>
+      </div>
     </div>
   </div>
-  <p class="lead">中身は実データ（過去5大会）です。いま気持ち悪いのは、面の色（種別）と左からのぼかし（結果）が重なって、紫＋緑のような混ざった色が出ているところだと思います。5案とも「2つの色を重ねない」方針に変えています。</p>
+  <p class="lead">
+    考え方を直しました。<b>入賞・優勝・予選通過は、どれも「結果を残した」で同じ重さ</b>として扱います。予選通過は上位に入ったから決勝に行けたという話で、入賞と別扱いにする理由がありません。差がつくのは<b>出場のみ</b>との間だけ。つまり色は2段階（結果あり／出場のみ）で、何の結果かはラベルの文字が担当します。<br>
+    色が混ざって気持ち悪かったのは、面（種別）と左のぼかし（結果）を重ねていたからなので、5案とも重ねません。中身は実データの過去5大会です。
+  </p>
 
   <div class="grid" id="grid"></div>
 
-  <p class="note">
-    <b>現状</b>＝面が種別色（単発 青／予選 紫／決勝 金）で、その上に結果の色を左から重ねる。情報は多いが色が混ざる。<br>
-    <b>A</b>＝日付は日付として無色にし、種別は下のバッジ、結果は右のラベルに任せる。いちばん静か。<br>
-    <b>B</b>＝面の色を結果1色だけにする。色の意味が「結果」に一本化される。種別はバッジが担当。<br>
-    <b>C</b>＝日付は無色、結果はカード左端の細い縦線。一覧を上から見たときに結果が線で読める。<br>
-    <b>D</b>＝入賞・優勝だけ金でしっかり塗る（トロフィー付き）。予選通過は下線だけ。出場のみは無色。良い結果が際立つ。<br>
-    <b>E</b>＝日付は無色にして、代わりに順位の数字そのものに色をつける。色より数字が主役。
-  </p>
+  <div class="foot">
+    <h3>参考：優勝が出たとき</h3>
+    <p>実データにまだ優勝がないので、これは<b>仮の例</b>です。入賞と予選通過を同じ重さにしたうえで、優勝だけもう一段上げることもできます（輪郭を足してトロフィー）。要らなければ優勝も同じ見え方にします。</p>
+    <div class="champ pZ" id="champ"></div>
+  </div>
 </div>
 
 <script>
 const CONTESTS = [
-  {date:'2026-08-23', day:23, dow:'土', name:'THE ROOKIES 2026 1stシリーズ中部予選2回戦', place:'名東文化小劇場', round:'予選', result:'予選通過', rank:'5位', total:35},
-  {date:'2026-08-22', day:22, dow:'土', name:'START UP KIDS DANCE CONTEST 中部大会', place:'名東文化小劇場', round:'単発', result:'入賞', rank:'2位', total:22},
-  {date:'2026-07-12', day:12, dow:'日', name:'NEW REVOLUTION 2026 FIRST STAGE', place:'名古屋レジェンドホール', round:'予選', result:'予選通過', rank:'3位', total:13},
-  {date:'2026-07-11', day:11, dow:'土', name:'ALL JAPAN CHALLENGE CUP 1st series 中部予選2回戦', place:'青少年文化センター（アートピア）・ホール', round:'予選', result:'入賞', rank:'5位', total:21},
-  {date:'2026-06-27', day:27, dow:'土', name:'THE ROOKIES 2026 1stシリーズ中部予選', place:'港文化小劇場', round:'予選', result:'出場のみ', rank:'', total:26},
+  {day:23, dow:'土', name:'THE ROOKIES 2026 1stシリーズ中部予選2回戦', place:'名東文化小劇場', round:'予選', result:'予選通過', rank:'5位', total:35},
+  {day:22, dow:'土', name:'START UP KIDS DANCE CONTEST 中部大会', place:'名東文化小劇場', round:'単発', result:'入賞', rank:'2位', total:22},
+  {day:12, dow:'日', name:'NEW REVOLUTION 2026 FIRST STAGE', place:'名古屋レジェンドホール', round:'予選', result:'予選通過', rank:'3位', total:13},
+  {day:11, dow:'土', name:'ALL JAPAN CHALLENGE CUP 1st series 中部予選2回戦', place:'青少年文化センター（アートピア）・ホール', round:'予選', result:'入賞', rank:'5位', total:21},
+  {day:27, dow:'土', name:'THE ROOKIES 2026 1stシリーズ中部予選', place:'港文化小劇場', round:'予選', result:'出場のみ', rank:'', total:26},
 ];
 
 const PATTERNS = [
-  {id:'p0', cls:'now', tag:'現状', title:'いまのかたち', desc:'面＝種別の色、左からのぼかし＝結果の色。2つが重なって混ざる。'},
-  {id:'pA', tag:'A', title:'色をやめる', desc:'日付は無色。種別はバッジ、結果はラベルに任せる。'},
-  {id:'pB', tag:'B', title:'結果の1色だけ', desc:'面の色は結果だけを表す。入賞は金、予選通過は緑、出場のみは無色。'},
-  {id:'pC', tag:'C', title:'左端の縦線', desc:'日付は無色。結果はカード左端の細い線で示す。'},
-  {id:'pD', tag:'D', title:'入賞だけ塗る', desc:'入賞・優勝は金でしっかり。予選通過は下線、出場のみは無色。'},
-  {id:'pE', tag:'E', title:'数字を主役に', desc:'日付は無色。順位の数字そのものに色をつける。'},
+  {id:'p0', cls:'now', tag:'現状', title:'いまのかたち', desc:'面＝種別の色、左からのぼかし＝結果の色。2つが重なって濁る。'},
+  {id:'pA', tag:'A', title:'色をやめる', desc:'日付は無色。種別は下のバッジ、結果は右のラベルに任せる。'},
+  {id:'pB', tag:'B', title:'面を薄く1色', desc:'結果を残した大会だけ薄く色を敷く。入賞も予選通過も同じ色。'},
+  {id:'pC', tag:'C', title:'左端の縦線', desc:'日付は無色。結果を残した大会はカード左端に線が入る。'},
+  {id:'pD', tag:'D', title:'面をしっかり1色', desc:'結果を残した大会はしっかり塗ってメダルの印。出場のみは無色。'},
+  {id:'pE', tag:'E', title:'数字を主役に', desc:'日付は無色。順位の数字に色をつける。色より数字を見せる。'},
 ];
 
 const roundCls = r => r === '決勝' ? 'final' : r === '予選' ? 'qual' : 'single';
-const isPrize  = r => /入賞|優勝/.test(r);
-const isPass   = r => /通過|進出/.test(r);
-const resCls   = r => isPrize(r) ? 'res-prize' : isPass(r) ? 'res-pass' : 'res-plain';
-const pillTone = r => isPrize(r) ? 'p-acc' : isPass(r) ? 'p-ok' : 'p-mu';
-const pillIcon = r => isPrize(r) ? 'emoji_events' : isPass(r) ? 'check' : '';
+// 入賞・優勝・予選通過＝結果あり。出場のみ＝なし
+const hasResult = r => /入賞|優勝|通過|進出/.test(r);
+const oldResCls = r => /入賞|優勝/.test(r) ? 'res-prize' : /通過|進出/.test(r) ? 'res-pass' : '';
 
 function card(c, pid) {
-  const tile = `<div class="dtile r-${roundCls(c.round)} ${resCls(c.result)}"><b>${c.day}</b><small>${c.dow}</small></div>`;
-  const icon = pillIcon(c.result);
-  const resultPill = `<span class="pill ${pillTone(c.result)}">${icon ? `<span class="ms">${icon}</span>` : ''}${c.result}</span>`;
+  const yes = hasResult(c.result);
+  const tileCls = pid === 'p0' ? `r-${roundCls(c.round)} ${oldResCls(c.result)}` : (yes ? 'res-yes' : 'res-no');
+  const tile = `<div class="dtile ${tileCls}"><b>${c.day}</b><small>${c.dow}</small></div>`;
+  const pill = `<span class="pill ${yes ? 'p-res' : 'p-mu'}">${yes ? '<span class="ms">workspace_premium</span>' : ''}${c.result}</span>`;
   const placement = c.rank ? `${c.total}組中${c.rank}` : `${c.total}組`;
-
-  // E案だけ、順位を色つきの数字で見せる
   const foot = pid === 'pE'
-    ? `<div class="prog"><span class="rank ${isPrize(c.result) ? 'prize' : isPass(c.result) ? 'pass' : 'plain'}">${c.rank || '—'}<span class="u">／${c.total}組</span></span>${resultPill}</div>`
-    : `<div class="prog"><small>${placement}</small>${resultPill}</div>`;
-
-  const edge = pid === 'pC' ? (isPrize(c.result) ? ' c-prize' : isPass(c.result) ? ' c-pass' : '') : '';
+    ? `<div class="prog"><span class="rank ${yes ? 'yes' : ''}">${c.rank || '—'}<span class="u">／${c.total}組</span></span>${pill}</div>`
+    : `<div class="prog"><small>${placement}</small>${pill}</div>`;
+  const edge = pid === 'pC' && yes ? ' c-yes' : '';
   return `<div class="ccard${edge}">${tile}<div class="cb">
       <div class="cn">${c.name}</div>
       <div class="cm"><span class="type ty-${roundCls(c.round)}">${c.round}</span><span class="ms">location_on</span>${c.place}</div>
@@ -218,9 +231,30 @@ document.getElementById('grid').innerHTML = PATTERNS.map(p => `
     ${CONTESTS.map(c => card(c, p.id)).join('')}
   </section>`).join('');
 
-document.querySelectorAll('.tbtn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.tbtn').forEach(x => x.classList.toggle('on', x === b));
+// 参考：優勝を一段上げる／上げない
+const champRow = (label, tileCls, resultText, note) => `
+  <div><h4>${label}</h4>
+    <div class="ccard">
+      <div class="dtile ${tileCls}"><b>7</b><small>土</small></div>
+      <div class="cb">
+        <div class="cn">（例）DANCE CONTEST 2026 全国決勝</div>
+        <div class="cm"><span class="type ty-final">決勝</span><span class="hypo">仮の例</span></div>
+        <div class="prog"><small>18組中1位</small><span class="pill p-res"><span class="ms">workspace_premium</span>${resultText}</span></div>
+      </div>
+    </div>
+    <p style="margin:0">${note}</p>
+  </div>`;
+document.getElementById('champ').innerHTML =
+  champRow('優勝も同じ見え方', 'res-yes', '優勝', '入賞・予選通過とまったく同じ。色は2段階のまま。') +
+  champRow('優勝だけ一段上げる', 'res-yes win', '優勝', '輪郭とトロフィーを足す。色は増やさず、強さだけ変える。');
+
+document.querySelectorAll('.tbtn[data-t]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tbtn[data-t]').forEach(x => x.classList.toggle('on', x === b));
   document.documentElement.setAttribute('data-theme', b.dataset.t);
+}));
+document.querySelectorAll('.tbtn[data-r]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tbtn[data-r]').forEach(x => x.classList.toggle('on', x === b));
+  document.documentElement.setAttribute('data-res', b.dataset.r);
 }));
 </script>
 </body>
