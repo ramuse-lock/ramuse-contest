@@ -28,11 +28,22 @@ const tab = computed(() => {
 
 registerPinPrompter((message) => new Promise<string | null>((resolve) => { pinReq.value = { message, resolve }; }));
 
+// 時計やWi-Fiが乗る帯の色。暗幕（rgba(20,22,40,.34)）を背景色に重ねた結果と同じ色にする
+const BAR = { l: ['#EEF1F7', '#A4A7B1'], d: ['#0B0D14', '#0E101B'] };
+function setBarColor(dimmed: boolean) {
+  const i = dimmed ? 1 : 0;
+  document.getElementById('tc-l')?.setAttribute('content', BAR.l[i]);
+  document.getElementById('tc-d')?.setAttribute('content', BAR.d[i]);
+}
+
 export function App() {
   const r = route.value;
-  // シートが開いている間は背景の装飾を止める（iOSでの描画負荷対策）
+  // シートが開いている間は背景の装飾を止める（iOSでの描画負荷対策）。
+  // あわせて、時計やWi-Fiが乗る帯の色も暗幕ごしの色に合わせる（帯だけ明るく残ると段差に見えるため）
   useEffect(() => {
-    document.body.classList.toggle('sheet-open', modals.value.length > 0 || !!pinReq.value);
+    const open = modals.value.length > 0 || !!pinReq.value;
+    document.body.classList.toggle('sheet-open', open);
+    setBarColor(open);
   }, [modals.value.length, !!pinReq.value]);
   let view;
   const m = r.match(/^\/contest\/([^/]+)/);

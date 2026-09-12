@@ -1,5 +1,6 @@
 // 小さな共通部品
 import type { ComponentChildren } from 'preact';
+import { useRef } from 'preact/hooks';
 import { famClass, famJa } from './model';
 
 export function Icon({ name, fill = false, className = '', style }: { name: string; fill?: boolean; className?: string; style?: string }) {
@@ -83,17 +84,60 @@ export function Field({ label, children }: { label: string; children: ComponentC
 export function Sheet({ title, onClose, children, footer, left, right, top = false }: {
   title: string; onClose: () => void; children: ComponentChildren; footer?: ComponentChildren; left?: ComponentChildren; right?: ComponentChildren; top?: boolean;
 }) {
+  const sheet = useRef<HTMLDivElement>(null);
+  const dim = useRef<HTMLDivElement>(null);
+  // 上の横棒とタイトル行を下へ引っぱると閉じる（iOSの標準的な操作に合わせる）
+  const drag = useRef({ on: false, y0: 0, dy: 0, t: 0, v: 0 });
+
+  function paint(dy: number) {
+    if (sheet.current) sheet.current.style.transform = dy ? `translateY(${dy}px)` : '';
+    if (dim.current) dim.current.style.opacity = String(Math.max(0, 1 - dy / 420));
+  }
+  function down(e: PointerEvent) {
+    if ((e.target as HTMLElement).closest('button')) return; // ヘッダーのボタンは押せるまま
+    const d = drag.current;
+    d.on = true; d.y0 = e.clientY; d.dy = 0; d.t = e.timeStamp; d.v = 0;
+    if (sheet.current) sheet.current.style.transition = 'none';
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+  function move(e: PointerEvent) {
+    const d = drag.current;
+    if (!d.on) return;
+    const dy = Math.max(0, e.clientY - d.y0);
+    const dt = e.timeStamp - d.t;
+    if (dt > 0) d.v = (dy - d.dy) / dt;
+    d.dy = dy; d.t = e.timeStamp;
+    paint(dy);
+  }
+  function up() {
+    const d = drag.current;
+    if (!d.on) return;
+    d.on = false;
+    if (sheet.current) sheet.current.style.transition = 'transform .24s cubic-bezier(.2,.8,.2,1)';
+    if (dim.current) dim.current.style.transition = 'opacity .24s linear';
+    // しっかり下ろしたか、勢いよく払ったら閉じる
+    if (d.dy > 96 || (d.dy > 32 && d.v > 0.5)) {
+      if (sheet.current) sheet.current.style.transform = 'translateY(100%)';
+      if (dim.current) dim.current.style.opacity = '0';
+      window.setTimeout(onClose, 200);
+    } else {
+      paint(0);
+    }
+  }
+
   return (
     <>
-      <div class={`dim${top ? ' top' : ''}`} onClick={onClose} />
-      <div class={`sheet${top ? ' top' : ''}`} role="dialog" aria-label={title}>
-        <div class="grab" />
-        <div class="shd">
-          {left ?? <button class="cancel" onClick={onClose}>キャンセル</button>}
-          <span class="ttl">{title}</span>
-          {right ?? <span class="cancel" />}
+      <div class={`dim${top ? ' top' : ''}`} ref={dim} onClick={onClose} />
+      <div class={`sheet${top ? ' top' : ''}`} ref={sheet} role="dialog" aria-label={title}>
+        <div class="grip" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+          <div class="grab" />
+          <div class="shd">
+            {left ?? <button class="cancel" onClick={onClose}>キャンセル</button>}
+            <span class="ttl">{title}</span>
+            {right ?? <span class="cancel" />}
+          </div>
         </div>
-        <div class="sbody">{children}</div>
+        <div class={`sbody${footer ? '' : ' pb'}`}>{children}</div>
         {footer && <div class="sfoot">{footer}</div>}
       </div>
     </>
