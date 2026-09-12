@@ -3,7 +3,7 @@ import { computed } from '@preact/signals';
 import { useState } from 'preact/hooks';
 import { route, go } from './router';
 import { IS_KID, registerPinPrompter } from './api';
-import { syncing, error, bundle, toast } from './store';
+import { syncing, error, bundle, toast, refresh } from './store';
 import { useEffect } from 'preact/hooks';
 import { modals, pinReq } from './modal';
 import { Icon, Sheet } from './ui';
@@ -48,7 +48,14 @@ export function App() {
       <div class="blobs" aria-hidden="true"><i class="b1" /><i class="b2" /><i class="b3" /></div>
       <main class="page">{view}</main>
       {(syncing.value && !bundle.value) && <div class="sync"><Icon name="progress_activity" />読み込み中</div>}
-      {(!syncing.value && error.value && !bundle.value) && <div class="sync" style="color:var(--red)"><Icon name="cloud_off" style="animation:none" />通信できません</div>}
+      {(!syncing.value && error.value && !bundle.value) && (
+        <div class="neterr" role="alert">
+          <Icon name="cloud_off" style="animation:none" />
+          <b>データを取れませんでした</b>
+          <span>{error.value}</span>
+          <button class="btn" onClick={() => refresh()}><Icon name="refresh" style="animation:none" />もう一度</button>
+        </div>
+      )}
       <nav class="tabbar" aria-label="主要タブ">
         <TabButton id="home" icon="home" label="ホーム" path="/" />
         <TabButton id="contests" icon="emoji_events" label="大会" path="/contests" />
