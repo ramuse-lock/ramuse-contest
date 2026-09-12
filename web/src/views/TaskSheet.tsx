@@ -17,7 +17,8 @@ export function TaskSheet({ contestId, task, markDone, preset }: { contestId: st
   const contest = contests.value.find((c) => c.ID === contestId);
   const [t, setT] = useState<Task>(task
     ? { ...task, 済: markDone ? true : task.済 }
-    : { ID: '', 大会ID: contestId, 種別: 'other', 名前: '', 期限日: '', 当日: false, 済: false, 済日: '', 単価: '', 数量: fams.length, 台帳ID: '', メモ: '', 表示順: 99, ...preset });
+    // 新規は「当日」が既定。ほとんどが当日持っていくものなので、日付を選ぶのは例外
+    : { ID: '', 大会ID: contestId, 種別: 'other', 名前: '', 期限日: '', 当日: true, 済: false, 済日: '', 単価: '', 数量: fams.length, 台帳ID: '', メモ: '', 表示順: 99, ...preset });
   const isMoney = MONEY_KINDS.includes(t.種別);
   const willLog = isMoney && t.済 && !(task?.済) && !t.台帳ID && num(t.単価) > 0;
   const [logIt, setLogIt] = useState(true);
@@ -64,8 +65,11 @@ export function TaskSheet({ contestId, task, markDone, preset }: { contestId: st
         )}
         <Field label="名前"><input value={t.名前} placeholder={t.種別 === 'backup_cd' ? '音源CD 持参' : '例：観覧費 事前振込'} onInput={(e) => set('名前', (e.target as HTMLInputElement).value)} /></Field>
         <Field label="いつまで">
-          <Seg small options={[{ v: 'date', label: t.期限日 ? t.期限日.slice(5).replace('-', '/') : '日付' }, { v: 'today', label: '当日' }]} value={t.当日 ? 'today' : 'date'} onChange={(v) => set('当日', v === 'today')} />
-          {!t.当日 && <input type="date" value={t.期限日} onInput={(e) => set('期限日', (e.target as HTMLInputElement).value)} style="flex:0 0 150px" />}
+          {/* 日付の入力欄は「日付」を選んだときだけ出す。普段は当日なので、欄があるだけ狭くなる */}
+          <div class="due">
+            <Seg small options={[{ v: 'today', label: '当日' }, { v: 'date', label: '日付' }]} value={t.当日 ? 'today' : 'date'} onChange={(v) => set('当日', v === 'today')} />
+            {!t.当日 && <input type="date" value={t.期限日} onInput={(e) => set('期限日', (e.target as HTMLInputElement).value)} />}
+          </div>
         </Field>
         {isMoney && (
           <Field label="金額">
