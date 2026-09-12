@@ -192,10 +192,23 @@ export function participation(c: Contest, ts: Task[]): Participation {
 }
 export const PARTICIPATION_LABEL: Record<Participation, string> = { confirmed: '', unentered: '未エントリー', tentative: '進出待ち' };
 
-// 日付タイルの色。面＝種別（単発=青／予選=紫／決勝=金）、左のぼかし＝結果（予選通過=緑／入賞=金）
-export function dtileClass(c: Contest): string {
-  const base = c.ラウンド === '決勝' ? 'dt-final' : c.ラウンド === '予選' ? 'dt-qual' : 'dt-single';
-  const r = String(c.結果 || '');
-  const accent = /入賞|優勝/.test(r) ? ' dt-prize' : /通過|進出/.test(r) ? ' dt-pass' : '';
-  return base + accent;
+// 結果を残したか。入賞・優勝・予選通過はどれも同じ重さ（予選通過＝上位に入って決勝へ進んだということ）。
+// 差がつくのは「出場のみ」との間だけ
+export const hasResult = (c: Contest) => /入賞|優勝|通過|進出/.test(String(c.結果 || ''));
+export const isChampion = (c: Contest) => /優勝/.test(String(c.結果 || ''));
+
+// 日付タイルの見た目。
+// これからの大会＝種別の色（単発=青／予選=紫／決勝=金）。何の大会かが知りたい時期だから。
+// 終わった大会＝色を塗らず、結果の印だけ。入賞・予選通過はメダル、優勝は縁で囲んでトロフィー。
+export function dtileClass(c: Contest, past: boolean): string {
+  if (!past) return c.ラウンド === '決勝' ? 'dt-final' : c.ラウンド === '予選' ? 'dt-qual' : 'dt-single';
+  if (isChampion(c)) return 'dt-plain dt-champ';
+  return hasResult(c) ? 'dt-plain dt-medal' : 'dt-plain';
+}
+
+// 「5位／35組」。順位が主役なので先に出す
+export function placement(c: Contest): { rank: string; of: string } {
+  const n = Number(c.総組数) || 0;
+  const detail = String(c.結果詳細 || '').trim();
+  return { rank: detail || '—', of: n ? `／${n}組` : '' };
 }

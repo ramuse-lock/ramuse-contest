@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { IS_KID } from '../api';
 import { upcoming, past, tasks, today } from '../store';
-import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDate, MONEY_KINDS, yen, taskAmount, roundClass, participation, PARTICIPATION_LABEL, dtileClass } from '../model';
+import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDate, MONEY_KINDS, yen, taskAmount, roundClass, participation, PARTICIPATION_LABEL, dtileClass, hasResult, isChampion, placement } from '../model';
 import type { Contest } from '../types';
 import { Icon, Pill, TypeBadge, Glass } from '../ui';
 import { go } from '../router';
@@ -52,16 +52,16 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
   const finalLink = c.ラウンド === '予選' && c.シリーズ名 ? findFinal(c) : null;
   return (
     <button class={`ccard glass${!pastMode && part !== 'confirmed' ? ' tentative' : ''}`} onClick={() => go(`/contest/${encodeURIComponent(c.ID)}`)}>
-      <div class={`dtile ${dtileClass(c)}`}><b>{fmtDay(c.開催日)}</b><small>{fmtDow(c.開催日)}</small></div>
+      <div class={`dtile ${dtileClass(c, pastMode)}`}><b>{fmtDay(c.開催日)}</b><small>{fmtDow(c.開催日)}</small></div>
       <div class="cb">
         <div class="cn">{c.コンテスト名}</div>
         <div class="cm"><TypeBadge round={c.ラウンド} />{c.会場 && <><Icon name="location_on" />{c.会場}</>}{!c.会場 && c.開始時間 && <><Icon name="schedule" />{c.開始時間}{c.終了時間 && ` – ${c.終了時間}`}</>}</div>
         {pastMode ? (
           <div class="prog">
-            {/* ①順位＝数字の事実（色なし） ②結果の種類＝色 ③決勝進出＝予選通過のときだけ */}
-            {placementText(c) && <small class="n" style="color:var(--ink);font-size:12.5px">{placementText(c)}</small>}
+            {/* 順位の数字が主役。結果を残したかは数字の色と日付の印で、何の結果かはラベルの文字で */}
+            <span class={`rank${hasResult(c) ? ' yes' : ''}`}>{placement(c).rank}<span class="u">{placement(c).of}</span></span>
             {c.結果
-              ? <Pill tone={resultTone(c.結果)} icon={/入賞|優勝/.test(c.結果) ? 'emoji_events' : /通過|進出/.test(c.結果) ? 'check' : undefined}>{c.結果}</Pill>
+              ? <Pill tone={resultTone(c.結果)} icon={resultIcon(c.結果)}>{c.結果}</Pill>
               : <Pill tone="p-mu">結果 未入力</Pill>}
             {advanced && finalLink && <span class="pill p-blue" style="margin-left:auto"><Icon name="arrow_forward" />{`${parseDate(finalLink.開催日)!.getMonth() + 1}/${fmtDay(finalLink.開催日)} 決勝`}</span>}
           </div>
@@ -91,16 +91,13 @@ function orderText(c: Contest): string {
   if (n) return `${n}組`;
   return '';
 }
-function placementText(c: Contest): string {
-  const n = Number(c.総組数) || 0;
-  const detail = String(c.結果詳細 || '').trim();
-  if (detail && n) return `${n}組中${detail}`;
-  if (detail) return detail;
-  if (n) return `${n}組`;
-  return '';
-}
+// 入賞・優勝・予選通過は同じ重さなので、ラベルの色も1つ（金）にする
 export function resultTone(result: string): string {
-  return /入賞|優勝/.test(result) ? 'p-acc' : /通過|進出/.test(result) ? 'p-ok' : 'p-mu';
+  return /入賞|優勝|通過|進出/.test(result) ? 'p-acc' : 'p-mu';
+}
+export function resultIcon(result: string): string | undefined {
+  if (/優勝/.test(result)) return 'trophy';
+  return /入賞|通過|進出/.test(result) ? 'workspace_premium' : undefined;
 }
 
 function findFinal(c: Contest) {
