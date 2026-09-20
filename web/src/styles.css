@@ -412,3 +412,24 @@ body.sheet-open .blobs,body.sheet-open .tabbar,body.sheet-open .fab{display:none
 .neterr b{font-size:13px}
 .neterr span{font-size:11px;color:var(--mu);word-break:break-word}
 .neterr .btn{margin-top:2px}
+
+/* ===== やること：家庭ごとの券種×枚数（観覧チケットなど） ===== */
+.fld.bkf{flex-direction:column;align-items:stretch;gap:6px}
+.bkhd{display:flex;align-items:center;justify-content:space-between}
+.bkhd .more{font-size:12px;color:var(--acc-ink);font-weight:600;display:inline-flex;align-items:center;gap:2px}
+.bkhd .more .ms{font-size:16px}
+.bkrow{display:flex;align-items:center;gap:8px}
+.bkrow input:first-child{flex:1 1 90px;min-width:0}
+.bkrow input.n{flex:0 0 96px}
+.icnbtn.xs{width:28px;height:28px;flex-shrink:0;color:var(--mu)}
+.icnbtn.xs .ms{font-size:16px}
+.bktw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+.bkt{border-collapse:separate;border-spacing:0 4px;width:100%;font-size:12.5px}
+.bkt th{font-size:10.5px;font-weight:700;color:var(--mu);text-align:center;padding:0 4px 2px;white-space:nowrap}
+.bkt th:first-child{text-align:left}
+.bkt td{padding:0 3px;text-align:center}
+.bkt td.fam{text-align:left;font-weight:600;white-space:nowrap;padding-right:8px}
+.bkt td input.n{width:56px;min-width:56px;padding:7px 6px;text-align:center}
+.bkt .sub{text-align:right;white-space:nowrap;color:var(--mu);font-weight:600;padding-left:8px}
+.bkshare{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px}
+.bkshare b{margin-left:2px}

@@ -1,6 +1,6 @@
 import { IS_KID } from '../api';
 import { contests, tasks, today, past, ledger, families } from '../store';
-import { tasksOf, daysUntil, fmtMD, fmtDow, docsOf, taskIcon, taskAmount, yen, MONEY_KINDS, contestStatus, participation, PARTICIPATION_LABEL, owedOf, num, famJa, ledgerIcon } from '../model';
+import { tasksOf, daysUntil, fmtMD, fmtDow, docsOf, taskIcon, taskAmount, taskAmountText, yen, MONEY_KINDS, contestStatus, participation, PARTICIPATION_LABEL, owedOf, num, famJa, ledgerIcon } from '../model';
 import type { Task, Ledger } from '../types';
 import { Icon, Pill, TypeBadge, Glass, Check, SectionHead, Avatar } from '../ui';
 import { go } from '../router';
@@ -144,7 +144,7 @@ function TaskRow({ t }: { t: Task }) {
       <div class={`t${t.済 ? ' done' : ''}`}>
         {t.名前}
         {!t.済 && (amt > 0 || t.期限日) && (
-          <small>{amt > 0 && `${yen(t.単価)}${Number(t.数量) > 1 ? ` × ${t.数量} = ${yen(amt)}` : ''}`}{amt > 0 && t.期限日 && ' · '}{t.期限日 && `${fmtMD(t.期限日)} ${fmtDow(t.期限日)}まで`}</small>
+          <small>{amt > 0 && taskAmountText(t)}{amt > 0 && t.期限日 && ' · '}{t.期限日 && `${fmtMD(t.期限日)} ${fmtDow(t.期限日)}まで`}</small>
         )}
         {t.メモ && <small>{t.メモ}</small>}
       </div>

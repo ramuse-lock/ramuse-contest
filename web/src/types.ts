@@ -41,9 +41,17 @@ export interface Task {
   済日: string;
   単価?: number | string;
   数量?: number | string;
+  /** 家庭ごとに券種×枚数が違うとき（観覧チケットなど）。あれば 単価×数量 より優先 */
+  内訳JSON?: TaskBreakdown | string;
   台帳ID?: string;
   メモ: string;
   表示順: number | string;
+}
+
+/** 券種（大人 3,000／子供 1,500）と、家族ごとの枚数 qty[家族][券種] */
+export interface TaskBreakdown {
+  types: { label: string; price: number }[];
+  qty: Record<string, Record<string, number>>;
 }
 
 export interface LedgerItem { label: string; amount: number; targets: string[] }

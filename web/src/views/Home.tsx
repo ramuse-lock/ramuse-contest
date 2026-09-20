@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { IS_KID } from '../api';
 import { upcoming, tasks, today, eventsOn, contests } from '../store';
-import { tasksOf, daysUntil, fmtMD, fmtDow, fmtLong, progress, addDays, fmtDay, evColor, evTime, evTitle, isNotice, taskAmount, yen, MONEY_KINDS, participation, PARTICIPATION_LABEL } from '../model';
+import { tasksOf, daysUntil, fmtMD, fmtDow, fmtLong, progress, addDays, fmtDay, evColor, evTime, evTitle, isNotice, taskAmount, yen, MONEY_KINDS, participation, PARTICIPATION_LABEL, taskPriceLabel } from '../model';
 import type { Contest, Task } from '../types';
 import { Icon, Pill, TypeBadge, SectionHead, Empty } from '../ui';
 import { go } from '../router';
@@ -73,7 +73,7 @@ function Ticket({ c, first }: { c: Contest; first: boolean }) {
       {c.会場 && <div class="tvenue"><Icon name="location_on" /><b>{c.会場}</b></div>}
       {dayItems.length > 0 && (
         <div class="tfoot">
-          {dayItems.slice(0, 3).map((t) => <Pill tone="p-violet" icon={t.種別 === 'backup_cd' ? 'album' : 'currency_yen'}>{t.名前}{t.単価 ? ` ${yen(t.単価)}` : ''}</Pill>)}
+          {dayItems.slice(0, 3).map((t) => <Pill tone="p-violet" icon={t.種別 === 'backup_cd' ? 'album' : 'currency_yen'}>{t.名前}{taskPriceLabel(t) ? ` ${taskPriceLabel(t)}` : ''}</Pill>)}
         </div>
       )}
     </button>

@@ -1,5 +1,5 @@
 // 表示用の計算（純関数）。日付・自動ステータス・残高・カレンダー色
-import type { Balance, CalEvent, Contest, Ledger, LedgerItem, Task } from './types';
+import type { Balance, CalEvent, Contest, Ledger, LedgerItem, Task, TaskBreakdown } from './types';
 
 export const DOW = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -80,7 +80,37 @@ export function taskIcon(t: Task): { icon: string; tile: string } {
     default: return { icon: 'task_alt', tile: 't-mu' };
   }
 }
-export function taskAmount(t: Task): number { return num(t.単価) * (num(t.数量) || 1); }
+/** 家庭ごとの内訳。券種が1つも無ければ null（＝みんな同じ単価の従来モード） */
+export function breakdownOf(t: Task): TaskBreakdown | null {
+  const b = parseJson(t.内訳JSON, null as TaskBreakdown | null);
+  return b && Array.isArray(b.types) && b.types.length ? b : null;
+}
+/** その家族の負担額（内訳モードのみ意味を持つ） */
+export function familyAmount(t: Task, fam: string): number {
+  const b = breakdownOf(t);
+  if (!b) return num(t.単価);
+  const q = b.qty[fam] || {};
+  return b.types.reduce((s, ty) => s + num(ty.price) * num(q[ty.label]), 0);
+}
+/** 合計。内訳があればその合計、無ければ 単価×数量 */
+export function taskAmount(t: Task): number {
+  const b = breakdownOf(t);
+  if (b) return Object.keys(b.qty).reduce((s, f) => s + familyAmount(t, f), 0);
+  return num(t.単価) * (num(t.数量) || 1);
+}
+/** 一覧で出す短い金額。内訳なら合計、従来なら1人あたり。0なら空 */
+export function taskPriceLabel(t: Task): string {
+  const b = breakdownOf(t);
+  const v = b ? taskAmount(t) : num(t.単価);
+  return v > 0 ? yen(v) : '';
+}
+/** 明細の説明。「¥3,000 × 3 = ¥9,000」か「家庭ごと 合計 ¥13,500」 */
+export function taskAmountText(t: Task): string {
+  const amt = taskAmount(t);
+  if (amt <= 0) return '';
+  if (breakdownOf(t)) return `家庭ごと · 合計 ${yen(amt)}`;
+  return `${yen(t.単価)}${num(t.数量) > 1 ? ` × ${t.数量} = ${yen(amt)}` : ''}`;
+}
 export function docsOf(c: Contest) { return parseJson(c.資料JSON, [] as { label: string; url: string }[]); }
 
 // ---- 台帳 ----

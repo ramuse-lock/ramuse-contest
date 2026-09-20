@@ -1,7 +1,7 @@
 // 大会の追加（2ステップ：基本と当日 → やることテンプレ）／編集（やることもここから触れる）
 import { useState } from 'preact/hooks';
 import { families, today, tasks, saveContest, saveTasks, deleteContest } from '../store';
-import { docsOf, uid, yen, tasksOf, taskIcon, taskAmount, fmtMD, fmtDow } from '../model';
+import { docsOf, uid, yen, tasksOf, taskIcon, taskAmount, fmtMD, fmtDow, taskAmountText } from '../model';
 import type { Contest, Task, TaskKind } from '../types';
 import { Sheet, Field, Seg, Toggle, Icon, Glass, Pill, SectionHead } from '../ui';
 import { closeModal, openModal } from '../modal';
@@ -200,7 +200,7 @@ function TaskLine({ t, contestId }: { t: Task; contestId: string }) {
   return (
     <button class="row" onClick={() => openModal({ type: 'task', contestId, task: t })}>
       <span class={`tile ${tile}`}><Icon name={icon} /></span>
-      <div class={`t${t.済 ? ' done' : ''}`}>{t.名前}{amt > 0 && <small>{yen(t.単価)} × {t.数量} = {yen(amt)}</small>}</div>
+      <div class={`t${t.済 ? ' done' : ''}`}>{t.名前}{amt > 0 && <small>{taskAmountText(t)}</small>}</div>
       {t.済 ? <Pill tone="p-ok">済</Pill> : t.当日 ? <Pill tone="p-violet">当日</Pill> : <Pill tone="p-mu">{t.期限日 ? `${fmtMD(t.期限日)}` : '期限なし'}</Pill>}
       <Icon name="chevron_right" style="color:var(--mu2)" />
     </button>

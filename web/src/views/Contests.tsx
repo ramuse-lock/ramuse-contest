@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { IS_KID } from '../api';
 import { upcoming, past, tasks, today } from '../store';
-import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDate, MONEY_KINDS, yen, taskAmount, roundClass, participation, PARTICIPATION_LABEL, dtileClass, hasResult, isChampion, placement } from '../model';
+import { tasksOf, progress, nearestDeadline, daysUntil, fmtDay, fmtDow, parseDate, MONEY_KINDS, taskPriceLabel, roundClass, participation, PARTICIPATION_LABEL, dtileClass, hasResult, isChampion, placement } from '../model';
 import type { Contest } from '../types';
 import { Icon, Pill, TypeBadge, Glass } from '../ui';
 import { go } from '../router';
@@ -74,7 +74,7 @@ function Card({ c, pastMode }: { c: Contest; pastMode: boolean }) {
             {!IS_KID && near && daysUntil(near.期限日, today.value) <= 14
               ? <Pill tone="p-wn" icon="alarm">{fmtMonthDay(near.期限日)} {shortName(near.名前)}</Pill>
               : dayItem ? <Pill tone="p-violet" icon="album">当日CD</Pill>
-              : (!IS_KID && fee) ? <Pill tone="p-mu">{yen(taskAmount(fee) / (Number(fee.数量) || 1))} 当日</Pill>
+              : (!IS_KID && fee) ? <Pill tone="p-mu">{taskPriceLabel(fee)} 当日</Pill>
               : null}
           </div>
         )}
