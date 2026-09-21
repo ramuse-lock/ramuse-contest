@@ -1,8 +1,8 @@
 // やることの追加・編集。お金のやることを「済」にすると台帳へ1行足せる
 import { useState } from 'preact/hooks';
-import { families, today, contests, saveTasks, deleteTask, saveLedger } from '../store';
-import { famJa, uid, yen, num, MONEY_KINDS, breakdownOf, familyAmount, taskAmount } from '../model';
-import type { Task, TaskKind, Ledger, TaskBreakdown } from '../types';
+import { families, today, contests, ledger, saveTasks, deleteTask, saveLedger } from '../store';
+import { famJa, uid, yen, num, MONEY_KINDS, breakdownOf, familyAmount, taskAmount, itemsOf } from '../model';
+import type { Task, TaskKind, Ledger, LedgerItem, TaskBreakdown } from '../types';
 import { Sheet, Field, Seg, Toggle, Icon, Glass, WhoPicker, OnePicker } from '../ui';
 import { closeModal, lastPayer, rememberPayer } from '../modal';
 
@@ -34,10 +34,15 @@ export function TaskSheet({ contestId, task, markDone, preset }: { contestId: st
   const eff: Task = mode === 'each' ? { ...t, 内訳JSON: bk, 単価: '', 数量: '' } : { ...t, 内訳JSON: '' };
   const amount = taskAmount(eff);
 
+  // すでに台帳に載っている行（あれば）。編集で内容が変わったら、この行を書き直す
+  const linked = t.台帳ID ? ledger.value.find((l) => l.ID === t.台帳ID) : undefined;
+  const linkedItems = linked ? itemsOf(linked) : [];
+
   const willLog = isMoney && eff.済 && !(task?.済) && !eff.台帳ID && amount > 0;
   const [logIt, setLogIt] = useState(true);
-  const [payer, setPayer] = useState(lastPayer('Rinka'));
-  const [targets, setTargets] = useState<string[]>(fams);
+  const [payer, setPayer] = useState(linked?.支払者 || lastPayer('Rinka'));
+  const [targets, setTargets] = useState<string[]>(
+    linkedItems.length ? fams.filter((f) => linkedItems.some((i) => i.targets.includes(f))) : fams);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof Task, v: unknown) => setT({ ...t, [k]: v } as Task);
   const canSave = t.名前.trim().length > 0;
@@ -67,20 +72,28 @@ export function TaskSheet({ contestId, task, markDone, preset }: { contestId: st
   const setQty = (f: string, label: string, v: number) =>
     setBk({ ...bk, qty: { ...bk.qty, [f]: { ...(bk.qty[f] || {}), [label]: Math.max(0, v || 0) } } });
 
+  // 台帳の明細：家庭ごとに1行。内訳があれば「大人×2・子供×1」を行に書き、金額はその家庭ぶん
+  const buildItems = (): LedgerItem[] => mode === 'each'
+    ? fams.filter((f) => familyAmount(eff, f) > 0).map((f) => {
+        const q = bk.qty[f] || {};
+        const parts = bk.types.filter((ty) => num(q[ty.label]) > 0).map((ty) => `${ty.label}×${q[ty.label]}`).join('・');
+        return { label: `${t.名前} ${parts}（${famJa(f)}）`, amount: familyAmount(eff, f), targets: [f] };
+      })
+    : (num(t.単価) > 0 ? targets.map((f) => ({ label: `${t.名前}（${famJa(f)}）`, amount: num(t.単価), targets: [f] })) : []);
+  // 載せてある台帳の行と、いまの内容が違うか（違えば保存時に書き直す）
+  const newItems = isMoney ? buildItems() : [];
+  const willUpdate = !!linked && newItems.length > 0 && JSON.stringify(linkedItems) !== JSON.stringify(newItems);
+
   async function save() {
     if (!canSave || busy) return;
     setBusy(true);
     try {
       const next: Task = { ...eff, ID: t.ID || uid('t') };
-      if (willLog && logIt) {
-        // 台帳の明細：家庭ごとに1行。内訳があれば「大人×2・子供×1」を行に書き、金額はその家庭ぶん
-        const items = mode === 'each'
-          ? fams.filter((f) => familyAmount(eff, f) > 0).map((f) => {
-              const q = bk.qty[f] || {};
-              const parts = bk.types.filter((ty) => num(q[ty.label]) > 0).map((ty) => `${ty.label}×${q[ty.label]}`).join('・');
-              return { label: `${t.名前} ${parts}（${famJa(f)}）`, amount: familyAmount(eff, f), targets: [f] };
-            })
-          : targets.map((f) => ({ label: `${t.名前}（${famJa(f)}）`, amount: num(t.単価), targets: [f] }));
+      if (willUpdate && linked) {
+        // すでに台帳に載っている → その行の明細を今の内容で上書き（合計と負担はサーバーが再計算）
+        await saveLedger({ ...linked, 明細JSON: newItems });
+      } else if (willLog && logIt) {
+        const items = newItems;
         if (items.length) {
           const l: Ledger = {
             ID: uid('l'), 日付: today.value, 内容: `${contest?.コンテスト名 || ''} ${t.名前}`.trim(), 種別: 'fee', 合計: 0, 支払者: payer, 大会ID: contestId,
@@ -104,7 +117,7 @@ export function TaskSheet({ contestId, task, markDone, preset }: { contestId: st
   return (
     <Sheet title={isNew ? 'やることを追加' : 'やることを編集'} onClose={closeModal}
       right={!isNew ? <button class="cancel right danger" onClick={remove}>削除</button> : undefined}
-      footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />{willLog && logIt ? '保存して台帳に1行' : '保存する'}</button>}>
+      footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />{willUpdate ? '保存して台帳を書き直す' : willLog && logIt ? '保存して台帳に1行' : '保存する'}</button>}>
       <Glass className="fgrp">
         {isNew && (
           <div class="fld"><span class="lb">種類</span><div class="chips">
@@ -176,6 +189,22 @@ export function TaskSheet({ contestId, task, markDone, preset }: { contestId: st
       <Glass className="fgrp" style="margin-top:10px">
         <div class="fld"><span class="lb" style="width:auto;flex:1;color:var(--ink);font-weight:600">済にする</span><Toggle on={t.済} onChange={(v) => set('済', v)} /></div>
       </Glass>
+      {linked && isMoney && (
+        <Glass style="margin-top:10px;padding:12px 16px;background:radial-gradient(120% 120% at 0% 0%,rgba(40,167,69,.18),transparent 60%),var(--sfc)">
+          <div class="kicker" style="margin-bottom:6px">台帳に載っている行</div>
+          <div style="font-size:12.5px;line-height:1.6">
+            {linked.内容}<br />
+            <span style="color:var(--mu)">いま {yen(num(linked.合計))}</span>
+            {willUpdate && <> → <b class="n">{yen(newItems.reduce((s, i) => s + i.amount, 0))}</b> に書き直します</>}
+            {!willUpdate && <span style="color:var(--mu)">（変更なし）</span>}
+          </div>
+          {willUpdate && mode === 'each' && (
+            <div class="bkshare" style="margin-top:8px">
+              {fams.filter((f) => familyAmount(eff, f) > 0).map((f) => <span>{famJa(f)} <b class="n">{yen(familyAmount(eff, f))}</b></span>)}
+            </div>
+          )}
+        </Glass>
+      )}
       {willLog && (
         <Glass style="margin-top:10px;padding:12px 16px;background:radial-gradient(120% 120% at 0% 0%,rgba(40,167,69,.18),transparent 60%),var(--sfc)">
           <div class="kicker" style="margin-bottom:8px">台帳に載せる</div>
