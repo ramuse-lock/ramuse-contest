@@ -93,8 +93,11 @@ function ContestSelect({ value, onChange }: { value: string; onChange: (id: stri
 type Fuel = 'レギュラー' | 'ハイオク';
 const FUELS: Fuel[] = ['レギュラー', 'ハイオク'];
 const FUEL_KEY: Record<Fuel, string> = { レギュラー: 'ガソリン単価', ハイオク: 'ハイオク単価' };
+type Legs = 'rt' | 'go' | 'back';
+const LEGS: { v: Legs; label: string }[] = [{ v: 'rt', label: '往復' }, { v: 'go', label: '行きだけ' }, { v: 'back', label: '帰りだけ' }];
+const legsLabel = (v: Legs) => LEGS.find((x) => x.v === v)?.label || '';
 type CarLine = {
-  key: number; driver: string; oneway: string; roundTrip: boolean; fe: string; fuel: Fuel;
+  key: number; driver: string; oneway: string; legs: Legs; fe: string; fuel: Fuel;
   goToll: boolean; goFare: string; backToll: boolean; backFare: string; parking: boolean; parkFare: string;
 };
 let carSeq = 0;
@@ -110,7 +113,7 @@ function lastCarOf(fam: string): { fe: string; fuel: Fuel } {
 }
 function newLine(driver: string): CarLine {
   const last = lastCarOf(driver);
-  return { key: ++carSeq, driver, oneway: '', roundTrip: true, fe: last.fe, fuel: last.fuel, goToll: true, goFare: '', backToll: true, backFare: '', parking: false, parkFare: '' };
+  return { key: ++carSeq, driver, oneway: '', legs: 'rt', fe: last.fe, fuel: last.fuel, goToll: true, goFare: '', backToll: true, backFare: '', parking: false, parkFare: '' };
 }
 
 export function CarForm({ contestId: initContest }: { contestId?: string }) {
@@ -130,12 +133,12 @@ export function CarForm({ contestId: initContest }: { contestId?: string }) {
   const inp = (e: Event) => (e.target as HTMLInputElement).value;
 
   const calc = lines.map((l) => {
-    const dist = num(l.oneway) * (l.roundTrip ? 2 : 1);
+    const dist = num(l.oneway) * (l.legs === 'rt' ? 2 : 1);
     const unit = num(price[l.fuel]);
     const fe = num(l.fe);
     const gas = dist > 0 && fe > 0 && unit > 0 ? Math.floor(unit * dist / fe) : 0;
-    const go = l.goToll ? Math.round(num(l.goFare)) : 0;
-    const back = l.roundTrip && l.backToll ? Math.round(num(l.backFare)) : 0;
+    const go = l.legs !== 'back' && l.goToll ? Math.round(num(l.goFare)) : 0;
+    const back = l.legs !== 'go' && l.backToll ? Math.round(num(l.backFare)) : 0;
     const park = l.parking ? Math.round(num(l.parkFare)) : 0;
     const items: LedgerItem[] = [];
     if (gas > 0) items.push({ label: 'ガソリン', amount: gas, targets });
@@ -173,8 +176,8 @@ export function CarForm({ contestId: initContest }: { contestId?: string }) {
           ID: uid('l'), 日付: date, 内容: rows.length > 1 ? `${base}（${famJa(c.l.driver)}）` : base, 種別: 'car', 合計: c.total, 支払者: c.l.driver, 大会ID: contestId,
           明細JSON: c.items, 負担JSON: shareItems(c.items, fams, c.l.driver),
           車JSON: {
-            運転者: c.l.driver, 往復: c.l.roundTrip, 片道: num(c.l.oneway), 距離: c.dist, 燃費: c.fe, 燃料: c.l.fuel, 単価: c.unit, 駐車場: c.park,
-            行き高速: c.go, 帰り高速: c.back, 行き: c.l.goToll ? '高速' : '下道', 帰り: c.l.roundTrip ? (c.l.backToll ? '高速' : '下道') : '—', 同行ID: trip, 台数: rows.length,
+            運転者: c.l.driver, 往復: c.l.legs === 'rt', 行程: legsLabel(c.l.legs), 片道: num(c.l.oneway), 距離: c.dist, 燃費: c.fe, 燃料: c.l.fuel, 単価: c.unit, 駐車場: c.park,
+            行き高速: c.go, 帰り高速: c.back, 行き: c.l.legs === 'back' ? '—' : (c.l.goToll ? '高速' : '下道'), 帰り: c.l.legs === 'go' ? '—' : (c.l.backToll ? '高速' : '下道'), 同行ID: trip, 台数: rows.length,
           },
           メモ: '', 作成日時: '',
         });
@@ -201,7 +204,6 @@ export function CarForm({ contestId: initContest }: { contestId?: string }) {
             <Field label="距離">
               <input class="amt-in s" type="number" inputMode="decimal" placeholder="km" value={c.l.oneway} onInput={(e) => upd(c.l.key, { oneway: inp(e) })} />
               <span class="unit">km 片道</span>
-              <Seg small options={[{ v: 'rt', label: '往復' }, { v: 'ow', label: '片道' }]} value={c.l.roundTrip ? 'rt' : 'ow'} onChange={(v) => upd(c.l.key, { roundTrip: v === 'rt' })} />
             </Field>
             <Field label="燃費">
               <input class="amt-in s" type="number" inputMode="decimal" placeholder="km/L" value={c.l.fe} onInput={(e) => upd(c.l.key, { fe: inp(e) })} />
@@ -211,22 +213,27 @@ export function CarForm({ contestId: initContest }: { contestId?: string }) {
               <Seg small options={FUELS.map((f) => ({ v: f, label: f }))} value={c.l.fuel} onChange={(v) => upd(c.l.key, { fuel: v })} />
               <span class="unit">{c.unit > 0 ? `${yen(c.unit)}/L` : '単価は下で'}</span>
             </Field>
-            <Field label="行き">
-              <Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={c.l.goToll ? 'toll' : 'free'} onChange={(v) => upd(c.l.key, { goToll: v === 'toll' })} />
-              {c.l.goToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={c.l.goFare} onInput={(e) => upd(c.l.key, { goFare: inp(e) })} />}
+            <Field label="駐車場">
+              <Seg small options={[{ v: 'no', label: 'なし' }, { v: 'yes', label: 'あり' }]} value={c.l.parking ? 'yes' : 'no'} onChange={(v) => upd(c.l.key, { parking: v === 'yes' })} />
+              {c.l.parking && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={c.l.parkFare} onInput={(e) => upd(c.l.key, { parkFare: inp(e) })} />}
             </Field>
-            {c.l.roundTrip && (
+            <Field label="行程">
+              <Seg small options={LEGS} value={c.l.legs} onChange={(v) => upd(c.l.key, { legs: v })} />
+            </Field>
+            {c.l.legs !== 'back' && (
+              <Field label="行き">
+                <Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={c.l.goToll ? 'toll' : 'free'} onChange={(v) => upd(c.l.key, { goToll: v === 'toll' })} />
+                {c.l.goToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={c.l.goFare} onInput={(e) => upd(c.l.key, { goFare: inp(e) })} />}
+              </Field>
+            )}
+            {c.l.legs !== 'go' && (
               <Field label="帰り">
                 <Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={c.l.backToll ? 'toll' : 'free'} onChange={(v) => upd(c.l.key, { backToll: v === 'toll' })} />
                 {c.l.backToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={c.l.backFare} onInput={(e) => upd(c.l.key, { backFare: inp(e) })} />}
               </Field>
             )}
-            <Field label="駐車場">
-              <Seg small options={[{ v: 'no', label: 'なし' }, { v: 'yes', label: 'あり' }]} value={c.l.parking ? 'yes' : 'no'} onChange={(v) => upd(c.l.key, { parking: v === 'yes' })} />
-              {c.l.parking && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={c.l.parkFare} onInput={(e) => upd(c.l.key, { parkFare: inp(e) })} />}
-            </Field>
             <div class="carsub">
-              <span>{c.dist > 0 ? `${c.dist} km · ` : ''}ガソリン {yen(c.gas)}{c.go + c.back > 0 ? ` · 高速 ${yen(c.go + c.back)}` : ''}{c.park > 0 ? ` · 駐車場 ${yen(c.park)}` : ''}</span>
+              <span>{c.dist > 0 ? `${c.dist} km${c.l.legs === 'rt' ? '' : `（${legsLabel(c.l.legs)}）`} · ` : ''}ガソリン {yen(c.gas)}{c.go + c.back > 0 ? ` · 高速 ${yen(c.go + c.back)}` : ''}{c.park > 0 ? ` · 駐車場 ${yen(c.park)}` : ''}</span>
               <span><b>{yen(c.total)}</b>{c.total > 0 ? <span class="pay"> {famJa(c.l.driver)}が払う</span> : <span> 台帳には載りません</span>}</span>
             </div>
           </Glass>
