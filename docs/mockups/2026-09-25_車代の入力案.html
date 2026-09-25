@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>車代の入力案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,0&display=swap">
+<style>
+/* ===== RAMUSE 本体と同じトークン ===== */
+:root{
+  --bg:#EEF1F7;--sfc:rgba(255,255,255,.62);--sfc2:#FFFFFF;--ink:#1D1D1F;--mu:#6E6E73;--mu2:#C7C7CC;
+  --hair:rgba(29,29,31,.08);--hair2:rgba(29,29,31,.05);
+  --acc:#D1A800;--acc-ink:#8A6F00;--acc-bg:rgba(209,168,0,.16);
+  --blue:#0A7AFF;--blue-bg:rgba(10,122,255,.12);--green:#28A745;--green-bg:rgba(40,167,69,.12);
+  --violet:#5E5CE6;--violet-bg:rgba(94,92,230,.12);--orange:#FF9500;--orange-bg:rgba(255,149,0,.14);
+  --teal:#30B0C7;--teal-bg:rgba(48,176,199,.14);--red:#FF3B30;--red-bg:rgba(255,59,48,.11);
+  --fa:#FF6B6B;--fa-bg:rgba(255,107,107,.18);--fm:#32ADE6;--fm-bg:rgba(50,173,230,.18);--fr:#D1A800;--fr-bg:rgba(209,168,0,.2);
+  --r:24px;--card-bd:1px solid rgba(255,255,255,.7);--card-sh:0 8px 30px -18px rgba(30,40,80,.35);
+  --fld:rgba(255,255,255,.75);--seg:rgba(120,120,128,.14);
+  --jp:-apple-system,BlinkMacSystemFont,'SF Pro Text','Hiragino Sans','Noto Sans JP',sans-serif;
+  --num:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B0D14;--sfc:rgba(38,40,52,.55);--sfc2:#1E2030;--ink:#F5F5F7;--mu:#98989F;--mu2:#48484E;
+  --hair:rgba(245,245,247,.10);--hair2:rgba(245,245,247,.06);
+  --acc:#F0C400;--acc-ink:#F0C400;--acc-bg:rgba(240,196,0,.18);
+  --blue:#5AA3FF;--blue-bg:rgba(90,163,255,.18);--green:#3DD16E;--green-bg:rgba(61,209,110,.16);
+  --violet:#8E8CFF;--violet-bg:rgba(142,140,255,.18);--orange:#FFA939;--orange-bg:rgba(255,169,57,.18);
+  --teal:#4FD0E6;--teal-bg:rgba(79,208,230,.18);
+  --card-bd:1px solid rgba(255,255,255,.10);--card-sh:0 12px 40px -20px rgba(0,0,0,.8);--fld:rgba(255,255,255,.06);--seg:rgba(255,255,255,.10);
+}}
+:root[data-theme="dark"]{
+  --bg:#0B0D14;--sfc:rgba(38,40,52,.55);--sfc2:#1E2030;--ink:#F5F5F7;--mu:#98989F;--mu2:#48484E;
+  --hair:rgba(245,245,247,.10);--hair2:rgba(245,245,247,.06);
+  --acc:#F0C400;--acc-ink:#F0C400;--acc-bg:rgba(240,196,0,.18);
+  --blue:#5AA3FF;--blue-bg:rgba(90,163,255,.18);--green:#3DD16E;--green-bg:rgba(61,209,110,.16);
+  --violet:#8E8CFF;--violet-bg:rgba(142,140,255,.18);--orange:#FFA939;--orange-bg:rgba(255,169,57,.18);
+  --teal:#4FD0E6;--teal-bg:rgba(79,208,230,.18);
+  --card-bd:1px solid rgba(255,255,255,.10);--card-sh:0 12px 40px -20px rgba(0,0,0,.8);--fld:rgba(255,255,255,.06);--seg:rgba(255,255,255,.10);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--jp);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;padding:24px 16px 60px}
+button,input,select{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+.ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;white-space:nowrap;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;vertical-align:middle}
+.n{font-family:var(--num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+
+/* ===== ページの枠 ===== */
+.top{max-width:900px;margin:0 auto 18px}
+.top h1{font-size:20px;margin:0 0 6px;letter-spacing:-.02em}
+.top p{margin:0;color:var(--mu);font-size:13px;max-width:62ch}
+.frames{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.phone{width:375px;flex:0 0 375px}
+.phone-hd{font-size:13px;font-weight:700;margin:0 4px 8px;display:flex;align-items:center;gap:8px}
+.phone-hd .no{width:22px;height:22px;border-radius:999px;background:var(--ink);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-family:var(--num)}
+.screen{background:var(--bg);border:1px solid var(--hair);border-radius:28px;overflow:hidden;box-shadow:0 20px 60px -30px rgba(0,0,0,.45);position:relative}
+.screen.sheet{background:rgba(0,0,0,.28)}
+.sheetbox{background:var(--bg);border-radius:28px 28px 0 0;margin-top:26px;border-top:var(--card-bd)}
+.grab{width:38px;height:5px;border-radius:3px;background:var(--mu2);margin:8px auto 0}
+.shd{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 8px}
+.shd .ttl{font-weight:700;font-size:15px}
+.shd .cancel{font-size:14px;color:var(--mu);width:64px;white-space:nowrap}
+.sbody{padding:0 16px 8px}
+.sfoot{padding:10px 16px 18px}
+.save{width:100%;height:50px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px}
+.page{padding:12px 16px 22px}
+.back{display:flex;align-items:center;padding:6px 0 4px;font-size:14px}
+.back .ttl{margin:0 auto;font-weight:700;font-size:15px}
+
+/* ===== 本体の部品 ===== */
+.glass{background:var(--sfc);border:var(--card-bd);border-radius:var(--r);box-shadow:var(--card-sh)}
+.sec{margin-top:12px}
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding:0 2px}
+.sec-hd .more{font-size:12px;color:var(--acc-ink);font-weight:600;display:flex;align-items:center;gap:2px}
+.sec-hd .more .ms{font-size:16px}
+.fgrp{padding:4px 16px}
+.fld{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--hair2);font-size:13.5px;min-height:46px}
+.fld:first-child{border-top:0}
+.fld .lb{color:var(--mu);width:64px;flex-shrink:0;font-size:12.5px}
+.fld .in{flex:1;min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fld input,.fld select{flex:1;min-width:0;background:var(--fld);border:1px solid var(--hair);border-radius:10px;padding:8px 10px;font-size:14px;outline:none;color:var(--ink);appearance:none;-webkit-appearance:none}
+.fld select{background-image:linear-gradient(45deg,transparent 50%,var(--mu) 50%),linear-gradient(135deg,var(--mu) 50%,transparent 50%);background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:28px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld input.n{font-family:var(--num);text-align:right}
+.fld input.date{font-family:var(--num);flex:0 1 150px}
+.fld .unit{font-size:12px;color:var(--mu);white-space:nowrap}
+.amt-in{font-family:var(--num);font-weight:600;padding:6px 10px;border-radius:9px;background:var(--fld);border:1px solid var(--hair);width:88px;text-align:right;font-size:14px;color:var(--ink);outline:none}
+.amt-in.s{width:66px;padding:4px 8px;font-size:13px}
+.seg{display:flex;background:var(--seg);border-radius:999px;padding:3px;flex:1}
+.seg button{flex:1;text-align:center;font-size:12px;font-weight:600;padding:6px 6px;border-radius:999px;color:var(--mu);white-space:nowrap}
+.seg button.on{background:var(--sfc2);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.seg.narrow{flex:0 0 auto;min-width:118px}
+.av{width:34px;height:34px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;font-family:var(--num);flex-shrink:0}
+.av.sm{width:26px;height:26px;font-size:10.5px}
+.av-a{background:var(--fa-bg);color:var(--fa)}.av-m{background:var(--fm-bg);color:var(--fm)}.av-r{background:var(--fr-bg);color:var(--acc-ink)}
+.who{display:flex;gap:6px}
+.who .av{opacity:.4;border:2px solid transparent}
+.who .av.on{opacity:1;border-color:var(--ink)}
+.hint{font-size:12px;color:var(--mu);line-height:1.55;margin:8px 4px 0;display:flex;gap:6px;align-items:flex-start}
+.hint .ms{font-size:16px;flex-shrink:0;margin-top:1px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair2);font-size:13.5px}
+.row:first-child{border-top:0}
+.row .t{flex:1;min-width:0;line-height:1.35}
+.row .t small{display:block;color:var(--mu);font-size:11.5px;margin-top:2px}
+.tile{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background-color:var(--sfc2)}
+.t-orange{background-image:linear-gradient(var(--orange-bg),var(--orange-bg));color:var(--orange)}
+.t-teal{background-image:linear-gradient(var(--teal-bg),var(--teal-bg));color:var(--teal)}
+.list{padding:2px 16px}
+.calc{padding:12px 16px}
+.crow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;gap:8px}
+.crow .lb{color:var(--mu);display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}
+.crow .lb small{color:var(--mu2);font-size:11px}
+.crow .lb .ms{font-size:16px}
+.crow .v{font-family:var(--num);font-weight:600;white-space:nowrap}
+.crow.tot{border-top:1px solid var(--hair);margin-top:4px;padding-top:10px}
+.crow.tot .lb{color:var(--ink);font-weight:600}
+.crow.tot .v{font-size:20px;font-weight:700}
+
+/* ===== 車カード ===== */
+.carcard{padding:4px 16px 10px;margin-top:8px}
+.carhd{display:flex;align-items:center;gap:10px;padding:10px 0 8px}
+.carhd select{flex:1;min-width:0;background:var(--fld);border:1px solid var(--hair);border-radius:10px;padding:8px 28px 8px 10px;font-size:14px;font-weight:600;outline:none;color:var(--ink);appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mu) 50%),linear-gradient(135deg,var(--mu) 50%,transparent 50%);background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px;background-repeat:no-repeat;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.carhd .del{color:var(--mu2);width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.carhd .del .ms{font-size:18px}
+.carsub{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 0 2px;border-top:1px solid var(--hair);font-size:12px;color:var(--mu);flex-wrap:wrap}
+.carsub b{color:var(--ink);font-family:var(--num);font-size:15px}
+.carsub .pay{font-weight:600;color:var(--ink)}
+.addcar{width:100%;display:flex;align-items:center;justify-content:center;gap:4px;padding:11px 0 4px;color:var(--acc-ink);font-weight:600;font-size:13px}
+.addcar .ms{font-size:18px}
+.spec{font-size:11.5px;color:var(--mu);padding:0 0 6px 44px;margin-top:-4px}
+
+/* ===== 設定の車リスト ===== */
+.carrow{padding:10px 0;border-top:1px solid var(--hair2)}
+.carrow:first-child{border-top:0}
+.carrow .l1{display:flex;align-items:center;gap:10px}
+.carrow .l1 input.nm{flex:1;min-width:0;background:var(--fld);border:1px solid var(--hair);border-radius:10px;padding:7px 10px;font-size:14px;outline:none;color:var(--ink)}
+.carrow .l2{display:flex;align-items:center;gap:8px;padding:8px 0 0 44px}
+.carrow .l2 .unit{font-size:11px;color:var(--mu);white-space:nowrap}
+.carrow .del{color:var(--mu2);width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.carrow .del .ms{font-size:18px}
+.fuelrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair2);font-size:13.5px}
+.fuelrow:first-child{border-top:0}
+.fuelrow .t{flex:1}
+.fuelrow .t small{display:block;color:var(--mu);font-size:11.5px}
+.dot{width:10px;height:10px;border-radius:999px;display:inline-block;flex-shrink:0}
+
+/* ===== 決めたいこと ===== */
+.notes{max-width:900px;margin:32px auto 0}
+.notes h2{font-size:15px;margin:0 0 10px}
+.notes ol{margin:0;padding-left:1.4em;display:grid;gap:10px;font-size:13.5px}
+.notes li b{font-weight:700}
+.notes li small{display:block;color:var(--mu);font-size:12.5px;margin-top:2px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>車代の入力 — 新しい案</h1>
+  <p style="margin-bottom:8px;color:var(--red);font-weight:600">9/25 相談後の変更：車も行き先も登録しない（距離・燃費・燃料はその場で入力）。運転者は残す。2台まとめ・等分はこの案のまま。実装はこの案から変えてある。</p>
+  <p>「どこへ → どの車で（何台でも） → 誰で割る」の順に上から埋めるだけ。車は家族ごとに何台でも登録でき、燃費と燃料（レギュラー／ハイオク／軽油）を持ちます。数字は例です。</p>
+</header>
+
+<div class="frames">
+
+<!-- ① 車代を記録 -->
+<section class="phone">
+  <div class="phone-hd"><span class="no">1</span>車代を記録（2台で行って、3家庭で割る）</div>
+  <div class="screen sheet">
+    <div class="sheetbox">
+      <div class="grab"></div>
+      <div class="shd"><span class="cancel">キャンセル</span><span class="ttl">車代</span><span class="cancel"></span></div>
+      <div class="sbody">
+
+        <div class="sec" style="margin-top:2px"><div class="sec-hd"><span class="kicker">どこへ</span></div>
+          <div class="glass fgrp">
+            <div class="fld"><span class="lb">大会</span><div class="in"><select><option>9/26 THE ROOKIES 2026 1stシリーズ FINAL</option></select></div></div>
+            <div class="fld"><span class="lb">日付</span><div class="in"><input class="date" value="2026/09/26"></div></div>
+            <div class="fld"><span class="lb">行き先</span><div class="in"><select><option>青少年文化センター（38km）</option></select></div></div>
+            <div class="fld"><span class="lb">往復</span><div class="in"><div class="seg narrow"><button class="on">往復</button><button>片道</button></div><span class="unit">76 km</span></div></div>
+          </div>
+        </div>
+
+        <div class="sec"><div class="sec-hd"><span class="kicker">車 · 2台</span></div>
+
+          <div class="glass carcard" style="margin-top:0">
+            <div class="carhd"><span class="av av-a">A</span><select><option>アイリ · ノア</option></select><button class="del" aria-label="この車を外す"><span class="ms">close</span></button></div>
+            <div class="spec">8 km/L · レギュラー</div>
+            <div class="fld"><span class="lb">行き</span><div class="in"><div class="seg narrow"><button class="on">高速</button><button>下道</button></div><input class="amt-in" value="1,080"></div></div>
+            <div class="fld"><span class="lb">帰り</span><div class="in"><div class="seg narrow"><button class="on">高速</button><button>下道</button></div><input class="amt-in" value="1,080"></div></div>
+            <div class="fld"><span class="lb">駐車場</span><div class="in"><input class="amt-in" placeholder="¥"></div></div>
+            <div class="carsub"><span>ガソリン ¥1,567 · 高速 ¥2,160</span><span><b>¥3,727</b> <span class="pay">アイリが払う</span></span></div>
+          </div>
+
+          <div class="glass carcard">
+            <div class="carhd"><span class="av av-r">R</span><select><option>リンカ · セレナ</option></select><button class="del" aria-label="この車を外す"><span class="ms">close</span></button></div>
+            <div class="spec">9 km/L · ハイオク</div>
+            <div class="fld"><span class="lb">行き</span><div class="in"><div class="seg narrow"><button class="on">高速</button><button>下道</button></div><input class="amt-in" value="1,080"></div></div>
+            <div class="fld"><span class="lb">帰り</span><div class="in"><div class="seg narrow"><button>高速</button><button class="on">下道</button></div></div></div>
+            <div class="fld"><span class="lb">駐車場</span><div class="in"><input class="amt-in" value="1,400"></div></div>
+            <div class="carsub"><span>ガソリン ¥1,520 · 高速 ¥1,080 · 駐車 ¥1,400</span><span><b>¥4,000</b> <span class="pay">リンカが払う</span></span></div>
+          </div>
+
+          <button class="addcar"><span class="ms">add</span>もう1台</button>
+        </div>
+
+        <div class="sec" style="margin-top:4px"><div class="sec-hd"><span class="kicker">割る人</span></div>
+          <div class="glass fgrp">
+            <div class="fld"><span class="lb">割る人</span><div class="in"><span class="who"><span class="av av-a on">A</span><span class="av av-m on">M</span><span class="av av-r on">R</span></span><span class="unit">3家庭で等分</span></div></div>
+          </div>
+          <div class="hint"><span class="ms">info</span><span>2台分をまとめて、選んだ家庭で等分します。車ごとに乗った人だけで割りたいときは、1台ずつ記録してください。</span></div>
+        </div>
+
+        <div class="glass calc" style="margin-top:12px">
+          <div class="kicker" style="margin-bottom:4px">計算</div>
+          <div class="crow"><span class="lb"><span class="ms">route</span>距離 <small>38 km × 2</small></span><span class="v">76 km</span></div>
+          <div class="crow"><span class="lb"><span class="ms">local_gas_station</span>レギュラー <small>1Lあたり</small></span><span class="v"><input class="amt-in s" value="165"></span></div>
+          <div class="crow"><span class="lb"><span class="ms">local_gas_station</span>ハイオク <small>1Lあたり</small></span><span class="v"><input class="amt-in s" value="180"></span></div>
+          <div class="crow"><span class="lb"><span class="av av-a sm">A</span>ノア</span><span class="v">¥3,727</span></div>
+          <div class="crow"><span class="lb"><span class="av av-r sm">R</span>セレナ</span><span class="v">¥4,000</span></div>
+          <div class="crow tot"><span class="lb">合計 <small>1家庭 約 ¥2,580</small></span><span class="v">¥7,727</span></div>
+        </div>
+
+      </div>
+      <div class="sfoot"><button class="save"><span class="ms">check</span>台帳に2行 ¥7,727</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ② 設定 → 車 -->
+<section class="phone">
+  <div class="phone-hd"><span class="no">2</span>設定 → 車（家族ごとに何台でも）</div>
+  <div class="screen">
+    <div class="page">
+      <div class="back"><span style="display:flex;align-items:center;gap:2px"><span class="ms" style="font-size:16px">arrow_back_ios_new</span>お金</span><span class="ttl">設定</span><span style="width:50px"></span></div>
+
+      <div class="sec"><div class="sec-hd"><span class="kicker">車 · 家族ごとに何台でも</span><button class="more"><span class="ms">add</span>車を足す</button></div>
+        <div class="glass list">
+          <div class="carrow">
+            <div class="l1"><span class="av av-a">A</span><input class="nm" value="ノア"><button class="del"><span class="ms">close</span></button></div>
+            <div class="l2"><input class="amt-in s" value="8"><span class="unit">km/L</span><div class="seg"><button class="on">レギュラー</button><button>ハイオク</button><button>軽油</button></div></div>
+          </div>
+          <div class="carrow">
+            <div class="l1"><span class="av av-a">A</span><input class="nm" value="N-BOX"><button class="del"><span class="ms">close</span></button></div>
+            <div class="l2"><input class="amt-in s" value="20"><span class="unit">km/L</span><div class="seg"><button class="on">レギュラー</button><button>ハイオク</button><button>軽油</button></div></div>
+          </div>
+          <div class="carrow">
+            <div class="l1"><span class="av av-m">M</span><input class="nm" value="ミハの車"><button class="del"><span class="ms">close</span></button></div>
+            <div class="l2"><input class="amt-in s" value="8"><span class="unit">km/L</span><div class="seg"><button class="on">レギュラー</button><button>ハイオク</button><button>軽油</button></div></div>
+          </div>
+          <div class="carrow">
+            <div class="l1"><span class="av av-r">R</span><input class="nm" value="セレナ"><button class="del"><span class="ms">close</span></button></div>
+            <div class="l2"><input class="amt-in s" value="9"><span class="unit">km/L</span><div class="seg"><button>レギュラー</button><button class="on">ハイオク</button><button>軽油</button></div></div>
+          </div>
+        </div>
+        <div class="hint"><span class="ms">info</span><span>車代を記録する画面の「＋ 車を登録」からも足せます。ここに来なくても大丈夫。</span></div>
+      </div>
+
+      <div class="sec"><div class="sec-hd"><span class="kicker">燃料の単価 · 1Lあたり</span></div>
+        <div class="glass list">
+          <div class="fuelrow"><span class="tile t-orange"><span class="ms">local_gas_station</span></span><div class="t">レギュラー<small>車の記録の初期値。記録のときにも直せます</small></div><input class="amt-in" value="165"></div>
+          <div class="fuelrow"><span class="tile t-orange"><span class="ms">local_gas_station</span></span><div class="t">ハイオク</div><input class="amt-in" value="180"></div>
+          <div class="fuelrow"><span class="tile t-orange"><span class="ms">local_gas_station</span></span><div class="t">軽油</div><input class="amt-in" placeholder="¥"></div>
+        </div>
+      </div>
+
+      <div class="sec"><div class="sec-hd"><span class="kicker">行き先 · 出発は桑名</span><button class="more">追加<span class="ms">chevron_right</span></button></div>
+        <div class="glass list">
+          <div class="row"><div class="t">サンマンション高畑<small>桑名→白川 ／ 烏森→桑名</small></div><div class="n" style="text-align:right;font-weight:600">37 km<small style="display:block;font-size:11px;color:var(--mu);font-weight:500">行 ¥1,080 · 帰 ¥1,080</small></div></div>
+          <div class="row"><div class="t">ウィル愛知<small>桑名→丸の内 ／ 烏森→桑名東</small></div><div class="n" style="text-align:right;font-weight:600">39 km<small style="display:block;font-size:11px;color:var(--mu);font-weight:500">行 ¥0 · 帰 ¥0</small></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<section class="notes">
+  <h2>決めたいこと</h2>
+  <ol>
+    <li><b>2台のときの割り方＝まとめて等分。</b><small>2台分の合計を「割る人」で等分します。台帳には車1台につき1行（払う人が違うので）。車ごとに乗った人だけで割りたいときは、1台ずつ記録します。</small></li>
+    <li><b>払う人＝その車の家族。</b><small>「運転者」の選択はなくします。アイリの車で行けばアイリが払った扱い。</small></li>
+    <li><b>車は家族ごとに何台でも。</b><small>車名・燃費・燃料（レギュラー／ハイオク／軽油）。設定からも、記録の途中の「＋ 車を登録」からも足せます。燃料ごとの単価は設定に3つ。</small></li>
+    <li><b>入力の順番＝どこへ → 車 → 割る人。</b><small>いまの「運転者が最初」をやめ、大会を選べば日付と行き先が埋まる流れに。</small></li>
+  </ol>
+</section>
+</body>
+</html>

@@ -544,6 +544,7 @@ function getV2Bundle(mode) {
   }
   var ledger = v2ReadSheet_(V2_SHEETS.LEDGER);
   pub['ガソリン単価'] = settings['ガソリン単価'] || '';
+  pub['ハイオク単価'] = settings['ハイオク単価'] || ''; // 車代の燃料がハイオクのときの初期値（2026-09-25）
   return {
     mode: 'adult', families: fams, contests: contests, tasks: tasks, ledger: ledger,
     destinations: v2ReadSheet_(V2_SHEETS.DEST), cars: v2ReadSheet_(V2_SHEETS.CARS), settings: pub,

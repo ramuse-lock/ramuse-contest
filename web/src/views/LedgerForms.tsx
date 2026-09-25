@@ -1,8 +1,8 @@
 // 台帳の入力：選択 → レシート／車／受け取り・支払い。＋ 明細の確認と削除
 import { useState } from 'preact/hooks';
-import { families, today, contests, destinations, cars, settings, saveLedger, deleteLedger, saveDestination, saveSetting } from '../store';
-import { famJa, num, yen, uid, shareItems, sumItems, fmtMD, fmtDow, itemsOf, owedOf, daysUntil } from '../model';
-import type { Ledger, LedgerItem, Destination } from '../types';
+import { families, today, contests, ledger, settings, saveLedger, deleteLedger, saveSetting } from '../store';
+import { famJa, num, yen, uid, shareItems, sumItems, fmtMD, fmtDow, itemsOf, owedOf, daysUntil, parseJson } from '../model';
+import type { Ledger, LedgerItem } from '../types';
 import { Sheet, Field, Seg, Icon, Glass, WhoPicker, OnePicker, Pill, Avatar } from '../ui';
 import { openModal, replaceModal, closeModal, lastPayer, rememberPayer } from '../modal';
 
@@ -17,7 +17,7 @@ export function LedgerChooser({ contestId }: { contestId?: string }) {
     <Sheet title="なにを記録する？" onClose={closeModal} left={<span class="cancel" />} right={<button class="cancel right" onClick={closeModal}>閉じる</button>}>
       <Glass className="list">
         <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'receipt', contestId }))}><span class="tile t-red"><Icon name="receipt_long" /></span><div class="t">レシート<small>ご飯・チケット・衣装など。1行ずつ誰の分か決める</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
-        <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'car', contestId }))}><span class="tile t-teal"><Icon name="directions_car" /></span><div class="t">車<small>運転者と行き先を選ぶだけ。高速・ガソリン・駐車場を計算</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
+        <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'car', contestId }))}><span class="tile t-teal"><Icon name="directions_car" /></span><div class="t">車代<small>距離と燃費を入れるだけ。高速・駐車場も。2台でも1回で記録</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
         <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'settle' }))}><span class="tile t-green"><Icon name="swap_horiz" /></span><div class="t">受け取り・支払い<small>現金やPayPayで精算したとき</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
       </Glass>
     </Sheet>
@@ -87,114 +87,167 @@ function ContestSelect({ value, onChange }: { value: string; onChange: (id: stri
 }
 
 // ---- 車 ----
+// 車も行き先も登録しない。会場も出発地（各家）も毎回ちがうので、その場で「片道の距離・燃費・燃料・高速・駐車場」を入れる。
+// 燃費と燃料だけは、その家族が前回入れた値を初期値にする（台帳の車の行から拾う）。
+// 2台で行ったら「もう1台」で同じ記録にまとめ、2台分の合計を「割る人」で等分する。台帳には車1台につき1行（払う人＝運転者が違うため）
+type Fuel = 'レギュラー' | 'ハイオク';
+const FUELS: Fuel[] = ['レギュラー', 'ハイオク'];
+const FUEL_KEY: Record<Fuel, string> = { レギュラー: 'ガソリン単価', ハイオク: 'ハイオク単価' };
+type CarLine = {
+  key: number; driver: string; oneway: string; roundTrip: boolean; fe: string; fuel: Fuel;
+  goToll: boolean; goFare: string; backToll: boolean; backFare: string; parking: boolean; parkFare: string;
+};
+let carSeq = 0;
+
+function lastCarOf(fam: string): { fe: string; fuel: Fuel } {
+  const rows = ledger.value.filter((l) => l.種別 === 'car').sort((a, b) => (a.日付 > b.日付 ? -1 : a.日付 < b.日付 ? 1 : 0));
+  for (const l of rows) {
+    const j = parseJson(l.車JSON, {} as Record<string, unknown>);
+    if (String(j.運転者 || l.支払者) !== fam || !(num(j.燃費) > 0)) continue;
+    return { fe: String(j.燃費), fuel: j.燃料 === 'ハイオク' ? 'ハイオク' : 'レギュラー' };
+  }
+  return { fe: '', fuel: 'レギュラー' };
+}
+function newLine(driver: string): CarLine {
+  const last = lastCarOf(driver);
+  return { key: ++carSeq, driver, oneway: '', roundTrip: true, fe: last.fe, fuel: last.fuel, goToll: true, goFare: '', backToll: true, backFare: '', parking: false, parkFare: '' };
+}
+
 export function CarForm({ contestId: initContest }: { contestId?: string }) {
   const fams = families.value;
-  const dests = destinations.value;
   const initC = initContest ? contests.value.find((x) => x.ID === initContest) : null;
   const [contestId, setContestId] = useState(initContest || '');
   const [date, setDate] = useState(initC?.開催日 || today.value);
-  const [destId, setDestId] = useState(() => (initC ? (destinations.value.find((d) => d.名前 === initC.会場)?.ID || '') : ''));
-  const [newDest, setNewDest] = useState<Destination>({ ID: '', 名前: '', 片道距離: 0, 行き高速代: 0, 帰り高速代: 0, メモ: '' });
-  const [driver, setDriver] = useState(lastPayer('Rinka'));
-  const [riders, setRiders] = useState<string[]>(fams);
-  const [roundTrip, setRoundTrip] = useState(true);
-  // 行き・帰りそれぞれ「高速か下道か」と、その日の実額（初期値は行き先マスタ）
-  const [goToll, setGoToll] = useState(true);
-  const [backToll, setBackToll] = useState(true);
-  const [goFare, setGoFare] = useState('');
-  const [backFare, setBackFare] = useState('');
-  const [parking, setParking] = useState('');
-  const [gasUnit, setGasUnit] = useState(String(settings.value['ガソリン単価'] || 165));
+  const [title, setTitle] = useState(initC?.コンテスト名 || '');
+  const [lines, setLines] = useState<CarLine[]>(() => [newLine(lastPayer('Rinka'))]);
+  const [targets, setTargets] = useState<string[]>(fams);
+  const [price, setPrice] = useState<Record<Fuel, string>>({ レギュラー: String(settings.value['ガソリン単価'] || 165), ハイオク: String(settings.value['ハイオク単価'] || '') });
   const [busy, setBusy] = useState(false);
 
-  const dest = destId === 'new' ? newDest : dests.find((d) => d.ID === destId) || null;
-  const car = cars.value.find((c) => c.家族 === driver);
-  const fe = num(car?.燃費) || 15;
-  const dist = dest ? num(dest.片道距離) * (roundTrip ? 2 : 1) : 0;
-  const gas = dist > 0 && num(gasUnit) > 0 ? Math.floor(num(gasUnit) * dist / fe) : 0;
-  const goAmt = goToll ? Math.round(num(goFare)) : 0;
-  const backAmt = roundTrip && backToll ? Math.round(num(backFare)) : 0;
-  const highway = goAmt + backAmt;
-  const park = Math.round(num(parking));
-  const items: LedgerItem[] = [];
-  if (gas > 0) items.push({ label: 'ガソリン', amount: gas, targets: riders });
-  if (highway > 0) items.push({ label: goAmt && backAmt ? '高速（往復）' : goAmt ? '高速（行きのみ）' : '高速（帰りのみ）', amount: highway, targets: riders });
-  if (park > 0) items.push({ label: '駐車場', amount: park, targets: riders });
-  const total = sumItems(items);
-  const per = riders.length ? Math.round(total / riders.length / 10) * 10 : 0;
-  const canSave = items.length > 0 && riders.length > 0 && !!dest && !!dest.名前;
-  const contest = contests.value.find((c) => c.ID === contestId);
+  const upd = (k: number, p: Partial<CarLine>) => setLines(lines.map((l) => (l.key === k ? { ...l, ...p } : l)));
+  const setDriver = (k: number, f: string) => { const last = lastCarOf(f); upd(k, { driver: f, fe: last.fe || lines.find((l) => l.key === k)?.fe || '', fuel: last.fe ? last.fuel : lines.find((l) => l.key === k)?.fuel }); };
+  const nextDriver = () => fams.find((f) => !lines.some((l) => l.driver === f)) || fams[0];
+  const inp = (e: Event) => (e.target as HTMLInputElement).value;
 
-  function pickDest(id: string) {
-    setDestId(id);
-    const d = id === 'new' ? null : dests.find((x) => x.ID === id);
-    setGoFare(d ? String(d.行き高速代 || '') : '');
-    setBackFare(d ? String(d.帰り高速代 || '') : '');
-    setGoToll(!d || num(d.行き高速代) > 0);
-    setBackToll(!d || num(d.帰り高速代) > 0);
-  }
+  const calc = lines.map((l) => {
+    const dist = num(l.oneway) * (l.roundTrip ? 2 : 1);
+    const unit = num(price[l.fuel]);
+    const fe = num(l.fe);
+    const gas = dist > 0 && fe > 0 && unit > 0 ? Math.floor(unit * dist / fe) : 0;
+    const go = l.goToll ? Math.round(num(l.goFare)) : 0;
+    const back = l.roundTrip && l.backToll ? Math.round(num(l.backFare)) : 0;
+    const park = l.parking ? Math.round(num(l.parkFare)) : 0;
+    const items: LedgerItem[] = [];
+    if (gas > 0) items.push({ label: 'ガソリン', amount: gas, targets });
+    if (go + back > 0) items.push({ label: go && back ? '高速（往復）' : go ? '高速（行きのみ）' : '高速（帰りのみ）', amount: go + back, targets });
+    if (park > 0) items.push({ label: '駐車場', amount: park, targets });
+    return { l, dist, unit, fe, gas, go, back, park, items, total: sumItems(items) };
+  });
+  const rows = calc.filter((c) => c.total > 0);
+  const total = rows.reduce((s, c) => s + c.total, 0);
+  const per = targets.length ? Math.round(total / targets.length / 10) * 10 : 0;
+  const fuelsUsed = FUELS.filter((f) => lines.some((l) => l.fuel === f));
+  const canSave = rows.length > 0 && targets.length > 0;
+
   function pickContest(id: string) {
     setContestId(id);
     const c = contests.value.find((x) => x.ID === id);
     if (!c) return;
     setDate(c.開催日);
-    const d = dests.find((x) => x.名前 === c.会場);
-    if (d) pickDest(d.ID);
-    else if (c.会場) { pickDest('new'); setNewDest({ ...newDest, 名前: c.会場 }); }
+    const prev = contests.value.find((x) => x.ID === contestId);
+    if (!title.trim() || (prev && title === prev.コンテスト名)) setTitle(c.コンテスト名);
   }
   async function save() {
-    if (!canSave || busy || !dest) return;
+    if (!canSave || busy) return;
     setBusy(true);
     try {
-      let d = dest;
-      if (destId === 'new') d = await saveDestination({ ...newDest, 片道距離: num(newDest.片道距離), 行き高速代: num(newDest.行き高速代), 帰り高速代: num(newDest.帰り高速代) });
-      if (String(settings.value['ガソリン単価']) !== String(gasUnit)) await saveSetting('ガソリン単価', num(gasUnit));
-      rememberPayer(driver);
-      await saveLedger({
-        ID: uid('l'), 日付: date, 内容: `${contest ? contest.コンテスト名 : d.名前} 車`, 種別: 'car', 合計: total, 支払者: driver, 大会ID: contestId,
-        明細JSON: items, 負担JSON: shareItems(items, fams, driver),
-        車JSON: { 行き先: d.名前, 行き先ID: d.ID, 運転者: driver, 往復: roundTrip, 距離: dist, 燃費: fe, 単価: num(gasUnit), 駐車場: park, 行き高速: goAmt, 帰り高速: backAmt, 行き: goToll ? '高速' : '下道', 帰り: roundTrip ? (backToll ? '高速' : '下道') : '—' },
-        メモ: '', 作成日時: '',
-      });
+      for (const f of fuelsUsed) {
+        const v = num(price[f]);
+        if (v > 0 && String(settings.value[FUEL_KEY[f]] ?? '') !== String(v)) await saveSetting(FUEL_KEY[f], v);
+      }
+      const base = title.trim() ? `${title.trim()} 車` : '車';
+      const trip = uid('trip');
+      rememberPayer(rows[0].l.driver);
+      for (const c of rows) {
+        await saveLedger({
+          ID: uid('l'), 日付: date, 内容: rows.length > 1 ? `${base}（${famJa(c.l.driver)}）` : base, 種別: 'car', 合計: c.total, 支払者: c.l.driver, 大会ID: contestId,
+          明細JSON: c.items, 負担JSON: shareItems(c.items, fams, c.l.driver),
+          車JSON: {
+            運転者: c.l.driver, 往復: c.l.roundTrip, 片道: num(c.l.oneway), 距離: c.dist, 燃費: c.fe, 燃料: c.l.fuel, 単価: c.unit, 駐車場: c.park,
+            行き高速: c.go, 帰り高速: c.back, 行き: c.l.goToll ? '高速' : '下道', 帰り: c.l.roundTrip ? (c.l.backToll ? '高速' : '下道') : '—', 同行ID: trip, 台数: rows.length,
+          },
+          メモ: '', 作成日時: '',
+        });
+      }
       closeModal();
     } catch { /* */ } finally { setBusy(false); }
   }
   return (
-    <Sheet title="車" onClose={closeModal} footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />台帳に1行 {total ? yen(total) : ''}</button>}>
+    <Sheet title="車代" onClose={closeModal} footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />台帳に{rows.length || 1}行 {total ? yen(total) : ''}</button>}>
       <Glass className="fgrp">
-        <Field label="運転者"><OnePicker fams={fams} value={driver} onChange={setDriver} /><span class="unit">{car ? `${car.車名} · ${fe} km/L` : ''}</span></Field>
         <Field label="大会"><ContestSelect value={contestId} onChange={pickContest} /></Field>
-        <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} /></Field>
-        <Field label="行き先">
-          <select value={destId} onChange={(e) => pickDest((e.target as HTMLSelectElement).value)}>
-            <option value="">選ぶ</option>
-            {dests.map((d) => <option value={d.ID}>{d.名前}（{d.片道距離}km）</option>)}
-            <option value="new">＋ 新しい行き先</option>
-          </select>
-        </Field>
-        {destId === 'new' && (
-          <>
-            <Field label="名前"><input value={newDest.名前} placeholder="会場名" onInput={(e) => setNewDest({ ...newDest, 名前: (e.target as HTMLInputElement).value })} /></Field>
-            <Field label="片道"><input class="n" type="number" inputMode="decimal" value={String(newDest.片道距離 || '')} placeholder="km" onInput={(e) => setNewDest({ ...newDest, 片道距離: num((e.target as HTMLInputElement).value) })} /><span class="unit">km</span></Field>
-            <Field label="高速代"><input class="n" type="number" inputMode="numeric" value={String(newDest.行き高速代 || '')} placeholder="行き" onInput={(e) => { const v = (e.target as HTMLInputElement).value; setNewDest({ ...newDest, 行き高速代: num(v) }); setGoFare(v); setGoToll(num(v) > 0); }} /><span class="unit">行き</span><input class="n" type="number" inputMode="numeric" value={String(newDest.帰り高速代 || '')} placeholder="帰り" onInput={(e) => { const v = (e.target as HTMLInputElement).value; setNewDest({ ...newDest, 帰り高速代: num(v) }); setBackFare(v); setBackToll(num(v) > 0); }} /><span class="unit">帰り</span></Field>
-          </>
-        )}
-        <Field label="乗った人"><WhoPicker fams={fams} value={riders} onChange={setRiders} /><span class="unit">{riders.length}人で割る</span></Field>
-        <Field label="往復"><Seg small options={[{ v: 'rt', label: '往復' }, { v: 'ow', label: '片道' }]} value={roundTrip ? 'rt' : 'ow'} onChange={(v) => setRoundTrip(v === 'rt')} /><span class="unit">駐車場</span><input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={parking} onInput={(e) => setParking((e.target as HTMLInputElement).value)} /></Field>
-        {dest && (
-          <>
-            <Field label="行き"><Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={goToll ? 'toll' : 'free'} onChange={(v) => setGoToll(v === 'toll')} />{goToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={goFare} onInput={(e) => setGoFare((e.target as HTMLInputElement).value)} />}</Field>
-            {roundTrip && <Field label="帰り"><Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={backToll ? 'toll' : 'free'} onChange={(v) => setBackToll(v === 'toll')} />{backToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={backFare} onInput={(e) => setBackFare((e.target as HTMLInputElement).value)} />}</Field>}
-          </>
-        )}
+        <Field label="日付"><input type="date" value={date} onInput={(e) => setDate(inp(e))} /></Field>
+        <Field label="内容"><input value={title} placeholder="大会名・送迎 など" onInput={(e) => setTitle(inp(e))} /></Field>
       </Glass>
+
+      <div class="sec">
+        <div class="sec-hd"><span class="kicker">車 · {lines.length}台</span><span class="kicker" style="text-transform:none;letter-spacing:0">運転者が払った分を入れる</span></div>
+        {calc.map((c) => (
+          <Glass className="fgrp carcard" key={c.l.key}>
+            <Field label="運転者">
+              <OnePicker fams={fams} value={c.l.driver} onChange={(f) => setDriver(c.l.key, f)} />
+              {lines.length > 1 && <button class="del" aria-label="この車を外す" onClick={() => setLines(lines.filter((x) => x.key !== c.l.key))}><Icon name="close" /></button>}
+            </Field>
+            <Field label="距離">
+              <input class="amt-in s" type="number" inputMode="decimal" placeholder="km" value={c.l.oneway} onInput={(e) => upd(c.l.key, { oneway: inp(e) })} />
+              <span class="unit">km 片道</span>
+              <Seg small options={[{ v: 'rt', label: '往復' }, { v: 'ow', label: '片道' }]} value={c.l.roundTrip ? 'rt' : 'ow'} onChange={(v) => upd(c.l.key, { roundTrip: v === 'rt' })} />
+            </Field>
+            <Field label="燃費">
+              <input class="amt-in s" type="number" inputMode="decimal" placeholder="km/L" value={c.l.fe} onInput={(e) => upd(c.l.key, { fe: inp(e) })} />
+              <span class="unit">km/L</span>
+            </Field>
+            <Field label="燃料">
+              <Seg small options={FUELS.map((f) => ({ v: f, label: f }))} value={c.l.fuel} onChange={(v) => upd(c.l.key, { fuel: v })} />
+              <span class="unit">{c.unit > 0 ? `${yen(c.unit)}/L` : '単価は下で'}</span>
+            </Field>
+            <Field label="行き">
+              <Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={c.l.goToll ? 'toll' : 'free'} onChange={(v) => upd(c.l.key, { goToll: v === 'toll' })} />
+              {c.l.goToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={c.l.goFare} onInput={(e) => upd(c.l.key, { goFare: inp(e) })} />}
+            </Field>
+            {c.l.roundTrip && (
+              <Field label="帰り">
+                <Seg small options={[{ v: 'toll', label: '高速' }, { v: 'free', label: '下道' }]} value={c.l.backToll ? 'toll' : 'free'} onChange={(v) => upd(c.l.key, { backToll: v === 'toll' })} />
+                {c.l.backToll && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={c.l.backFare} onInput={(e) => upd(c.l.key, { backFare: inp(e) })} />}
+              </Field>
+            )}
+            <Field label="駐車場">
+              <Seg small options={[{ v: 'no', label: 'なし' }, { v: 'yes', label: 'あり' }]} value={c.l.parking ? 'yes' : 'no'} onChange={(v) => upd(c.l.key, { parking: v === 'yes' })} />
+              {c.l.parking && <input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={c.l.parkFare} onInput={(e) => upd(c.l.key, { parkFare: inp(e) })} />}
+            </Field>
+            <div class="carsub">
+              <span>{c.dist > 0 ? `${c.dist} km · ` : ''}ガソリン {yen(c.gas)}{c.go + c.back > 0 ? ` · 高速 ${yen(c.go + c.back)}` : ''}{c.park > 0 ? ` · 駐車場 ${yen(c.park)}` : ''}</span>
+              <span><b>{yen(c.total)}</b>{c.total > 0 ? <span class="pay"> {famJa(c.l.driver)}が払う</span> : <span> 台帳には載りません</span>}</span>
+            </div>
+          </Glass>
+        ))}
+        <button class="addcar" onClick={() => setLines([...lines, newLine(nextDriver())])}><Icon name="add" />もう1台</button>
+      </div>
+
+      <Glass className="fgrp" style="margin-top:6px">
+        <Field label="割る人"><WhoPicker fams={fams} value={targets} onChange={setTargets} /><span class="unit">{targets.length}家庭で等分</span></Field>
+      </Glass>
+      <div class="hint"><Icon name="info" /><span>{lines.length > 1 ? `${lines.length}台分をまとめて、` : ''}選んだ家庭で等分します。車ごとに乗った人だけで割りたいときは、1台ずつ記録してください</span></div>
+
       <Glass className="calc" style="margin-top:10px">
         <div class="kicker" style="margin-bottom:4px">計算</div>
-        <div class="crow"><span class="lb"><Icon name="route" style="font-size:16px" />距離 <small>{dest ? `${dest.片道距離} km ${roundTrip ? '× 2' : ''}` : ''}</small></span><span class="v">{dist} km</span></div>
-        <div class="crow"><span class="lb"><Icon name="local_gas_station" style="font-size:16px" />ガソリン <small>{dist} ÷ {fe} × ¥</small><input class="amt-in" style="width:70px;padding:3px 8px" type="number" inputMode="numeric" value={gasUnit} onInput={(e) => setGasUnit((e.target as HTMLInputElement).value)} /></span><span class="v">{yen(gas)}</span></div>
-        <div class="crow"><span class="lb"><Icon name="add_road" style="font-size:16px" />高速 <small>{dest ? `行き ${goToll ? yen(goAmt) : '下道'}${roundTrip ? ` · 帰り ${backToll ? yen(backAmt) : '下道'}` : ''}` : ''}</small></span><span class="v">{yen(highway)}</span></div>
-        <div class="crow"><span class="lb"><Icon name="local_parking" style="font-size:16px" />駐車場</span><span class="v">{yen(park)}</span></div>
-        <div class="crow tot"><span class="lb" style="color:var(--ink);font-weight:600">合計 <small>1人 {yen(per)}</small></span><span class="v">{yen(total)}</span></div>
+        {fuelsUsed.map((f) => (
+          <div class="crow"><span class="lb"><Icon name="local_gas_station" style="font-size:16px" />{f} <small>1Lあたり</small></span><span class="v"><input class="amt-in" style="width:70px;padding:3px 8px" type="number" inputMode="numeric" placeholder="¥" value={price[f]} onInput={(e) => setPrice({ ...price, [f]: inp(e) })} /></span></div>
+        ))}
+        {calc.length > 1 && calc.map((c) => (
+          <div class="crow"><span class="lb"><Avatar fam={c.l.driver} small on />{famJa(c.l.driver)}の車 <small>{c.dist > 0 ? `${c.dist} km` : ''}</small></span><span class="v">{yen(c.total)}</span></div>
+        ))}
+        <div class="crow tot"><span class="lb" style="color:var(--ink);font-weight:600">合計 <small>{targets.length && total ? `1家庭 約 ${yen(per)}` : ''}</small></span><span class="v">{yen(total)}</span></div>
       </Glass>
     </Sheet>
   );
