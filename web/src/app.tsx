@@ -97,7 +97,7 @@ function ModalView({ state: s, depth }: { state: ModalState; depth: number }) {
       case 'contest': return <ContestForm contest={s.contest} />;
       case 'task': return <TaskSheet contestId={s.contestId} task={s.task} markDone={s.markDone} preset={s.preset} />;
       case 'ledger-choose': return <LedgerChooser contestId={s.contestId} />;
-      case 'receipt': return <ReceiptForm contestId={s.contestId} />;
+      case 'receipt': return <ReceiptForm contestId={s.contestId} kind={s.kind} />;
       case 'car': return <CarForm contestId={s.contestId} />;
       case 'settle': return <SettleForm from={s.from} to={s.to} amount={s.amount} />;
       case 'ledger-detail': return <LedgerDetail ledger={s.ledger} />;

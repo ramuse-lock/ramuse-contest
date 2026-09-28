@@ -7,7 +7,7 @@ export type ModalState =
   | { type: 'contest'; contest?: Contest }
   | { type: 'task'; contestId: string; task?: Task; markDone?: boolean; preset?: Partial<Task> }
   | { type: 'ledger-choose'; contestId?: string }
-  | { type: 'receipt'; contestId?: string }
+  | { type: 'receipt'; contestId?: string; kind?: 'receipt' | 'car' | 'other' }
   | { type: 'car'; contestId?: string }
   | { type: 'settle'; from?: string; to?: string; amount?: number }
   | { type: 'ledger-detail'; ledger: Ledger };

@@ -151,6 +151,7 @@ export function ledgerIcon(l: Ledger): { icon: string; tile: string } {
       const s = l.内容;
       if (/衣装|ハット|インナー/.test(s)) return { icon: 'checkroom', tile: 't-orange' };
       if (/チケット|観覧/.test(s)) return { icon: 'local_activity', tile: 't-blue' };
+      if (/交通費|ガソリン|高速|駐車|ETC|電車|タクシー/.test(s)) return { icon: 'directions_car', tile: 't-teal' };
       return { icon: 'restaurant', tile: 't-red' };
     }
     default: return { icon: 'receipt_long', tile: 't-mu' };

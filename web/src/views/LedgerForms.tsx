@@ -16,7 +16,7 @@ export function LedgerChooser({ contestId }: { contestId?: string }) {
   return (
     <Sheet title="なにを記録する？" onClose={closeModal} left={<span class="cancel" />} right={<button class="cancel right" onClick={closeModal}>閉じる</button>}>
       <Glass className="list">
-        <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'receipt', contestId }))}><span class="tile t-red"><Icon name="receipt_long" /></span><div class="t">レシート<small>ご飯・チケット・衣装など。1行ずつ誰の分か決める</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
+        <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'receipt', contestId }))}><span class="tile t-red"><Icon name="receipt_long" /></span><div class="t">レシート<small>ご飯・チケット・衣装、合計だけの交通費も。1行ずつ誰の分か決める</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
         <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'car', contestId }))}><span class="tile t-teal"><Icon name="directions_car" /></span><div class="t">車代<small>距離と燃費を入れるだけ。高速・駐車場も。2台でも1回で記録</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
         <button class="row" style="padding:14px 0" onClick={() => (replaceModal({ type: 'settle' }))}><span class="tile t-green"><Icon name="swap_horiz" /></span><div class="t">受け取り・支払い<small>現金やPayPayで精算したとき</small></div><Icon name="chevron_right" style="color:var(--mu2)" /></button>
       </Glass>
@@ -25,45 +25,57 @@ export function LedgerChooser({ contestId }: { contestId?: string }) {
 }
 
 // ---- レシート ----
+// 種類でアイコンが決まる（大会に紐づけても変わらない）。食事・買い物＝内容の言葉から（衣装・チケット・ご飯）、
+// 交通費＝車（各家庭がガソリン・高速・駐車場を込み込みで出した合計を1行で入れるとき）、その他＝レシート
+type ReceiptKind = 'receipt' | 'car' | 'other';
+const RECEIPT_KINDS: { v: ReceiptKind; label: string }[] = [{ v: 'receipt', label: '食事・買い物' }, { v: 'car', label: '交通費' }, { v: 'other', label: 'その他' }];
 type Line = { amount: string; label: string; targets: string[] };
-export function ReceiptForm({ contestId: initContest }: { contestId?: string }) {
+export function ReceiptForm({ contestId: initContest, kind: initKind }: { contestId?: string; kind?: ReceiptKind }) {
   const fams = families.value;
+  const [kind, setKind] = useState<ReceiptKind>(initKind || 'receipt');
+  const isCar = kind === 'car';
   const initC = initContest ? contests.value.find((x) => x.ID === initContest) : null;
   const [date, setDate] = useState(initC?.開催日 || today.value);
   const [title, setTitle] = useState(initC?.コンテスト名 || '');
   const [payer, setPayer] = useState(lastPayer('Rinka'));
   const [contestId, setContestId] = useState(initContest || '');
-  const [lines, setLines] = useState<Line[]>([{ amount: '', label: '', targets: [] }]);
+  // 交通費はみんなで割ることがほとんどなので、最初から全員を選んでおく
+  const [lines, setLines] = useState<Line[]>([{ amount: '', label: '', targets: initKind === 'car' ? fams : [] }]);
   const [busy, setBusy] = useState(false);
-  const items: LedgerItem[] = lines.filter((l) => num(l.amount) > 0 && l.targets.length).map((l) => ({ label: l.label || 'その他', amount: Math.round(num(l.amount)), targets: l.targets }));
+  const items: LedgerItem[] = lines.filter((l) => num(l.amount) > 0 && l.targets.length).map((l) => ({ label: l.label || (isCar ? '交通費' : 'その他'), amount: Math.round(num(l.amount)), targets: l.targets }));
   const total = sumItems(items);
   const owed = shareItems(items, fams, payer);
-  const canSave = items.length > 0 && title.trim().length > 0;
+  const canSave = items.length > 0 && (title.trim().length > 0 || isCar);
   const upd = (i: number, p: Partial<Line>) => setLines(lines.map((l, j) => (j === i ? { ...l, ...p } : l)));
+  function pickKind(k: ReceiptKind) {
+    setKind(k);
+    if (k === 'car') setLines(lines.map((l) => (l.targets.length ? l : { ...l, targets: fams })));
+  }
 
   async function save() {
     if (!canSave || busy) return;
     setBusy(true);
     try {
       rememberPayer(payer);
-      await saveLedger({ ID: uid('l'), 日付: date, 内容: title.trim(), 種別: 'receipt', 合計: total, 支払者: payer, 大会ID: contestId, 明細JSON: items, 負担JSON: owed, 車JSON: '', メモ: '', 作成日時: '' });
+      await saveLedger({ ID: uid('l'), 日付: date, 内容: title.trim() || '交通費', 種別: kind, 合計: total, 支払者: payer, 大会ID: contestId, 明細JSON: items, 負担JSON: owed, 車JSON: isCar ? { 入力: '合計' } : '', メモ: '', 作成日時: '' });
       closeModal();
     } catch { /* */ } finally { setBusy(false); }
   }
   return (
-    <Sheet title="レシート" onClose={closeModal} footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />保存する {total ? yen(total) : ''}</button>}>
+    <Sheet title={isCar ? '交通費' : 'レシート'} onClose={closeModal} footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />保存する {total ? yen(total) : ''}</button>}>
       <Glass className="fgrp">
+        <Field label="種類"><Seg small options={RECEIPT_KINDS} value={kind} onChange={pickKind} /></Field>
         <Field label="払った人"><OnePicker fams={fams} value={payer} onChange={setPayer} /><span class="unit">{famJa(payer)}の財布から</span></Field>
         <Field label="日付"><input type="date" value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} /></Field>
-        <Field label="内容"><input value={title} placeholder="ROOKIES 昼ごはん" onInput={(e) => setTitle((e.target as HTMLInputElement).value)} /></Field>
-        <Field label="大会"><ContestSelect value={contestId} onChange={(id) => { setContestId(id); const c = contests.value.find((x) => x.ID === id); if (c && !title) setTitle(c.コンテスト名); }} /></Field>
+        <Field label="内容"><input value={title} placeholder={isCar ? '交通費' : 'ROOKIES 昼ごはん'} onInput={(e) => setTitle((e.target as HTMLInputElement).value)} /></Field>
+        <Field label="大会"><ContestSelect value={contestId} onChange={(id) => { setContestId(id); const c = contests.value.find((x) => x.ID === id); if (c && !title && !isCar) setTitle(c.コンテスト名); }} /></Field>
       </Glass>
       <div class="sec"><div class="sec-hd"><span class="kicker">明細 · {items.length}行</span><span class="kicker" style="text-transform:none;letter-spacing:0">金額 → 誰の分をタップ</span></div>
         <Glass className="fgrp">
           {lines.map((l, i) => (
             <div class="rline">
               <input class="amt" type="number" inputMode="numeric" placeholder="¥" value={l.amount} onInput={(e) => upd(i, { amount: (e.target as HTMLInputElement).value })} />
-              <input class="nm" placeholder="オムライス" value={l.label} onInput={(e) => upd(i, { label: (e.target as HTMLInputElement).value })} />
+              <input class="nm" placeholder={isCar ? 'ガソリン・高速・駐車場 込み' : 'オムライス'} value={l.label} onInput={(e) => upd(i, { label: (e.target as HTMLInputElement).value })} />
               <WhoPicker small fams={fams} value={l.targets} onChange={(v) => upd(i, { targets: v })} />
               {lines.length > 1 && <button class="del" onClick={() => setLines(lines.filter((_, j) => j !== i))} aria-label="行を削除"><Icon name="close" /></button>}
             </div>
@@ -72,6 +84,7 @@ export function ReceiptForm({ contestId: initContest }: { contestId?: string }) 
           <div class="rtotal"><span class="kicker">合計</span><span class="big">{yen(total)}</span></div>
           <div class="split">{fams.map((f) => <div><Avatar fam={f} small on /><div><span class="n">{yen(owed[f])}</span><small>{famJa(f)}{f === payer ? ' · 払' : ''}</small></div></div>)}</div>
         </Glass>
+        {isCar && <div class="hint"><Icon name="info" /><span>車を出した家庭が、ガソリン・高速・駐車場を込み込みで出した合計を1行で。2台なら、払った家庭ごとに1回ずつ記録します</span></div>}
       </div>
     </Sheet>
   );
@@ -187,6 +200,13 @@ export function CarForm({ contestId: initContest }: { contestId?: string }) {
   }
   return (
     <Sheet title="車代" onClose={closeModal} footer={<button class="save" disabled={!canSave || busy} onClick={save}><Icon name="check" />台帳に{rows.length || 1}行 {total ? yen(total) : ''}</button>}>
+      <Glass className="list" style="margin-bottom:10px">
+        <button class="row" onClick={() => replaceModal({ type: 'receipt', contestId: contestId || undefined, kind: 'car' })}>
+          <span class="tile t-teal"><Icon name="receipt_long" /></span>
+          <div class="t">合計だけ分かっているとき<small>ガソリン・高速・駐車場 込みの金額を1行で入れる</small></div>
+          <Icon name="chevron_right" style="color:var(--mu2)" />
+        </button>
+      </Glass>
       <Glass className="fgrp">
         <Field label="大会"><ContestSelect value={contestId} onChange={pickContest} /></Field>
         <Field label="日付"><input type="date" value={date} onInput={(e) => setDate(inp(e))} /></Field>
