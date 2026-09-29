@@ -104,6 +104,6 @@ GitHubに無い状態を先に本番へ出さない。`clasp push` だけでは�
 - `migrateV2Dry` / `migrateV2Run`：旧シートからv2への移行（実施済み。再実行しない）
 - `listOrphanContestEvents` / `deleteOrphanContestEvents`：アプリから消したのにカレンダーに残った大会の予定を一覧・削除
 - `restoreMissingContestsFromLegacy`：旧シートにだけある大会を**一覧するだけ**。実際に戻すのは `restoreMissingContestsApply`（意図的に消した大会も戻るので注意）
-- `setupTaskCalendarDry` / `setupTaskCalendarApply`：旧シートのエントリー開始日を戻し（空のときだけ・名前が同じ大会だけ）、これからの 受付開始・音源／観覧の期限 をカレンダー（バジル）に入れる。旧アプリの【エントリー開始】予定（同じ名前・同じ日）は引き継いで色を変える。入っているものは触らないので何度実行しても安全
+- `setupTaskCalendarDry` / `setupTaskCalendarApply`：旧シートのエントリー開始日を戻し（空のときだけ・名前が同じ大会だけ）、これからの 受付開始・音源／観覧の期限 をカレンダー（バジル）に入れる。旧アプリの【エントリー開始】予定（同じ名前・同じ日）は引き継いで色を変える。入っているものは触らないので何度実行しても安全。あわせて、締切の欄に受付開始日を入れていた3件（W.B.T 中部No.1決定戦 10/1・AJSK 中部予選3回戦 11/1・AJSK 中部最終予選 12/1。2026-09-29 藤本さん確認）を 締切→開始日 へ移す（`V2_ENTRY_DL_WAS_START`。この3件だけ）
 - `restoreInstagramUrlsDry` / `restoreInstagramUrlsApply`：旧シートの `Instagram_URL` を `大会v2` の `Instagram` 列へ。空の行だけ埋めるので何度実行しても安全
 

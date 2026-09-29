@@ -1003,6 +1003,14 @@ function setupTaskCalendarDry() { return v2SetupTaskCalendar_(false); }
 /** 上の一覧のとおり書き込み、カレンダー（バジル）に入れる。入っているものは触らないので何度実行しても安全 */
 function setupTaskCalendarApply() { return v2SetupTaskCalendar_(true); }
 
+// 締切の欄しか無かったころ、エントリーの受付開始日を締切に入れていたもの（2026-09-29 藤本さん確認）。
+// この3件だけ 期限日 → 開始日 へ移す。ほかのエントリーの締切は本当の締切なので触らない
+var V2_ENTRY_DL_WAS_START = {
+  't_mtwyv9m3_2rg4h4': 'W.B.T 2026 中部No.1決定戦',
+  't_mug5ng3y_1qfs1b': 'ALL JAPAN SUPER KIDS DANCE CONTEST 2026 中部予選3回戦',
+  't_mufijbly_2b39pe': 'ALL JAPAN SUPER KIDS DANCE CONTEST 2026 中部最終予選'
+};
+
 function v2SetupTaskCalendar_(apply) {
   var today = v2DateStr_(new Date());
   var contests = {};
@@ -1017,7 +1025,7 @@ function v2SetupTaskCalendar_(apply) {
   var taken = v2TakenCalIds_(all);
   var hasEntry = {};
   // 移行後に大会名を変えたもの（例：旧「3回戦」→今「4回戦」）は、どの大会の日付か決められないので戻さない
-  var out = { 受付開始を戻す: [], カレンダーに入れる: [], 名前が変わっているので戻さない: [], エントリーのやることが無い: [] };
+  var out = { 締切から開始日へ移す: [], 受付開始を戻す: [], カレンダーに入れる: [], 名前が変わっているので戻さない: [], エントリーのやることが無い: [] };
   all.forEach(function(t) {
     var c = contests[String(t['大会ID'])];
     if (!c) return;
@@ -1025,6 +1033,10 @@ function v2SetupTaskCalendar_(apply) {
     var changed = false;
     if (t['種別'] === 'entry') {
       hasEntry[String(c['ID'])] = true;
+      if (V2_ENTRY_DL_WAS_START[String(t['ID'])] && v2DateStr_(t['期限日']) && !v2DateStr_(t['開始日'])) {
+        out.締切から開始日へ移す.push(label + '：締切 ' + v2DateStr_(t['期限日']) + ' → 開始日');
+        t['開始日'] = v2DateStr_(t['期限日']); t['開始時間'] = ''; t['期限日'] = ''; changed = true;
+      }
       var lg = legacy[String(c['旧行番号'] || '')];
       if (lg && !v2DateStr_(t['開始日']) && lg.name !== v2Str_(c['コンテスト名'])) {
         out.名前が変わっているので戻さない.push(label + '（旧シートでは「' + lg.name + '」・受付開始 ' + lg.date + (lg.time ? ' ' + lg.time : '') + '）');
