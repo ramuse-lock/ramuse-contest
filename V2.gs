@@ -1025,7 +1025,13 @@ function v2SetupTaskCalendar_(apply) {
   var taken = v2TakenCalIds_(all);
   var hasEntry = {};
   // 移行後に大会名を変えたもの（例：旧「3回戦」→今「4回戦」）は、どの大会の日付か決められないので戻さない
-  var out = { 締切から開始日へ移す: [], 受付開始を戻す: [], カレンダーに入れる: [], 名前が変わっているので戻さない: [], エントリーのやることが無い: [] };
+  var out = { 締切から開始日へ移す: [], 受付開始を戻す: [], カレンダーに入れる: [], すでにカレンダーにある: [], 名前が変わっているので戻さない: [], エントリーのやることが無い: [] };
+  var cal = CalendarApp.getDefaultCalendar();
+  // 同じ日に同じ名前の予定がもうあれば、入れ直さない（色も中身も触らない。2026-09-29 藤本さんの指示）
+  var already = function(title, date) {
+    var dayStart = combineCalendarDateTime_(date, '00:00');
+    return cal.getEvents(dayStart, new Date(dayStart.getTime() + 86400000 - 1)).some(function(e) { return e.getTitle() === title; });
+  };
   all.forEach(function(t) {
     var c = contests[String(t['大会ID'])];
     if (!c) return;
@@ -1049,8 +1055,14 @@ function v2SetupTaskCalendar_(apply) {
     }
     var spec = V2_TASK_CAL[t['種別']];
     if (spec && !v2Str_(t['カレンダーID']) && v2TaskCalActive_(t, c) && v2DateStr_(t[spec.date]) >= today) {
-      out.カレンダーに入れる.push(spec.prefix + c['コンテスト名'] + ' ／ ' + v2DateStr_(t[spec.date]) + (spec.time && t[spec.time] ? ' ' + t[spec.time] : '（終日）'));
-      if (apply) { t['カレンダーID'] = v2SyncTaskCalendar_(t, c, taken); changed = true; }
+      var title = spec.prefix + c['コンテスト名'];
+      var line = title + ' ／ ' + v2DateStr_(t[spec.date]) + (spec.time && t[spec.time] ? ' ' + t[spec.time] : '（終日）');
+      if (already(title, v2DateStr_(t[spec.date]))) {
+        out.すでにカレンダーにある.push(line + '（触らない）');
+      } else {
+        out.カレンダーに入れる.push(line);
+        if (apply) { t['カレンダーID'] = v2SyncTaskCalendar_(t, c, taken); changed = true; }
+      }
     }
     if (apply && changed) v2UpsertRow_(V2_SHEETS.TASKS, V2_TASK_HEADERS_W, t);
   });
