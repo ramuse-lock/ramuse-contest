@@ -1,14 +1,14 @@
 // 大会の追加（2ステップ：基本と当日 → やることテンプレ）／編集（やることもここから触れる）
 import { useState } from 'preact/hooks';
 import { families, today, tasks, saveContest, saveTasks, deleteContest } from '../store';
-import { docsOf, uid, yen, tasksOf, taskIcon, taskAmount, fmtMD, fmtDow, taskAmountText } from '../model';
+import { docsOf, uid, yen, tasksOf, taskIcon, taskAmount, fmtMD, taskAmountText, taskDateShort } from '../model';
 import type { Contest, Task, TaskKind } from '../types';
 import { Sheet, Field, Seg, Toggle, Icon, Glass, Pill, SectionHead } from '../ui';
 import { closeModal, openModal } from '../modal';
 import { go } from '../router';
 
 type Tpl = {
-  entry: boolean; entryDl: string;
+  entry: boolean; entryStart: string; entryStartTime: string; entryDl: string;
   music: '事前提出' | '当日CD' | '不要'; musicDl: string; backup: boolean;
   fee: string; feeMode: '事前' | '当日'; feeDl: string;
   view: string; viewMode: '事前' | '当日' | '不要'; viewDl: string;
@@ -33,7 +33,7 @@ export function ContestForm({ contest }: { contest?: Contest }) {
   const [c, setC] = useState<Contest>(contest ? { ...contest } : blank());
   const [docs, setDocs] = useState(contest ? docsOf(contest) : []);
   const [step, setStep] = useState<1 | 2>(1);
-  const [tpl, setTpl] = useState<Tpl>({ entry: true, entryDl: '', music: '当日CD', musicDl: '', backup: false, fee: '', feeMode: '当日', feeDl: '', view: '', viewMode: '不要', viewDl: '' });
+  const [tpl, setTpl] = useState<Tpl>({ entry: true, entryStart: '', entryStartTime: '', entryDl: '', music: '当日CD', musicDl: '', backup: false, fee: '', feeMode: '当日', feeDl: '', view: '', viewMode: '不要', viewDl: '' });
   const [busy, setBusy] = useState(false);
   const set = (k: keyof Contest, v: unknown) => setC({ ...c, [k]: v } as Contest);
   const isPast = !!c.開催日 && c.開催日 < today.value;
@@ -147,16 +147,25 @@ export function ContestForm({ contest }: { contest?: Contest }) {
           <Glass className="fgrp">
             <div class="tpl">
               <span class="tile t-blue"><Icon name="upload" /></span>
-              <div class="tt">エントリー<small>期限を入れると締切に出ます</small></div>
-              <div class="tpl-ctl"><input type="date" value={tpl.entryDl} onInput={(e) => setTpl({ ...tpl, entryDl: (e.target as HTMLInputElement).value })} /><Toggle on={tpl.entry} onChange={(v) => setTpl({ ...tpl, entry: v })} /></div>
+              <div class="tt">エントリー<small>開始日はカレンダーにも入ります</small></div>
+              <div class="tpl-ctl"><Toggle on={tpl.entry} onChange={(v) => setTpl({ ...tpl, entry: v })} /></div>
             </div>
+            {tpl.entry && (
+              <>
+                <div class="tpl sub"><div class="tt light">開始日<small>時刻もあれば</small></div><div class="tpl-ctl when">
+                  <input type="date" value={tpl.entryStart} onInput={(e) => setTpl({ ...tpl, entryStart: (e.target as HTMLInputElement).value })} />
+                  {tpl.entryStart && <input type="time" value={tpl.entryStartTime} onInput={(e) => setTpl({ ...tpl, entryStartTime: (e.target as HTMLInputElement).value })} />}
+                </div></div>
+                <div class="tpl sub"><div class="tt light">締切<small>あれば</small></div><div class="tpl-ctl"><input type="date" value={tpl.entryDl} onInput={(e) => setTpl({ ...tpl, entryDl: (e.target as HTMLInputElement).value })} /></div></div>
+              </>
+            )}
             <div class="tpl">
               <span class="tile t-blue"><Icon name="music_note" /></span>
               <div class="tt">音源</div>
               <div class="tpl-ctl"><Seg small options={[{ v: '事前提出', label: '事前提出' }, { v: '当日CD', label: '当日CD' }, { v: '不要', label: '不要' }]} value={tpl.music} onChange={(v) => setTpl({ ...tpl, music: v })} /></div>
             </div>
             {tpl.music === '事前提出' && (
-              <div class="tpl sub"><div class="tt light">提出期限</div><div class="tpl-ctl"><input type="date" value={tpl.musicDl} onInput={(e) => setTpl({ ...tpl, musicDl: (e.target as HTMLInputElement).value })} /></div></div>
+              <div class="tpl sub"><div class="tt light">提出期限<small>カレンダーにも入ります</small></div><div class="tpl-ctl"><input type="date" value={tpl.musicDl} onInput={(e) => setTpl({ ...tpl, musicDl: (e.target as HTMLInputElement).value })} /></div></div>
             )}
             {tpl.music !== '不要' && (
               <div class="tpl sub"><div class="tt light">{tpl.music === '事前提出' ? '予備CDも当日持参' : '予備データも持参'}<small>「当日」のやることになる</small></div><div class="tpl-ctl"><Toggle on={tpl.backup} onChange={(v) => setTpl({ ...tpl, backup: v })} /></div></div>
@@ -175,7 +184,7 @@ export function ContestForm({ contest }: { contest?: Contest }) {
               <div class="tpl-ctl"><input class="amt-in" type="number" inputMode="numeric" placeholder="¥" value={tpl.view} onInput={(e) => setTpl({ ...tpl, view: (e.target as HTMLInputElement).value, viewMode: tpl.viewMode === '不要' ? '当日' : tpl.viewMode })} /><Seg small options={[{ v: '事前', label: '事前' }, { v: '当日', label: '当日' }, { v: '不要', label: '不要' }]} value={tpl.viewMode} onChange={(v) => setTpl({ ...tpl, viewMode: v })} /></div>
             </div>
             {tpl.view && tpl.viewMode === '事前' && (
-              <div class="tpl sub"><div class="tt light">振込期限</div><div class="tpl-ctl"><input type="date" value={tpl.viewDl} onInput={(e) => setTpl({ ...tpl, viewDl: (e.target as HTMLInputElement).value })} /></div></div>
+              <div class="tpl sub"><div class="tt light">申込・振込期限<small>カレンダーにも入ります</small></div><div class="tpl-ctl"><input type="date" value={tpl.viewDl} onInput={(e) => setTpl({ ...tpl, viewDl: (e.target as HTMLInputElement).value })} /></div></div>
             )}
           </Glass>
           <div class="sec"><div class="kicker" style="padding:0 2px 6px">できるやること · {previewTasks.length}</div>
@@ -183,7 +192,7 @@ export function ContestForm({ contest }: { contest?: Contest }) {
               {previewTasks.map((t) => (
                 <div class="row"><span class={`tile ${taskIcon(t).tile}`}><Icon name={taskIcon(t).icon} /></span>
                   <div class="t">{t.名前}{t.単価 ? <small>{yen(t.単価)} × {t.数量}</small> : null}</div>
-                  <Pill tone={t.当日 ? 'p-violet' : 'p-mu'}>{t.当日 ? '当日' : (t.期限日 ? `${fmtMD(t.期限日)} ${fmtDow(t.期限日)}` : '期限なし')}</Pill></div>
+                  <Pill tone={t.当日 ? 'p-violet' : 'p-mu'}>{t.当日 ? '当日' : (taskDateShort(t) || '期限なし')}</Pill></div>
               ))}
               {previewTasks.length === 0 && <div class="empty">やることなし。あとから編集画面で追加できます</div>}
             </Glass>
@@ -201,7 +210,7 @@ function TaskLine({ t, contestId }: { t: Task; contestId: string }) {
     <button class="row" onClick={() => openModal({ type: 'task', contestId, task: t })}>
       <span class={`tile ${tile}`}><Icon name={icon} /></span>
       <div class={`t${t.済 ? ' done' : ''}`}>{t.名前}{amt > 0 && <small>{taskAmountText(t)}</small>}</div>
-      {t.済 ? <Pill tone="p-ok">済</Pill> : t.当日 ? <Pill tone="p-violet">当日</Pill> : <Pill tone="p-mu">{t.期限日 ? `${fmtMD(t.期限日)}` : '期限なし'}</Pill>}
+      {t.済 ? <Pill tone="p-ok">済</Pill> : t.当日 ? <Pill tone="p-violet">当日</Pill> : <Pill tone="p-mu">{taskDateShort(t) || '期限なし'}</Pill>}
       <Icon name="chevron_right" style="color:var(--mu2)" />
     </button>
   );
@@ -210,9 +219,9 @@ function TaskLine({ t, contestId }: { t: Task; contestId: string }) {
 export function buildTasks(contestId: string, t: Tpl, famCount: number): Task[] {
   const out: Task[] = [];
   let order = 0;
-  const push = (kind: TaskKind, name: string, opts: { today?: boolean; dl?: string; unit?: string; qty?: number }) =>
-    out.push({ ID: uid('t'), 大会ID: contestId, 種別: kind, 名前: name, 期限日: opts.today ? '' : (opts.dl || ''), 当日: !!opts.today, 済: false, 済日: '', 単価: opts.unit || '', 数量: opts.qty || '', 台帳ID: '', メモ: '', 表示順: ++order });
-  if (t.entry) push('entry', 'エントリー', { dl: t.entryDl });
+  const push = (kind: TaskKind, name: string, opts: { today?: boolean; dl?: string; unit?: string; qty?: number; start?: string; startTime?: string }) =>
+    out.push({ ID: uid('t'), 大会ID: contestId, 種別: kind, 名前: name, 期限日: opts.today ? '' : (opts.dl || ''), 当日: !!opts.today, 済: false, 済日: '', 単価: opts.unit || '', 数量: opts.qty || '', 台帳ID: '', メモ: '', 表示順: ++order, 開始日: opts.start || '', 開始時間: opts.start ? (opts.startTime || '') : '' });
+  if (t.entry) push('entry', 'エントリー', { dl: t.entryDl, start: t.entryStart, startTime: t.entryStartTime });
   if (t.music === '事前提出') { push('music', '音源 事前提出', { dl: t.musicDl }); if (t.backup) push('backup_cd', '予備CD 持参', { today: true }); }
   if (t.music === '当日CD') { push('backup_cd', '音源CD 持参', { today: true }); if (t.backup) push('backup_cd', '予備データ 持参', { today: true }); }
   if (t.fee) push('entry_fee', t.feeMode === '当日' ? 'エントリー費 持参' : 'エントリー費 振込', { today: t.feeMode === '当日', dl: t.feeDl, unit: t.fee, qty: famCount });

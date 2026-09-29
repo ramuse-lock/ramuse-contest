@@ -23,7 +23,7 @@ var V2_HEADERS = {
   CONTESTS: ['ID','コンテスト名','開催日','会場','部門','ラウンド','シリーズ名','決勝ステータス',
              '集合時間','開始時間','終了時間','出演順','総組数','URL','Instagram','資料JSON','結果','結果詳細',
              'キャンセル','メモ','更新日時','旧行番号'],
-  TASKS:    ['ID','大会ID','種別','名前','期限日','当日','済','済日','単価','数量','内訳JSON','台帳ID','メモ','表示順'],
+  TASKS:    ['ID','大会ID','種別','名前','期限日','当日','済','済日','単価','数量','内訳JSON','台帳ID','メモ','表示順','開始日','開始時間'],
   LEDGER:   ['ID','日付','内容','種別','合計','支払者','大会ID','明細JSON','負担JSON','車JSON','メモ','作成日時'],
   DEST:     ['ID','名前','片道距離','行き高速代','帰り高速代','メモ'],
   CARS:     ['家族','車名','燃費'],
@@ -585,7 +585,7 @@ function v2UpsertRow_(name, headers, obj) {
   var lastRow = sh.getLastRow();
   var ids = lastRow >= 2 ? sh.getRange(2, 1, lastRow - 1, 1).getValues().map(function(r) { return String(r[0]).trim(); }) : [];
   var idx = ids.indexOf(id);
-  var textCols = ['ID','大会ID','台帳ID','開催日','期限日','済日','日付','更新日時','作成日時','集合時間','開始時間','終了時間','資料JSON','明細JSON','負担JSON','車JSON','値','キー','カレンダーID'];
+  var textCols = ['ID','大会ID','台帳ID','開催日','期限日','開始日','済日','日付','更新日時','作成日時','集合時間','開始時間','終了時間','資料JSON','明細JSON','負担JSON','車JSON','値','キー','カレンダーID'];
   var r = idx >= 0 ? idx + 2 : lastRow + 1;
   hs.forEach(function(h, i) { if (textCols.indexOf(h) >= 0) sh.getRange(r, i + 1).setNumberFormat('@'); });
   sh.getRange(r, 1, 1, hs.length).setValues([row]);
@@ -609,6 +609,7 @@ function v2FindRow_(name, id) {
 }
 
 var V2_CONTEST_HEADERS_W = V2_HEADERS.CONTESTS.concat(['カレンダーID']);
+var V2_TASK_HEADERS_W = V2_HEADERS.TASKS.concat(['カレンダーID']);
 
 // ---- 大会 ----
 function saveContestV2(pin, c) {
@@ -625,6 +626,9 @@ function saveContestV2(pin, c) {
   if (prev && prev['旧行番号'] && !c['旧行番号']) c['旧行番号'] = prev['旧行番号'];
   try { c['カレンダーID'] = v2SyncCalendar_(c, prev); } catch (e) { Logger.log('calendar sync failed: ' + e); }
   v2UpsertRow_(V2_SHEETS.CONTESTS, V2_CONTEST_HEADERS_W, c);
+  var touched = !prev || v2Str_(prev['コンテスト名']) !== v2Str_(c['コンテスト名']) || v2DateStr_(prev['開催日']) !== c['開催日'] ||
+    v2Str_(prev['URL']) !== v2Str_(c['URL']) || v2Bool_(prev['キャンセル']) !== c['キャンセル'];
+  if (touched) { try { v2ResyncTasksCalendar_(c); } catch (e) { Logger.log('task calendar resync failed: ' + e); } }
   return c;
 }
 function deleteContestV2(pin, id) {
@@ -633,7 +637,7 @@ function deleteContestV2(pin, id) {
   if (prev) { try { v2DeleteCalendarFor_(prev); } catch (e) { Logger.log('calendar delete failed: ' + e); } }
   // ぶら下がる「やること」も消す（台帳は履歴なので残す）
   v2ReadSheet_(V2_SHEETS.TASKS).filter(function(t) { return String(t['大会ID']) === String(id); })
-    .forEach(function(t) { v2DeleteRow_(V2_SHEETS.TASKS, t['ID']); });
+    .forEach(function(t) { v2DeleteTaskCalendar_(t); v2DeleteRow_(V2_SHEETS.TASKS, t['ID']); });
   return v2DeleteRow_(V2_SHEETS.CONTESTS, id);
 }
 // Googleカレンダーへ同期（旧アプリと同じ命名・色：決勝は【決勝進出】／【決勝・進出未定】、色5=黄・8=灰）
@@ -753,17 +757,118 @@ function deleteOrphanContestEvents() {
 function saveTasksV2(pin, tasks) {
   v2RequirePin_(pin);
   if (!Array.isArray(tasks)) tasks = [tasks];
+  // カレンダーの同期に大会名と前回のカレンダーIDが要るので、まとめて1回だけ読む
+  var contests = {};
+  v2ReadSheet_(V2_SHEETS.CONTESTS).forEach(function(c) { contests[String(c['ID'])] = c; });
+  var all = v2ReadSheet_(V2_SHEETS.TASKS);
+  var prevs = {};
+  all.forEach(function(t) { prevs[String(t['ID'])] = t; });
+  var taken = v2TakenCalIds_(all);
   return tasks.map(function(t) {
     t['ID'] = t['ID'] || v2Uid_('t');
     t['当日'] = v2Bool_(t['当日']);
     t['済'] = v2Bool_(t['済']);
     t['期限日'] = t['当日'] ? '' : v2DateStr_(t['期限日']);
+    t['開始日'] = v2DateStr_(t['開始日']);
+    t['開始時間'] = t['開始日'] ? v2TimeStr_(t['開始時間']) : '';
     if (t['済'] && !t['済日']) t['済日'] = v2DateStr_(new Date());
     if (!t['済']) t['済日'] = '';
-    return v2UpsertRow_(V2_SHEETS.TASKS, V2_HEADERS.TASKS, t);
+    var prev = prevs[String(t['ID'])];
+    if (prev && v2Str_(prev['カレンダーID']) && !v2Str_(t['カレンダーID'])) t['カレンダーID'] = prev['カレンダーID'];
+    try { t['カレンダーID'] = v2SyncTaskCalendar_(t, contests[String(t['大会ID'])] || null, taken); }
+    catch (e) { Logger.log('task calendar sync failed: ' + e); }
+    return v2UpsertRow_(V2_SHEETS.TASKS, V2_TASK_HEADERS_W, t);
   });
 }
-function deleteTaskV2(pin, id) { v2RequirePin_(pin); return v2DeleteRow_(V2_SHEETS.TASKS, id); }
+function deleteTaskV2(pin, id) {
+  v2RequirePin_(pin);
+  var prev = v2FindRow_(V2_SHEETS.TASKS, id);
+  if (prev) v2DeleteTaskCalendar_(prev);
+  return v2DeleteRow_(V2_SHEETS.TASKS, id);
+}
+
+// ---- やることの日付をGoogleカレンダーへ（色10＝バジル） ----
+//   エントリー＝受付開始（開始日・開始時間）→【エントリー開始】大会名。時間があれば30分の予定、無ければ終日
+//   音源＝提出期限（期限日）→【音源提出期限】大会名（終日）
+//   観覧費＝申込・振込の期限（期限日）→【観覧申込期限】大会名（終日）
+// 済にした・日付を消した・当日にした・大会をキャンセルした → 予定を消す（済を外せば戻る）。
+// 1つのやることに予定は1つ。やることの「カレンダーID」で持つ
+var V2_TASK_CAL = {
+  entry:    { prefix: '【エントリー開始】', date: '開始日', time: '開始時間', what: 'エントリーの受付開始' },
+  music:    { prefix: '【音源提出期限】', date: '期限日', what: '音源の提出期限' },
+  view_fee: { prefix: '【観覧申込期限】', date: '期限日', what: '観覧の申込・振込期限' }
+};
+var V2_TASK_CAL_COLOR = '10'; // バジル
+
+function v2TaskCalActive_(t, c) {
+  var spec = V2_TASK_CAL[t['種別']];
+  if (!spec || !c || v2Bool_(c['キャンセル']) || !v2Str_(c['コンテスト名'])) return false;
+  if (v2Bool_(t['済'])) return false;
+  if (spec.date === '期限日' && v2Bool_(t['当日'])) return false;
+  return !!v2DateStr_(t[spec.date]);
+}
+// 使われているカレンダーID → やることID（同じ名前の予定を別のやることが引き継がないように）
+function v2TakenCalIds_(tasks) {
+  var m = {};
+  tasks.forEach(function(t) { var id = v2Str_(t['カレンダーID']); if (id) m[id] = String(t['ID']); });
+  return m;
+}
+function v2SyncTaskCalendar_(t, c, taken) {
+  var cal = CalendarApp.getDefaultCalendar();
+  var spec = V2_TASK_CAL[t['種別']];
+  var id = v2Str_(t['カレンダーID']);
+  var ev = null;
+  if (id) { try { ev = cal.getEventById(id); } catch (e) { ev = null; } }
+  if (!v2TaskCalActive_(t, c)) {
+    if (ev) { try { ev.deleteEvent(); } catch (e) { Logger.log('task event delete failed: ' + e); } }
+    if (id && taken) delete taken[id];
+    return '';
+  }
+  var date = v2DateStr_(t[spec.date]);
+  var time = spec.time ? v2TimeStr_(t[spec.time]) : '';
+  var title = spec.prefix + c['コンテスト名'];
+  var md = function(d) { var p = String(d).split('-'); return p.length === 3 ? (+p[1]) + '/' + (+p[2]) : d; };
+  var lines = [spec.what + (t['名前'] ? '（' + t['名前'] + '）' : '')];
+  if (c['開催日']) lines.push('大会: ' + md(c['開催日']) + ' ' + c['コンテスト名']);
+  if (c['URL']) lines.push('大会サイト: ' + c['URL']);
+  var desc = lines.join('\n');
+  if (!ev) {
+    // 旧アプリが作った同じ名前の予定（同じ日）があれば引き継ぐ。ほかのやることが使っている予定は取らない
+    var dayStart = combineCalendarDateTime_(date, '00:00');
+    var cands = cal.getEvents(dayStart, new Date(dayStart.getTime() + 86400000 - 1)).filter(function(e) {
+      var owner = taken ? taken[e.getId()] : '';
+      return e.getTitle() === title && (!owner || owner === String(t['ID']));
+    });
+    if (cands.length) ev = cands[0];
+  }
+  if (ev) {
+    setCalendarEventSchedule_(ev, date, time, '', 30);
+    ev.setTitle(title);
+    ev.setDescription(desc);
+  } else {
+    ev = createCalendarEvent_(cal, title, date, time, '', 30, { description: desc });
+  }
+  try { ev.setColor(V2_TASK_CAL_COLOR); } catch (e) {}
+  if (taken) taken[ev.getId()] = String(t['ID']);
+  return ev.getId();
+}
+function v2DeleteTaskCalendar_(t) {
+  var id = v2Str_(t['カレンダーID']);
+  if (!id) return;
+  try { var ev = CalendarApp.getDefaultCalendar().getEventById(id); if (ev) ev.deleteEvent(); } catch (e) { Logger.log('task event delete failed: ' + e); }
+}
+// 大会の名前・日付・サイト・キャンセルが変わったとき、その大会のやることの予定を直す
+function v2ResyncTasksCalendar_(c) {
+  var all = v2ReadSheet_(V2_SHEETS.TASKS);
+  var taken = v2TakenCalIds_(all);
+  all.forEach(function(t) {
+    if (String(t['大会ID']) !== String(c['ID']) || !V2_TASK_CAL[t['種別']]) return;
+    var before = v2Str_(t['カレンダーID']);
+    if (!before && !v2TaskCalActive_(t, c)) return;
+    var after = v2SyncTaskCalendar_(t, c, taken);
+    if (after !== before) { t['カレンダーID'] = after; v2UpsertRow_(V2_SHEETS.TASKS, V2_TASK_HEADERS_W, t); }
+  });
+}
 
 // ---- 台帳 ----
 function saveLedgerV2(pin, l) {
@@ -893,6 +998,59 @@ function restoreMissingContestsApply() {
 //   新シート 大会v2 に Instagram 列が無かったため、移行時に落ちていた。
 //   大会名（＋開催日）で突き合わせ、v2側が空のときだけ埋める。何度実行しても安全。
 // ============================================================
+/** エントリーの受付開始日を旧シートから戻し、これからの日付（受付開始・音源・観覧の期限）をカレンダーに入れる。一覧するだけ */
+function setupTaskCalendarDry() { return v2SetupTaskCalendar_(false); }
+/** 上の一覧のとおり書き込み、カレンダー（バジル）に入れる。入っているものは触らないので何度実行しても安全 */
+function setupTaskCalendarApply() { return v2SetupTaskCalendar_(true); }
+
+function v2SetupTaskCalendar_(apply) {
+  var today = v2DateStr_(new Date());
+  var contests = {};
+  v2ReadSheet_(V2_SHEETS.CONTESTS).forEach(function(c) { contests[String(c['ID'])] = c; });
+  // 旧シートの行番号 → エントリー開始日・時間（移行で落ちていた項目）
+  var legacy = {};
+  getContests().forEach(function(c) {
+    var d = v2DateStr_(c['エントリー_開始日']);
+    if (d && c['_rowIndex']) legacy[String(c['_rowIndex'])] = { date: d, time: v2TimeStr_(c['エントリー_開始時間']), name: v2Str_(c['コンテスト名']) };
+  });
+  var all = v2ReadSheet_(V2_SHEETS.TASKS);
+  var taken = v2TakenCalIds_(all);
+  var hasEntry = {};
+  // 移行後に大会名を変えたもの（例：旧「3回戦」→今「4回戦」）は、どの大会の日付か決められないので戻さない
+  var out = { 受付開始を戻す: [], カレンダーに入れる: [], 名前が変わっているので戻さない: [], エントリーのやることが無い: [] };
+  all.forEach(function(t) {
+    var c = contests[String(t['大会ID'])];
+    if (!c) return;
+    var label = v2DateStr_(c['開催日']) + ' ' + c['コンテスト名'];
+    var changed = false;
+    if (t['種別'] === 'entry') {
+      hasEntry[String(c['ID'])] = true;
+      var lg = legacy[String(c['旧行番号'] || '')];
+      if (lg && !v2DateStr_(t['開始日']) && lg.name !== v2Str_(c['コンテスト名'])) {
+        out.名前が変わっているので戻さない.push(label + '（旧シートでは「' + lg.name + '」・受付開始 ' + lg.date + (lg.time ? ' ' + lg.time : '') + '）');
+        lg = null;
+      }
+      if (lg && !v2DateStr_(t['開始日'])) {
+        out.受付開始を戻す.push(label + ' ← ' + lg.date + (lg.time ? ' ' + lg.time : ''));
+        t['開始日'] = lg.date; t['開始時間'] = lg.time; changed = true; // 下の判定のため、一覧のときもメモリ上は入れる
+      }
+    }
+    var spec = V2_TASK_CAL[t['種別']];
+    if (spec && !v2Str_(t['カレンダーID']) && v2TaskCalActive_(t, c) && v2DateStr_(t[spec.date]) >= today) {
+      out.カレンダーに入れる.push(spec.prefix + c['コンテスト名'] + ' ／ ' + v2DateStr_(t[spec.date]) + (spec.time && t[spec.time] ? ' ' + t[spec.time] : '（終日）'));
+      if (apply) { t['カレンダーID'] = v2SyncTaskCalendar_(t, c, taken); changed = true; }
+    }
+    if (apply && changed) v2UpsertRow_(V2_SHEETS.TASKS, V2_TASK_HEADERS_W, t);
+  });
+  Object.keys(contests).forEach(function(id) {
+    var c = contests[id];
+    var lg = legacy[String(c['旧行番号'] || '')];
+    if (lg && !hasEntry[id] && v2DateStr_(c['開催日']) >= today) out.エントリーのやることが無い.push(v2DateStr_(c['開催日']) + ' ' + c['コンテスト名'] + '（旧シートの受付開始 ' + lg.date + '）');
+  });
+  Logger.log((apply ? '書き込みました' : '一覧だけ（まだ書き込んでいません）') + '\n' + JSON.stringify(out, null, 2));
+  return out;
+}
+
 function restoreInstagramUrlsDry() { return v2RestoreInstagram_(false); }
 function restoreInstagramUrlsApply() { return v2RestoreInstagram_(true); }
 

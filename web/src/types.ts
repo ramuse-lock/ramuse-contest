@@ -46,6 +46,11 @@ export interface Task {
   台帳ID?: string;
   メモ: string;
   表示順: number | string;
+  /** エントリーの受付開始（YYYY-MM-DD と HH:mm）。Googleカレンダーに【エントリー開始】で入る */
+  開始日?: string;
+  開始時間?: string;
+  /** このやることの日付を入れたGoogleカレンダーの予定（エントリー開始・音源／観覧の期限）。サーバーが入れる */
+  カレンダーID?: string;
 }
 
 /** 券種（大人 3,000／子供 1,500）と、家族ごとの枚数 qty[家族][券種] */

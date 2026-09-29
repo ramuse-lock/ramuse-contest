@@ -57,6 +57,16 @@ export function contestStatus(c: Contest, tasks: Task[], today = todayStr()): St
   if (open.some((t) => !t.当日)) return '準備中';
   return open.length ? '当日待ち' : '当日待ち';
 }
+// 一覧のピル用。エントリーは「開始〜締切」、ほかは期限。無ければ空
+export function taskDateShort(t: Task): string {
+  if (t.開始日 && t.期限日) return `${fmtMD(t.開始日)}〜${fmtMD(t.期限日)}`;
+  if (t.開始日) return `${fmtMD(t.開始日)}〜`;
+  return t.期限日 ? fmtMD(t.期限日) : '';
+}
+// Googleカレンダーにも入る日付か（色はバジル）。エントリー＝開始日、音源・観覧費＝期限
+export function goesToCalendar(t: Task): boolean {
+  return t.種別 === 'entry' || ((t.種別 === 'music' || t.種別 === 'view_fee') && !t.当日);
+}
 export function progress(tasks: Task[]): { done: number; total: number } {
   return { done: tasks.filter((t) => t.済).length, total: tasks.length };
 }

@@ -131,6 +131,9 @@ function TaskRow({ t }: { t: Task }) {
   const { icon, tile } = taskIcon(t);
   const amt = taskAmount(t);
   const dl = t.期限日 && !t.済 ? daysUntil(t.期限日, today.value) : NaN;
+  // エントリーは受付が始まる前なら「開始まで◯日」を先に出す（先着順が多いので、締切より大事）
+  const st = t.開始日 && !t.済 ? daysUntil(t.開始日, today.value) : NaN;
+  const start = t.開始日 ? `${fmtMD(t.開始日)} ${fmtDow(t.開始日)}${t.開始時間 ? ` ${t.開始時間}` : ''} 開始` : '';
   const open = () => { if (!IS_KID) openModal({ type: 'task', contestId: t.大会ID, task: t }); };
   // チェック：お金のやることを初めて済にするときだけ「台帳に載せる？」を聞く。それ以外は即トグル
   const toggle = (e: Event) => {
@@ -143,13 +146,15 @@ function TaskRow({ t }: { t: Task }) {
       <span class={`tile ${tile}`}><Icon name={icon} /></span>
       <div class={`t${t.済 ? ' done' : ''}`}>
         {t.名前}
-        {!t.済 && (amt > 0 || t.期限日) && (
-          <small>{amt > 0 && taskAmountText(t)}{amt > 0 && t.期限日 && ' · '}{t.期限日 && `${fmtMD(t.期限日)} ${fmtDow(t.期限日)}まで`}</small>
+        {!t.済 && (amt > 0 || t.期限日 || start) && (
+          // 金額・開始日・締切は省略すると何の日付か分からなくなるので折り返す
+          <small class="wrap">{[amt > 0 ? taskAmountText(t) : '', start, t.期限日 ? `${fmtMD(t.期限日)} ${fmtDow(t.期限日)}まで` : ''].filter(Boolean).join(' · ')}</small>
         )}
         {t.メモ && <small>{t.メモ}</small>}
       </div>
       {t.済 ? <Pill tone="p-ok">済</Pill>
         : t.当日 ? <Pill tone="p-violet">当日</Pill>
+        : st >= 0 ? <Pill tone={st <= 7 ? 'p-wn' : 'p-mu'} icon={st <= 7 ? 'alarm' : undefined}>{st === 0 ? '今日から' : `開始まで${st}日`}</Pill>
         : !isNaN(dl) ? <Pill tone={dl <= 7 ? 'p-wn' : 'p-mu'} icon={dl <= 7 ? 'alarm' : undefined}>{dl < 0 ? '期限切れ' : dl === 0 ? '今日' : `あと${dl}日`}</Pill>
         : null}
       {!IS_KID && <Check on={t.済} onClick={toggle} />}

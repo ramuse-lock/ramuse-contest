@@ -1,7 +1,7 @@
 // やることの追加・編集。お金のやることを「済」にすると台帳へ1行足せる
 import { useState } from 'preact/hooks';
 import { families, today, contests, ledger, saveTasks, deleteTask, saveLedger } from '../store';
-import { famJa, uid, yen, num, MONEY_KINDS, breakdownOf, familyAmount, taskAmount, itemsOf } from '../model';
+import { famJa, uid, yen, num, MONEY_KINDS, breakdownOf, familyAmount, taskAmount, itemsOf, goesToCalendar } from '../model';
 import type { Task, TaskKind, Ledger, LedgerItem, TaskBreakdown } from '../types';
 import { Sheet, Field, Seg, Toggle, Icon, Glass, WhoPicker, OnePicker } from '../ui';
 import { closeModal, lastPayer, rememberPayer } from '../modal';
@@ -125,7 +125,16 @@ export function TaskSheet({ contestId, task, markDone, preset }: { contestId: st
           </div></div>
         )}
         <Field label="名前"><input value={t.名前} placeholder={t.種別 === 'backup_cd' ? '音源CD 持参' : '例：観覧費 事前振込'} onInput={(e) => set('名前', (e.target as HTMLInputElement).value)} /></Field>
-        <Field label="いつまで">
+        {t.種別 === 'entry' && (
+          <Field label="開始日">
+            {/* 受付開始の日と時刻。先着順が多いので時刻も入れられる（無ければ終日の予定） */}
+            <div class="when">
+              <input type="date" value={t.開始日 || ''} onInput={(e) => set('開始日', (e.target as HTMLInputElement).value)} />
+              {t.開始日 && <input type="time" value={t.開始時間 || ''} onInput={(e) => set('開始時間', (e.target as HTMLInputElement).value)} />}
+            </div>
+          </Field>
+        )}
+        <Field label={t.種別 === 'entry' ? '締切' : 'いつまで'}>
           {/* 日付の入力欄は「日付」を選んだときだけ出す。普段は当日なので、欄があるだけ狭くなる */}
           <div class="due">
             <Seg small options={[{ v: 'today', label: '当日' }, { v: 'date', label: '日付' }]} value={t.当日 ? 'today' : 'date'} onChange={(v) => set('当日', v === 'today')} />
@@ -186,6 +195,9 @@ export function TaskSheet({ contestId, task, markDone, preset }: { contestId: st
         )}
         <Field label="メモ"><input value={t.メモ} onInput={(e) => set('メモ', (e.target as HTMLInputElement).value)} placeholder="振込先など" /></Field>
       </Glass>
+      {goesToCalendar(t) && (
+        <div class="hint"><Icon name="event" /><span>{t.種別 === 'entry' ? '開始日' : '期限'}はGoogleカレンダーにも入ります（緑＝バジル）。済にすると消えます</span></div>
+      )}
       <Glass className="fgrp" style="margin-top:10px">
         <div class="fld"><span class="lb" style="width:auto;flex:1;color:var(--ink);font-weight:600">済にする</span><Toggle on={t.済} onChange={(v) => set('済', v)} /></div>
       </Glass>

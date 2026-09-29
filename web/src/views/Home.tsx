@@ -89,8 +89,11 @@ function Week() {
     // 大会はGoogleカレンダーにも同期されているので、カレンダー側の大会イベントは落とす
     const evsNoContest = evs.filter((e) => !(String(e.isContest) === 'true') && !contests.value.some((c) => c.開催日 === d && c.コンテスト名 && e.title.includes(c.コンテスト名)));
     const dl: Task[] = IS_KID ? [] : tasks.value.filter((t) => !t.済 && !t.当日 && t.期限日 === d);
-    return { d, evs: evsNoContest, cs, dl };
-  }).filter((r) => r.evs.length || r.cs.length || r.dl.length);
+    const st: Task[] = IS_KID ? [] : tasks.value.filter((t) => t.種別 === 'entry' && !t.済 && t.開始日 === d);
+    // やることの日付はGoogleカレンダーにも入っているので、カレンダー側の同じ予定は落とす（アプリの行で出す）
+    const evsOwn = evsNoContest.filter((e) => !tasks.value.some((t) => t.カレンダーID && t.カレンダーID === e.id));
+    return { d, evs: evsOwn, cs, dl, st };
+  }).filter((r) => r.evs.length || r.cs.length || r.dl.length || r.st.length);
 
   return (
     <div class="sec">
@@ -107,6 +110,15 @@ function Week() {
                   <span class="tt"><b>{c.コンテスト名}</b>{c.会場 && <small>{c.会場}</small>}</span>
                 </button>
               ))}
+              {r.st.map((t) => {
+                const c = contests.value.find((x) => x.ID === t.大会ID);
+                return (
+                  <button class="evi" onClick={() => c && go(`/contest/${encodeURIComponent(c.ID)}`)}>
+                    <i class="c-green" /><span class="tm">{t.開始時間 || '開始'}</span>
+                    <span class="tt">エントリー開始{c && <small>{c.コンテスト名}</small>}</span>
+                  </button>
+                );
+              })}
               {r.dl.map((t) => {
                 const c = contests.value.find((x) => x.ID === t.大会ID);
                 return (
