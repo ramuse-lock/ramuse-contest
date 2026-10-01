@@ -174,10 +174,12 @@ export const famJa = (f: string) => FAM_JA[f] || f;
 export const famClass = (f: string) => (f === 'Airi' ? 'a' : f === 'Miha' ? 'm' : 'r');
 
 // ---- カレンダー ----
-// Googleカレンダーの colorId → 系統色。大会=金／自主練=橙／レッスン・イベント=青緑／お知らせ・締切=緑／打ち上げ等=紫／無色=灰
-export type EvColor = 'acc' | 'orange' | 'teal' | 'green' | 'violet' | 'mu' | 'blue';
+// Googleカレンダーの colorId → 系統色。大会=金／自主練=橙（3家庭そろって出る）・茶（追加で入れた分）／レッスン・イベント=青緑／お知らせ・締切=緑／打ち上げ等=紫／無色=灰
+// 追加の自主練は色を付けずに入れてある（Googleカレンダーではカレンダーの色＝茶で見える）。色なしで題名に「自主練」があるものだけ茶にし、学校・誕生日などの色なしは灰のまま
+export type EvColor = 'acc' | 'orange' | 'brown' | 'teal' | 'green' | 'violet' | 'mu' | 'blue';
 export function evColor(e: CalEvent): EvColor {
   if (bool(e.isContest)) return 'acc';
+  if (!String(e.color || '') && /自主練/.test(String(e.title || ''))) return 'brown';
   switch (String(e.color)) {
     case '5': return 'acc';
     case '6': return 'orange';

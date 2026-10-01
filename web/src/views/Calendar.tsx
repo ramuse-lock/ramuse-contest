@@ -84,7 +84,7 @@ export function Calendar() {
       </Glass>
       <div class="legend">
         <span><i class="c-acc" />大会</span>
-        <span><i class="c-orange" />自主練</span>
+        <span><i class="c-orange" /><i class="c-brown" />自主練</span>
         <span><i class="c-teal" />レッスン・イベント</span>
         {!IS_KID && <span><i class="c-green" />お知らせ・締切</span>}
         <span><i class="c-violet" />集まり</span>
